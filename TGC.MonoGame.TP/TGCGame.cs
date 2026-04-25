@@ -100,6 +100,7 @@ public class TGCGame : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
         _tank = new Tank();
+        //var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank_brisa");
         var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/ph_tanque");
         _tank.Load(tankModel);
 
@@ -155,7 +156,7 @@ public class TGCGame : Game
     protected override void Draw(GameTime gameTime)
     {
         // Aca deberiamos poner toda la logia de renderizado del juego.
-        GraphicsDevice.Clear(Color.Black);
+        GraphicsDevice.Clear(Color.Goldenrod);
 
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);

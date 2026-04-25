@@ -21,6 +21,8 @@ public class Hud
         _instructions = new[]
         {
             "movimiento: w / a / s / d",
+            "levitar: q / e",
+            "torreta / canon: mouse (TODO)",
             "barra espaciadora: bocina",
             "zoom: rueda del mouse",
             "salir: escape",

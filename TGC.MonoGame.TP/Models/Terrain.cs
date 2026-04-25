@@ -2,197 +2,162 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
 
 namespace TGC.MonoGame.TP.Models;
 
 /// <summary>
-///     Terreno plano con obstaculos cubicos generados de forma deterministica.
+///     Terreno generado a partir de un heightmap con alturas variables
 /// </summary>
 public class Terrain
 {
-    private const int RandomSeed = 42;
-    private const int ObstacleCount = 50;
-    private const float TerrainSize = 10000f;
-    private const float MaxObstacleSize = 400f;
-    private const float MinObstacleSize = 40f;
+    //escalas para controlar el tamano y relieve del terreno
+    private const float TerrainScale = 40f;
+    private const float HeightScale = 3500f;
 
     private readonly GraphicsDevice _graphicsDevice;
-    private readonly List<Obstacle> _obstacles;
-
-    private VertexBuffer _groundVertexBuffer;
-    private IndexBuffer _groundIndexBuffer;
-    private BasicEffect _groundEffect;
-
-    private VertexBuffer _cubeVertexBuffer;
-    private IndexBuffer _cubeIndexBuffer;
-    private BasicEffect _obstacleEffect;
+    private VertexBuffer _terrainVertexBuffer;
+    private IndexBuffer _terrainIndexBuffer;
+    private BasicEffect _terrainEffect;
+    private int _primitiveCount;
 
     public Terrain(GraphicsDevice graphicsDevice)
     {
         _graphicsDevice = graphicsDevice;
-        _obstacles = new List<Obstacle>();
     }
 
     public void LoadContent(ContentManager content)
     {
-        _groundEffect = new BasicEffect(_graphicsDevice)
-        {
-            TextureEnabled = false,
-            VertexColorEnabled = false,
-            LightingEnabled = true,
-            DiffuseColor = new Vector3(0.2f, 0.5f, 0.2f)
-        };
-        _groundEffect.EnableDefaultLighting();
+        var heightmapTexture = content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
 
-        _obstacleEffect = new BasicEffect(_graphicsDevice)
-        {
-            TextureEnabled = false,
-            VertexColorEnabled = false,
-            LightingEnabled = true,
-            DiffuseColor = new Vector3(0.6f, 0.4f, 0.2f)
-        };
-        _obstacleEffect.EnableDefaultLighting();
+        CreateHeightmapMesh(heightmapTexture);
 
-        CreateGroundGeometry();
-        CreateCubeGeometry();
-        GenerateObstacles();
+        _terrainEffect = new BasicEffect(_graphicsDevice)
+        {
+            VertexColorEnabled = true,
+            LightingEnabled = false,
+            DiffuseColor = new Vector3(1f, 1f, 1f)
+        };
     }
 
-    private void CreateGroundGeometry()
+    private void CreateHeightmapMesh(Texture2D heightmapTexture)
     {
-        // vertices ya definidos en el plano xz (y = 0)
-        var vertices = new VertexPositionNormalTexture[4]
+        int width = heightmapTexture.Width;
+        int height = heightmapTexture.Height;
+
+        Color[] heightmapData = new Color[width * height];
+        heightmapTexture.GetData(heightmapData);
+
+        //crear vertices con posicion y color
+        var vertices = new VertexPositionColor[width * height];
+        int index = 0;
+
+        for (int z = 0; z < height; z++)
         {
-            new VertexPositionNormalTexture(new Vector3(-0.5f, 0f, -0.5f), Vector3.Up, Vector2.Zero),
-            new VertexPositionNormalTexture(new Vector3( 0.5f, 0f, -0.5f), Vector3.Up, new Vector2(1, 0)),
-            new VertexPositionNormalTexture(new Vector3( 0.5f, 0f,  0.5f), Vector3.Up, Vector2.One),
-            new VertexPositionNormalTexture(new Vector3(-0.5f, 0f,  0.5f), Vector3.Up, new Vector2(0, 1))
-        };
-
-        var indices = new ushort[6] { 0, 1, 2, 0, 2, 3 };
-
-        _groundVertexBuffer = new VertexBuffer(_graphicsDevice, VertexPositionNormalTexture.VertexDeclaration, 4, BufferUsage.None);
-        _groundVertexBuffer.SetData(vertices);
-
-        _groundIndexBuffer = new IndexBuffer(_graphicsDevice, IndexElementSize.SixteenBits, 6, BufferUsage.None);
-        _groundIndexBuffer.SetData(indices);
-    }
-
-    private void CreateCubeGeometry()
-    {
-        var vertices = new VertexPositionNormalTexture[8]
-        {
-            new VertexPositionNormalTexture(new Vector3(-0.5f, -0.5f,  0.5f), Vector3.Forward, Vector2.Zero),
-            new VertexPositionNormalTexture(new Vector3( 0.5f, -0.5f,  0.5f), Vector3.Forward, new Vector2(1, 0)),
-            new VertexPositionNormalTexture(new Vector3( 0.5f,  0.5f,  0.5f), Vector3.Forward, new Vector2(1, 1)),
-            new VertexPositionNormalTexture(new Vector3(-0.5f,  0.5f,  0.5f), Vector3.Forward, new Vector2(0, 1)),
-            new VertexPositionNormalTexture(new Vector3(-0.5f, -0.5f, -0.5f), Vector3.Backward, Vector2.Zero),
-            new VertexPositionNormalTexture(new Vector3( 0.5f, -0.5f, -0.5f), Vector3.Backward, new Vector2(1, 0)),
-            new VertexPositionNormalTexture(new Vector3( 0.5f,  0.5f, -0.5f), Vector3.Backward, new Vector2(1, 1)),
-            new VertexPositionNormalTexture(new Vector3(-0.5f,  0.5f, -0.5f), Vector3.Backward, new Vector2(0, 1))
-        };
-
-        var indices = new ushort[36]
-        {
-            0, 1, 2, 0, 2, 3,
-            5, 4, 7, 5, 7, 6,
-            3, 2, 6, 3, 6, 7,
-            1, 0, 4, 1, 4, 5,
-            2, 1, 5, 2, 5, 6,
-            0, 3, 7, 0, 7, 4
-        };
-
-        _cubeVertexBuffer = new VertexBuffer(_graphicsDevice, VertexPositionNormalTexture.VertexDeclaration, 8, BufferUsage.None);
-        _cubeVertexBuffer.SetData(vertices);
-
-        _cubeIndexBuffer = new IndexBuffer(_graphicsDevice, IndexElementSize.SixteenBits, 36, BufferUsage.None);
-        _cubeIndexBuffer.SetData(indices);
-    }
-
-    private void GenerateObstacles()
-    {
-        var random = new Random(RandomSeed);
-        var margin = TerrainSize * 0.45f;
-
-        for (int i = 0; i < ObstacleCount; i++)
-        {
-            float x = (float)(random.NextDouble() * 2 - 1) * margin;
-            float z = (float)(random.NextDouble() * 2 - 1) * margin;
-            float size = (float)(random.NextDouble() * (MaxObstacleSize - MinObstacleSize) + MinObstacleSize);
-            float rotation = (float)(random.NextDouble() * MathHelper.TwoPi);
-
-            _obstacles.Add(new Obstacle
+            for (int x = 0; x < width; x++)
             {
-                Position = new Vector3(x, size * 0.5f, z),
-                Size = new Vector3(size),
-                RotationY = rotation
-            });
+                float posX = (x - width / 2f) * TerrainScale;
+                float posZ = (z - height / 2f) * TerrainScale;
+
+                //altura basada en el canal rojo del heightmap
+                float heightValue = heightmapData[index].R / 255f * HeightScale;
+
+                Vector3 position = new Vector3(posX, heightValue, posZ);
+                Color vertexColor = GetColorForHeight(heightValue);
+
+                vertices[index] = new VertexPositionColor(position, vertexColor);
+                index++;
+            }
         }
+
+        //crear indices para triangulos (1 quad = triangulo 1 + triangulo 2)
+        int indexCount = (width - 1) * (height - 1) * 6;
+        var indices = new uint[indexCount];
+        index = 0;
+
+        for (int z = 0; z < height - 1; z++)
+        {
+            for (int x = 0; x < width - 1; x++)
+            {
+                int topLeft = z * width + x;
+                int topRight = topLeft + 1;
+                int bottomLeft = (z + 1) * width + x;
+                int bottomRight = bottomLeft + 1;
+
+                // triangulo 1
+                indices[index++] = (uint)topLeft;
+                indices[index++] = (uint)bottomLeft;
+                indices[index++] = (uint)topRight;
+
+                // triangulo 2
+                indices[index++] = (uint)topRight;
+                indices[index++] = (uint)bottomLeft;
+                indices[index++] = (uint)bottomRight;
+            }
+        }
+
+        _primitiveCount = index / 3;
+
+        //pasar datos a la gpu
+        _terrainVertexBuffer = new VertexBuffer(
+            _graphicsDevice,
+            VertexPositionColor.VertexDeclaration,
+            vertices.Length,
+            BufferUsage.WriteOnly);
+        _terrainVertexBuffer.SetData(vertices);
+
+        //usar 32 bits para soportar mas de 65k vertices, despues que me paso me acorde que lo dijeron los profes
+        _terrainIndexBuffer = new IndexBuffer(
+            _graphicsDevice,
+            IndexElementSize.ThirtyTwoBits,
+            indices.Length,
+            BufferUsage.WriteOnly);
+        _terrainIndexBuffer.SetData(indices);
+    }
+
+    /// <summary>
+    ///     Retorna un color segun la altura para simular tonos de desierto
+    /// </summary>
+    private Color GetColorForHeight(float height)
+    {
+        float t = MathHelper.Clamp(height / HeightScale, 0f, 1f);
+
+        if (t < 0.2f) return new Color(255, 248, 220); // arena muy clara
+        if (t < 0.4f) return new Color(255, 239, 194); // arena clara
+        if (t < 0.6f) return new Color(244, 212, 150); // arena mas o menos clara
+        if (t < 0.8f) return new Color(222, 184, 135); // arena apenas clara
+                      return new Color(160, 82, 45);   // arena no clara :D
     }
 
     public void Draw(Matrix view, Matrix projection)
     {
-        //dibujar terreno sin rotacion -- los vertices ya son horizontales.
-        _groundEffect.World = Matrix.CreateScale(TerrainSize);
-        _groundEffect.View = view;
-        _groundEffect.Projection = projection;
+        _terrainEffect.World = Matrix.Identity;
+        _terrainEffect.View = view;
+        _terrainEffect.Projection = projection;
 
-        _graphicsDevice.SetVertexBuffer(_groundVertexBuffer);
-        _graphicsDevice.Indices = _groundIndexBuffer;
+        _graphicsDevice.SetVertexBuffer(_terrainVertexBuffer);
+        _graphicsDevice.Indices = _terrainIndexBuffer;
 
-        foreach (var pass in _groundEffect.CurrentTechnique.Passes)
+        //configurar rendering
+        _graphicsDevice.RasterizerState = RasterizerState.CullNone;
+        _graphicsDevice.DepthStencilState = DepthStencilState.Default;
+        _graphicsDevice.BlendState = BlendState.Opaque;
+
+        foreach (var pass in _terrainEffect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            _graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+            _graphicsDevice.DrawIndexedPrimitives(
+                PrimitiveType.TriangleList,
+                0,
+                0,
+                _primitiveCount
+            );
         }
-
-        _graphicsDevice.SetVertexBuffer(_cubeVertexBuffer);
-        _graphicsDevice.Indices = _cubeIndexBuffer;
-
-        foreach (var obstacle in _obstacles)
-        {
-            var world = Matrix.CreateScale(obstacle.Size) *
-                        Matrix.CreateRotationY(obstacle.RotationY) *
-                        Matrix.CreateTranslation(obstacle.Position);
-
-            _obstacleEffect.World = world;
-            _obstacleEffect.View = view;
-            _obstacleEffect.Projection = projection;
-
-            foreach (var pass in _obstacleEffect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                _graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 12);
-            }
-        }
-    }
-
-    public float GetHeightAt(float x, float z)
-    {
-        return 0f;
-    }
-
-    public bool IsWithinBounds(float x, float z)
-    {
-        float halfSize = TerrainSize * 0.5f;
-        return x >= -halfSize && x <= halfSize && z >= -halfSize && z <= halfSize;
     }
 
     public void Dispose()
     {
-        _groundVertexBuffer?.Dispose();
-        _groundIndexBuffer?.Dispose();
-        _cubeVertexBuffer?.Dispose();
-        _cubeIndexBuffer?.Dispose();
-        _groundEffect?.Dispose();
-        _obstacleEffect?.Dispose();
-    }
-
-    private class Obstacle
-    {
-        public Vector3 Position { get; set; }
-        public Vector3 Size { get; set; }
-        public float RotationY { get; set; }
+        _terrainVertexBuffer?.Dispose();
+        _terrainIndexBuffer?.Dispose();
+        _terrainEffect?.Dispose();
     }
 }

@@ -15,6 +15,7 @@ public class Tank
     public float Acceleration { get; set; } = 3500f;
     public float Friction { get; set; } = 0.96f;
     public float TurnSpeed { get; set; } = 2.8f;
+    public float VerticalSpeed = 1000f;
 
     //estado interno
     public Vector3 Position { get; private set; }
@@ -59,6 +60,9 @@ public class Tank
         if (keyboard.IsKeyDown(Keys.W)) forwardInput += 1f;
         if (keyboard.IsKeyDown(Keys.S)) forwardInput -= 1f;
 
+        if (keyboard.IsKeyDown(Keys.Q)) Position += Vector3.Up * VerticalSpeed * dt;
+        if (keyboard.IsKeyDown(Keys.E)) Position -= Vector3.Up * VerticalSpeed * dt;
+
         //fisica sencilla
         Speed += forwardInput * Acceleration * dt;
         Speed *= System.MathF.Pow(Friction, dt * 60f);
@@ -69,6 +73,6 @@ public class Tank
         Position += forward * Speed * dt;
 
         //mantener flotando en y = 0
-        Position = new Vector3(Position.X, 0f, Position.Z);
+        //Position = new Vector3(Position.X, 0f, Position.Z);
     }
 }

@@ -17,7 +17,7 @@ public class TankFollowCamera
     //configuracion del zoom
     public float MinDistance { get; set; } = 20f;
     public float MaxDistance { get; set; } = 4500f;
-    public float ZoomSensitivity { get; set; } = 40f;
+    public float ZoomSensitivity { get; set; } = 250f;
 
     private Vector3 _currentPosition;
     private Vector3 _targetPosition;
@@ -39,7 +39,7 @@ public class TankFollowCamera
 
     public void UpdateProjection(float aspectRatio)
     {
-        Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, 0.5f, 10000f);
+        Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, 0.5f, 50000f);
     }
 
     public void Update(GameTime gameTime, Vector3 tankPosition, float tankRotationY)
