@@ -7,6 +7,8 @@ using Microsoft.Xna.Framework.Input;
 
 using TGC.MonoGame.TP.Cameras;
 using TGC.MonoGame.TP.Models;
+using TGC.MonoGame.TP.Viewer;
+using TGC.MonoGame.TP.Viewer.Gizmos;
 
 namespace TGC.MonoGame.TP;
 
@@ -44,6 +46,9 @@ public class TGCGame : Game
     private Terrain _terrain;
     private Hud _hud;
 
+    public bool GodModeEnabled { get; set; } = true;    // provisional
+    public Gizmos Gizmos { get; }
+
     /// <summary>
     ///     Constructor del juego.
     /// </summary>
@@ -60,6 +65,9 @@ public class TGCGame : Game
         Content.RootDirectory = "Content";
         // Hace que el mouse sea visible.
         IsMouseVisible = true;
+
+        //Gizmos 
+        Gizmos = new Gizmos();
     }
 
     /// <summary>
@@ -100,8 +108,9 @@ public class TGCGame : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
         _tank = new Tank();
-        //var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank_brisa");
+        //var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank_brisa"); // <--modelo roto
         var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/ph_tanque");
+        // var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank");
         _tank.Load(tankModel);
 
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
@@ -114,6 +123,8 @@ public class TGCGame : Game
 
         _klaxonSound = Content.Load<SoundEffect>(ContentFolderSounds + "klaxon");
         _hornSound = Content.Load<SoundEffect>(ContentFolderSounds + "horn");
+
+        Gizmos.LoadContent(GraphicsDevice, Content);
 
         base.LoadContent();
     }
@@ -146,6 +157,11 @@ public class TGCGame : Game
         _tank.Update(gameTime, kb);
         _camera.Update(gameTime, _tank.Position, _tank.RotationY);
 
+        if(!GodModeEnabled)
+            Gizmos.Enabled = false;
+
+        Gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
+
         base.Update(gameTime);
     }
 
@@ -162,7 +178,14 @@ public class TGCGame : Game
         _tank.Draw(_camera.View, _camera.Projection);
         _hud.Draw();
 
-        //base.Draw();
+        // dibujo los gizmos!
+        Gizmos.SetColor(Color.Red);
+        // quiero hacerle modificaciones al cilindro
+        // Gizmos.DrawCylinder(_tank.Position, Matrix.Identity, new Vector3(500f, 500f, 500f));
+        Gizmos.DrawCube(_tank.Position, new Vector3(700f), Color.Red);
+        Gizmos.Draw();
+
+        base.Draw(gameTime);
     }
 
     /// <summary>
