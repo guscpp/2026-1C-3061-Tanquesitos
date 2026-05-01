@@ -107,9 +107,13 @@ public class TGCGame : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
         _tank = new Tank();
-        //var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank_brisa");
-        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/ph_tanque");
-        _tank.Load(tankModel);
+
+        //Cargad de modelo
+        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank");
+        //Carga de texturas
+        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta");
+
+        _tank.Load(tankModel, tankTexture);
 
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
 
@@ -159,6 +163,12 @@ public class TGCGame : Game
         //_world = Matrix.CreateRotationY(_rotation);
 
         _tank.Update(gameTime, kb);
+
+        // Actualiza la posicionY del tanque según el terreno
+        float terrainHeight = _terrain.GetHeight(_tank.Position); //Altura correcta que debe usar
+        _tank.SetHeight(terrainHeight);
+        //Actualmente el tanque hace esto, primero dice donde quiere moverse (tanl.Update) y luego nosotros le corregimos la posicion segun el mapa
+
         _camera.Update(gameTime, _tank.Position, _tank.RotationY);
 
         base.Update(gameTime);

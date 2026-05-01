@@ -31,13 +31,19 @@ public class Tank
     /// <summary>
     ///     Carga el modelo compilado y aplica la iluminacion basica.
     /// </summary>
-    public void Load(Model model)
+    public void Load(Model model, Texture2D texture)
     {
         Model = model;
         //habilitar iluminacion por defecto en todos los meshes
         foreach (var mesh in model.Meshes)
             foreach (BasicEffect effect in mesh.Effects)
+            {
                 effect.EnableDefaultLighting();
+
+                //Habilitación de texturas
+                effect.TextureEnabled = true;
+                effect.Texture = texture;
+            }
     }
 
     /// <summary>
@@ -74,5 +80,13 @@ public class Tank
 
         //mantener flotando en y = 0
         //Position = new Vector3(Position.X, 0f, Position.Z);
+    }
+
+    /// <summary>
+    ///     Corrige la Y de la posicion, como Tanque no tiene una referencial al terreno, no puedo ponerlo en Update (Aunque sería lo ideal... creo xd)
+    /// </summary>
+    public void SetHeight(float y)
+    {
+        Position = new Vector3(Position.X, y, Position.Z);
     }
 }
