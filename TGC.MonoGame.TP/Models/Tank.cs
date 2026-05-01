@@ -9,6 +9,8 @@ namespace TGC.MonoGame.TP.Models;
 /// </summary>
 public class Tank
 {
+    private Effect _effect;
+
     public Model Model { get; private set; }
     //configuracion de movimiento
     public float MaxSpeed { get; set; } = 25000f;
@@ -22,28 +24,36 @@ public class Tank
     public float RotationY { get; private set; }
     public float Speed { get; private set; }
 
+    //Propieda de escalado - el valor puede variar
+    public float Scale { get; set; } = 100f;
+
     /// <summary>
     ///     Matriz de mundo lista para pasar al Draw de un Model.
     /// </summary>
     public Matrix WorldMatrix => 
-        Matrix.CreateRotationY(RotationY) * Matrix.CreateTranslation(Position);
+        Matrix.CreateScale(Scale) * //Primero lo escalo porque sino se ve diminuto
+        Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) * //Para que no se vea acostado xd
+        Matrix.CreateRotationY(RotationY) *  //Luego lo roto
+        Matrix.CreateTranslation(Position); //Finalmente lo traslado
 
     /// <summary>
     ///     Carga el modelo compilado y aplica la iluminacion basica.
     /// </summary>
-    public void Load(Model model, Texture2D texture)
+    public void Load(Model model, Texture2D texture, Effect effect)
     {
         Model = model;
-        //habilitar iluminacion por defecto en todos los meshes
-        foreach (var mesh in model.Meshes)
-            foreach (BasicEffect effect in mesh.Effects)
-            {
-                effect.EnableDefaultLighting();
+        _effect = effect; //Mi efecto ahora es el BasicShader que le pase por parametro
 
-                //Habilitación de texturas
-                effect.TextureEnabled = true;
-                effect.Texture = texture;
+        //Para cada malla de mi coleccion de mallas del modelo
+        foreach (var mesh in Model.Meshes)
+        {
+            //Para cada parte de la malla de mi coleccion de partes de la malla
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                // Reemplazamos el efecto por defecto del modelo por el nuestro
+                meshPart.Effect = _effect;
             }
+        }
     }
 
     /// <summary>
@@ -52,7 +62,22 @@ public class Tank
     public void Draw(Matrix view, Matrix projection)
     {
         if (Model == null) return;
-        Model.Draw(WorldMatrix, view, projection);
+
+        //Para cada malla en la coleccion de mallas del modelo
+        foreach (var mesh in Model.Meshes)
+        {
+            //Para cada efecto en la coleccion de efectos de la malla
+            foreach (var effect in mesh.Effects)
+            {
+
+                //Coloco los parametros de world, view y projection
+                effect.Parameters["World"].SetValue(WorldMatrix);
+                effect.Parameters["View"].SetValue(view);
+                effect.Parameters["Projection"].SetValue(projection);
+                effect.Parameters["DiffuseColor"].SetValue(Color.Red.ToVector3()); //Un color porque aun no sé ponerle las texturas
+            }
+            mesh.Draw();
+        }
     }
 
     public void Update(GameTime gameTime, KeyboardState keyboard)

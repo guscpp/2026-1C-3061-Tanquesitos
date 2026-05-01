@@ -93,6 +93,8 @@ public class TGCGame : Game
         _view = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
         _projection =
             Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
+            //Near Plane(1): Todo lo que este a menos de 1 unidad de la camara no se dibuja
+            //Far PLane(250): Todo lo que esté a más de 250 unidades desaparece.
 
         base.Initialize();
     }
@@ -107,14 +109,16 @@ public class TGCGame : Game
         // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-        _tank = new Tank();
-
+        //Cargo el BasicShader para reemplazar el BasicEffect, debo pasarle este shader tanto al tanque como al terreno (No se si en su load o en un set)
+        var effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
         //Cargad de modelo
         var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank");
         //Carga de texturas
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta");
-
-        _tank.Load(tankModel, tankTexture);
+        //Creamos el tanque
+        _tank = new Tank();
+        //Le pasamos el modelo y la textura
+        _tank.Load(tankModel, tankTexture, effect);
 
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
 
@@ -162,7 +166,7 @@ public class TGCGame : Game
         // Actualiza la posicionY del tanque según el terreno
         float terrainHeight = _terrain.GetHeight(_tank.Position); //Altura correcta que debe usar
         _tank.SetHeight(terrainHeight);
-        //Actualmente el tanque hace esto, primero dice donde quiere moverse (tanl.Update) y luego nosotros le corregimos la posicion segun el mapa
+        //Actualmente el tanque hace esto, primero dice donde quiere moverse (tank.Update) y luego nosotros le corregimos la posicion segun el mapa (tank.SetHeight)
 
         _camera.Update(gameTime, _tank.Position, _tank.RotationY);
 

@@ -45,6 +45,7 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
     return output;
 }
 
+//Le da un color a un triangulo (o todos)
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
     return float4(DiffuseColor, 1.0);
