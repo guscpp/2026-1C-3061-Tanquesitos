@@ -20,6 +20,11 @@ public class Terrain
     private BasicEffect _terrainEffect;
     private int _primitiveCount;
 
+    //matriz que guardará los valores del mapa para que pueda usarlos fuera de la clase
+    private float[,] _heights;
+    private int _width;
+    private int _height;
+
     public Terrain(GraphicsDevice graphicsDevice)
     {
         _graphicsDevice = graphicsDevice;
@@ -41,25 +46,31 @@ public class Terrain
 
     private void CreateHeightmapMesh(Texture2D heightmapTexture)
     {
-        int width = heightmapTexture.Width;
-        int height = heightmapTexture.Height;
+        _width = heightmapTexture.Width;
+        _height = heightmapTexture.Height;
 
-        Color[] heightmapData = new Color[width * height];
+        //matriz con las alturas
+        _heights = new float[_width, _height];
+
+        Color[] heightmapData = new Color[_width * _height];
         heightmapTexture.GetData(heightmapData);
 
         //crear vertices con posicion y color
-        var vertices = new VertexPositionColor[width * height];
+        var vertices = new VertexPositionColor[_width * _height];
         int index = 0;
 
-        for (int z = 0; z < height; z++)
+        for (int z = 0; z < _height; z++)
         {
-            for (int x = 0; x < width; x++)
+            for (int x = 0; x < _width; x++)
             {
-                float posX = (x - width / 2f) * TerrainScale;
-                float posZ = (z - height / 2f) * TerrainScale;
+                float posX = (x - _width / 2f) * TerrainScale;
+                float posZ = (z - _height / 2f) * TerrainScale;
 
                 //altura basada en el canal rojo del heightmap
                 float heightValue = heightmapData[index].R / 255f * HeightScale;
+
+                //guardo el valor en la matriz
+                _heights[x, z] = heightValue;
 
                 Vector3 position = new Vector3(posX, heightValue, posZ);
                 Color vertexColor = GetColorForHeight(heightValue);
@@ -70,17 +81,17 @@ public class Terrain
         }
 
         //crear indices para triangulos (1 quad = triangulo 1 + triangulo 2)
-        int indexCount = (width - 1) * (height - 1) * 6;
+        int indexCount = (_width - 1) * (_height - 1) * 6;
         var indices = new uint[indexCount];
         index = 0;
 
-        for (int z = 0; z < height - 1; z++)
+        for (int z = 0; z < _height - 1; z++)
         {
-            for (int x = 0; x < width - 1; x++)
+            for (int x = 0; x < _width - 1; x++)
             {
-                int topLeft = z * width + x;
+                int topLeft = z * _width + x;
                 int topRight = topLeft + 1;
-                int bottomLeft = (z + 1) * width + x;
+                int bottomLeft = (z + 1) * _width + x;
                 int bottomRight = bottomLeft + 1;
 
                 // triangulo 1
@@ -112,6 +123,41 @@ public class Terrain
             indices.Length,
             BufferUsage.WriteOnly);
         _terrainIndexBuffer.SetData(indices);
+    }
+
+    /// <summary>
+    ///     Retorna la altura real segun la posicion que le mandemos, de esa forma el tanque no atraviesa el suelo
+    /// </summary>
+    public float GetHeight(Vector3 position)
+    {
+        // Tomo los valores de x e y de la posicion
+        //Primero convierto el valor de la coordenada a pixel luego lo hago coincidir con el origen de la matriz
+        float x = (position.X / TerrainScale) + (_width / 2f);
+        float z = (position.Z / TerrainScale) + (_height / 2f);
+
+        //Tomo los 4 puntos más cercanos al tanque
+        int x0 = (int)Math.Floor(x); //vertice superior izquierdo
+        int x1 = MathHelper.Clamp(x0 + 1, 0, _width - 1); //vertice adyacente
+        int z0 = (int)Math.Floor(z); //vertice superior izquierdo
+        int z1 = MathHelper.Clamp(z0 + 1, 0, _height - 1); //vertice adyacente
+        x0 = MathHelper.Clamp(x0, 0, _width - 1);
+        z0 = MathHelper.Clamp(z0, 0, _height - 1);
+
+        // Fracciones para interpolar
+        float tx = x - x0;
+        float tz = z - z0;
+
+        // Obtener las alturas de los 4 puntos
+        float h00 = _heights[x0, z0];
+        float h10 = _heights[x1, z0];
+        float h01 = _heights[x0, z1];
+        float h11 = _heights[x1, z1];
+
+        // Interpolación bilineal (suaviza la pendiente)
+        //Permite que el movimiento por el terreno sea fluido y no parezca que sube y baja escaleras
+        float h0 = MathHelper.Lerp(h00, h10, tx);
+        float h1 = MathHelper.Lerp(h01, h11, tx);
+        return MathHelper.Lerp(h0, h1, tz);
     }
 
     /// <summary>
