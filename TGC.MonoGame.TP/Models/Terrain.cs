@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Data;
 
 namespace TGC.MonoGame.TP.Models;
 
@@ -13,6 +14,12 @@ public class Terrain
     //escalas para controlar el tamano y relieve del terreno
     private const float TerrainScale = 40f;
     private const float HeightScale = 3500f;
+    private float _heightmapWidth;
+    private float _heightmapHeight;
+
+    public float WidthUnits => 518f * TerrainScale / 2;   //unidades de ancho 
+
+    private Texture2D _heightmapTexture;
 
     private readonly GraphicsDevice _graphicsDevice;
     private VertexBuffer _terrainVertexBuffer;
@@ -28,6 +35,9 @@ public class Terrain
     public void LoadContent(ContentManager content)
     {
         var heightmapTexture = content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
+        _heightmapTexture = heightmapTexture;
+        _heightmapWidth = heightmapTexture.Width;
+        _heightmapHeight = heightmapTexture.Height;
 
         CreateHeightmapMesh(heightmapTexture);
 
@@ -112,6 +122,25 @@ public class Terrain
             indices.Length,
             BufferUsage.WriteOnly);
         _terrainIndexBuffer.SetData(indices);
+    }
+    /// <summary>
+    ///     Retorna la altura correspondiente respecto de sus coordenadas X, Z
+    /// </summary>
+    public float Height(float X, float Z)
+    {
+        // obtengo los colores del mapa
+        Color[] heightmapData = new Color[_heightmapTexture.Width * _heightmapTexture.Height];
+        _heightmapTexture.GetData(heightmapData);
+
+        // pasaje de las coordenadas de mundo a "coordenadas de heightmap" --> el pixel dentro del mapa
+        int xInMap = (int) (X / TerrainScale + _heightmapWidth / 2);
+        int zInMap = (int) (Z / TerrainScale + _heightmapHeight / 2);
+
+        var x = (int) MathHelper.Clamp(xInMap, 0, _heightmapWidth - 1);
+        var z = (int) MathHelper.Clamp(zInMap, 0, _heightmapHeight - 1);
+        
+        var Y = heightmapData[z * _heightmapTexture.Width + x].R / 255f * HeightScale;
+        return Y;
     }
 
     /// <summary>
