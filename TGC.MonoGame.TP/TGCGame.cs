@@ -157,8 +157,8 @@ public class TGCGame : Game
         _tank.Update(gameTime, kb);
 
         // Actualiza la posicionY del tanque según el terreno
-        //float terrainHeight = _terrain.GetHeight(_tank.Position); //Altura correcta que debe usar
-        //_tank.SetHeight(terrainHeight);
+        float terrainHeight = _terrain.GetHeight(_tank.Position); //Altura correcta que debe usar
+        _tank.SetHeight(terrainHeight);
         //Actualmente el tanque hace esto, primero dice donde quiere moverse (tanl.Update) y luego nosotros le corregimos la posicion segun el mapa
 
         _camera.Update(gameTime, _tank.Position, _tank.RotationY);
