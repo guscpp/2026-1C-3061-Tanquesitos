@@ -13,14 +13,20 @@ public class House
     public Vector3 Position { get; private set; }
     public float Rotation { get; set; }     // rotacion que se le quiera dar para generar variacion entre los modelos
 
+    public string Path { get; set; }
+
     private Matrix _world;
 
-    public void LoadContent(Model model, Vector3 position)
+    public void Initialize()
+    {
+        Position = Vector3.Zero;
+    }
+
+    public void LoadContent(Model model, Vector3 position, float angle)
     {
         Model = model;
-
         Position = position;
-        _world = Matrix.CreateScale(2.5f) * Matrix.CreateTranslation(Position);
+        _world = Matrix.CreateScale(2.5f) * Matrix.CreateRotationY(angle) * Matrix.CreateTranslation(Position);
     }
 
     public void Update()
