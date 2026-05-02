@@ -44,6 +44,7 @@ public class TGCGame : Game
     private TankFollowCamera _camera;
     private Terrain _terrain;
     private Hud _hud;
+    private AssetsManager _assets;
 
     private List<House> _modelosCasitas = new();
 
@@ -86,12 +87,6 @@ public class TGCGame : Game
         _view = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
         _projection =
             Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
-        
-        // creo modelos de las casas pequeñas
-        for(int i=0; i<10; i++)
-        {
-            _modelosCasitas.Add(new House());
-        }
 
         base.Initialize();
     }
@@ -123,14 +118,11 @@ public class TGCGame : Game
         _hud = new Hud();
         _hud.LoadContent(Content, GraphicsDevice);
 
-        var littleHouseModel = Content.Load<Model>(ContentFolder3D + "casas/casita_pequeña");
-        for(int i=0; i<10; i++)
-        {
-            _modelosCasitas[i].LoadContent(
-                littleHouseModel,
-                GetRandomPosition(_random)
-                );
-        }
+        // creo modelos
+        _assets = new AssetsManager(_terrain);
+        _assets.Initialize();
+        _assets.LoadContent(Content);
+
         _klaxonSound = Content.Load<SoundEffect>(ContentFolderSounds + "klaxon");
         _hornSound = Content.Load<SoundEffect>(ContentFolderSounds + "horn");
 
@@ -175,20 +167,6 @@ public class TGCGame : Game
     }
 
     /// <summary>
-    ///     Genera posiciones aleatorias dentro del terreno en un rango establecido 
-    /// </summary>
-    private Vector3 GetRandomPosition(Random random)
-    {
-        var minHorizontal = -_terrain.WidthUnits;
-        var maxHorizontal = _terrain.WidthUnits;
-        var horizontalRange = maxHorizontal - minHorizontal;
-
-        var x = random.NextSingle() * horizontalRange + minHorizontal;
-        var z = random.NextSingle() * horizontalRange + minHorizontal; 
-        return new Vector3(x, _terrain.Height(x,z), z);    
-    }
-
-    /// <summary>
     ///     Se llama cada vez que hay que refrescar la pantalla.
     ///     Escribir aqui el codigo referido al renderizado.
     /// </summary>
@@ -201,11 +179,7 @@ public class TGCGame : Game
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);
         _hud.Draw();
-
-        for(int i = 0; i < 10; i++)
-        {
-            _modelosCasitas[i].Draw(_camera.View, _camera.Projection);
-        } 
+        _assets.Draw(_camera.View, _camera.Projection); 
 
         //base.Draw();
     }

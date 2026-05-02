@@ -4,11 +4,10 @@ using Microsoft.Xna.Framework.Input;
 
 namespace TGC.MonoGame.TP.Models;
 /// <summary>
-/// Casas dentro de escenario 
+/// Decoraciones dentro de escenario: rocas, arboles, cactus, etc.
 /// </summary>
-public class House
+public class Decoration
 {
-
     public Model Model { get; private set; }
     public Vector3 Position { get; private set; }
     public float Rotation { get; set; }     // rotacion que se le quiera dar para generar variacion entre los modelos

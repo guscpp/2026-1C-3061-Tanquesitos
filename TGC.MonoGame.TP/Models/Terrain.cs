@@ -134,10 +134,11 @@ public class Terrain
             BufferUsage.WriteOnly);
         _terrainIndexBuffer.SetData(indices);
     }
+
     /// <summary>
-    ///     Retorna la altura correspondiente respecto de sus coordenadas X, Z
+    ///     Retorna la altura correspondiente respecto de coordenadas X, Z
     /// </summary>
-    public float Height(float X, float Z)
+    public float GetHeight(float X, float Z)
     {
         // obtengo los colores del mapa
         Color[] heightmapData = new Color[_heightmapTexture.Width * _heightmapTexture.Height];
