@@ -17,7 +17,7 @@ public class Terrain
     private readonly GraphicsDevice _graphicsDevice;
     private VertexBuffer _terrainVertexBuffer;
     private IndexBuffer _terrainIndexBuffer;
-    private BasicEffect _terrainEffect;
+    private Effect _terrainEffect;
     private int _primitiveCount;
 
     //matriz que guardará los valores del mapa para que pueda usarlos fuera de la clase
@@ -30,18 +30,11 @@ public class Terrain
         _graphicsDevice = graphicsDevice;
     }
 
-    public void LoadContent(ContentManager content)
+    public void LoadContent(Texture2D heightmapTexture, Effect BasicShader)
     {
-        var heightmapTexture = content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
-
         CreateHeightmapMesh(heightmapTexture);
 
-        _terrainEffect = new BasicEffect(_graphicsDevice)
-        {
-            VertexColorEnabled = true,
-            LightingEnabled = false,
-            DiffuseColor = new Vector3(1f, 1f, 1f)
-        };
+        _terrainEffect = BasicShader;
     }
 
     private void CreateHeightmapMesh(Texture2D heightmapTexture)
@@ -176,9 +169,10 @@ public class Terrain
 
     public void Draw(Matrix view, Matrix projection)
     {
-        _terrainEffect.World = Matrix.Identity;
-        _terrainEffect.View = view;
-        _terrainEffect.Projection = projection;
+        _terrainEffect.Parameters["World"].SetValue(Matrix.Identity);
+        _terrainEffect.Parameters["View"].SetValue(view);
+        _terrainEffect.Parameters["Projection"].SetValue(projection);
+        _terrainEffect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
 
         _graphicsDevice.SetVertexBuffer(_terrainVertexBuffer);
         _graphicsDevice.Indices = _terrainIndexBuffer;
@@ -204,6 +198,6 @@ public class Terrain
     {
         _terrainVertexBuffer?.Dispose();
         _terrainIndexBuffer?.Dispose();
-        _terrainEffect?.Dispose();
+        //_terrainEffect?.Dispose(); solo TGCGame debe hacerlo, porque es el dueño del efecto
     }
 }

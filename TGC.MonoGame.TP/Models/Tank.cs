@@ -69,7 +69,6 @@ public class Tank
             //Para cada efecto en la coleccion de efectos de la malla
             foreach (var effect in mesh.Effects)
             {
-
                 //Coloco los parametros de world, view y projection
                 effect.Parameters["World"].SetValue(WorldMatrix);
                 effect.Parameters["View"].SetValue(view);

@@ -109,21 +109,26 @@ public class TGCGame : Game
         // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-        //Cargo el BasicShader para reemplazar el BasicEffect, debo pasarle este shader tanto al tanque como al terreno (No se si en su load o en un set)
+        //Cargo el BasicShader para reemplazar el BasicEffect, debo pasarle este shader tanto al tanque como al terreno (Lo hago en su load pero no se si conviene más en un set)
         var effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
-        //Cargad de modelo
+
+        //Cargad de modelo tanque
         var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank");
-        //Carga de texturas
+        //Carga de texturas tanque
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta");
         //Creamos el tanque
         _tank = new Tank();
-        //Le pasamos el modelo y la textura
+        //Le pasamos el modelo, la textura y el efecto
         _tank.Load(tankModel, tankTexture, effect);
 
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
 
+        //Cargo las texturas del terreno
+        var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
+        //Creo el terreno
         _terrain = new Terrain(GraphicsDevice);
-        _terrain.LoadContent(Content);
+        //Le paso la textura y el efecto
+        _terrain.LoadContent(terrainTexture, effect);
 
         _hud = new Hud();
         _hud.LoadContent(Content, GraphicsDevice);
@@ -211,6 +216,7 @@ public class TGCGame : Game
 
         _terrain?.Dispose();
         _hud?.Dispose();
+        _effect.Dispose();
 
         base.UnloadContent();
     }
