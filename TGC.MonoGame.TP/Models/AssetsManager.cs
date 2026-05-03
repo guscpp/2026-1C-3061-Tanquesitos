@@ -39,8 +39,8 @@ public class AssetsManager
         "decoraciones/planta_rodadora",
         "decoraciones/pozo",
         "decoraciones/roca_1",
-        "decoraciones/roca_2"
-        //"decoraciones/roca_3"
+        "decoraciones/roca_2",
+        "decoraciones/roca_3"
     };
 
     private readonly float[] _decorationSpawrates =
@@ -71,7 +71,7 @@ public class AssetsManager
     private string[] HouseModelPaths =
     {
         "casas/casita_mediana",
-        //"casas/casita_pequeña",
+        "casas/casita_pequeña",
         "casas/Large Building B",
         "casas/Medium Building B"
     };

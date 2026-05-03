@@ -24,11 +24,13 @@ float Time = 0;
 struct VertexShaderInput
 {
 	float4 Position : POSITION0;
+	float4 Color : COLOR0; //Para poder tomar los colores de los pixeles, ya que el terreno a diferencia del tanque usa vertices con color propio en vez de un mismo color para todo
 };
 
 struct VertexShaderOutput
 {
 	float4 Position : SV_POSITION;
+	float4 Color : COLOR0;
 };
 
 VertexShaderOutput MainVS(in VertexShaderInput input)
@@ -42,12 +44,19 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 	// View space to Projection space
     output.Position = mul(viewPosition, Projection);
 
+	output.Color = input.Color; //Para copiar el color del vertice
+
     return output;
 }
 
+//Le da un color a un triangulo (o todos)
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
-    return float4(DiffuseColor, 1.0);
+	if (length(input.Color.rgb) < 0.001) //si el modelo no tiene color (el tanque xd)
+    {
+        return float4(DiffuseColor, 1.0); //Mostrar el diffuseColor
+    }
+    return input.Color * float4(DiffuseColor, 1.0); //si el modelo tiene color (el terreno) lo combino
 }
 
 technique BasicColorDrawing

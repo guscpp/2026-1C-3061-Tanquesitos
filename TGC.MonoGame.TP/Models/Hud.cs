@@ -26,7 +26,7 @@ public class Hud
             "barra espaciadora: bocina",
             "zoom: rueda del mouse",
             "salir: escape",
-            "shaders: el BasicEffect que no podemos usar en el TP :,("
+            "shaders: el BasicShader :D"
         };
     }
 
