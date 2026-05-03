@@ -74,13 +74,8 @@ public class TGCGame : Game
     {
         // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
 
-        // Apago el backface culling.
-        // Esto se hace por un problema en el diseno del modelo del logo de la materia.
-        // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
-        var rasterizerState = new RasterizerState();
-        rasterizerState.CullMode = CullMode.None;
-        GraphicsDevice.RasterizerState = rasterizerState;
-        // Seria hasta aca.
+        // Se activa el Backface Culling en sentido anti-horario (se renderizan las caras frontales de los triangulos)
+        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
         // Configuramos nuestras matrices de la escena.
         _world = Matrix.Identity;
@@ -176,10 +171,12 @@ public class TGCGame : Game
         var totalTime = (float)gameTime.TotalGameTime.TotalSeconds;
         GraphicsDevice.Clear(Color.Goldenrod);
 
+        // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);
+        _assets.Draw(_camera.View, _camera.Projection);
+        // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
         _hud.Draw();
-        _assets.Draw(_camera.View, _camera.Projection); 
 
         //base.Draw();
     }

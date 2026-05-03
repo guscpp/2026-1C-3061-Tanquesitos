@@ -106,13 +106,13 @@ public class Terrain
 
                 // triangulo 1
                 indices[index++] = (uint)topLeft;
-                indices[index++] = (uint)bottomLeft;
                 indices[index++] = (uint)topRight;
+                indices[index++] = (uint)bottomLeft;
 
                 // triangulo 2
                 indices[index++] = (uint)topRight;
-                indices[index++] = (uint)bottomLeft;
                 indices[index++] = (uint)bottomRight;
+                indices[index++] = (uint)bottomLeft;
             }
         }
 
@@ -214,7 +214,6 @@ public class Terrain
         _graphicsDevice.Indices = _terrainIndexBuffer;
 
         //configurar rendering
-        _graphicsDevice.RasterizerState = RasterizerState.CullNone;
         _graphicsDevice.DepthStencilState = DepthStencilState.Default;
         _graphicsDevice.BlendState = BlendState.Opaque;
 

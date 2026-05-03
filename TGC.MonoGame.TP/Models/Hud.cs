@@ -38,6 +38,7 @@ public class Hud
 
     public void Draw()
     {
+        // Esta linea es la que desactiva el Z-Buffer
         _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
 
         var drawPosition = new Vector2(_padding.X, _padding.Y);
