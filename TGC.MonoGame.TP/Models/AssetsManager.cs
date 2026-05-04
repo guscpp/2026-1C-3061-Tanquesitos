@@ -225,13 +225,14 @@ public class AssetsManager
 
     public void LoadContent(ContentManager content)
     {
+        var effect = content.Load<Effect>(ContentFolderEffects + "BasicShader");
 
         int i = 0;
         var houseModelPositions = GetValidHousePositions();
         foreach(var house in _houseModels)
         {
             var houseModel = content.Load<Model>(ContentFolder3D + GetRandomHousePath());
-            house.LoadContent(houseModel, houseModelPositions[i], _random.NextSingle());
+            house.LoadContent(houseModel, houseModelPositions[i], _random.NextSingle(), effect);
             i++;
         }
         i = 0;
@@ -239,7 +240,7 @@ public class AssetsManager
         foreach(var asset in _decorationModels)
         {
             var assetModel = content.Load<Model>(ContentFolder3D + GetRandomAssetPath());
-            asset.LoadContent(assetModel, decorationModelPositions[i], _random.NextSingle());
+            asset.LoadContent(assetModel, decorationModelPositions[i], _random.NextSingle(), effect);
             i++;
         }
     }
