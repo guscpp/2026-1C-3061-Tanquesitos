@@ -21,12 +21,9 @@ public class Hud
         _instructions = new[]
         {
             "movimiento: w / a / s / d",
-            "levitar: q / e",
-            "torreta / canon: mouse (TODO)",
-            "barra espaciadora: bocina",
+            "bocina: espacio",
             "zoom: rueda del mouse",
-            "salir: escape",
-            "shaders: el BasicShader :D"
+            "salir: escape"
         };
     }
 
