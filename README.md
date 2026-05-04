@@ -8,30 +8,21 @@
 
 ## Descripción
 
-Proyecto plantilla para los trabajos prácticos de la asignatura electiva [Técnicas de Gráficos por Computadora](https://tgc-utn.github.io/) (TGC) en la carrera de Ingeniería en Sistemas de Información. Universidad Tecnológica Nacional, Facultad Regional Buenos Aires (UTN-FRBA).
-
-## Configuración del entorno de desarrollo
-
-Los pasos a seguir según su sistema operativo se pueden leer en el siguiente documento [install.md](https://github.com/tgc-utn/tgc-monogame-samples/blob/master/docs/install/install.md).
-
-Afuera del mundo Windows, vas a necesitar la ayudar de [Wine](https://www.winehq.org) para los shaders, por lo menos por [ahora](https://github.com/MonoGame/MonoGame/issues/2167).
-
-Los recursos usados se almacenan utilizando [Git LFS](https://git-lfs.github.com), con lo cual antes de clonar el repositorio les conviene tenerlo instalado así es automático el pull o si ya lo tienen pueden hacer `git lfs pull`.
+Proyecto de la asignatura electiva [Técnicas de Gráficos por Computadora](https://tgc-utn.github.io/) (TGC) en la carrera de Ingeniería en Sistemas de Información. Universidad Tecnológica Nacional, Facultad Regional Buenos Aires (UTN-FRBA).
 
 ## Integrantes
 
-TGC, Tgcito  |  Apellido, Nombre
+Fotografia |  Apellido, Nombre
 ------------ | -------------
-| <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/main/images/robotgc.png" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/main/images/trofeotp.png" height="500"> |
+| <img width="100" height="100" alt="agustina" src="https://github.com/user-attachments/assets/cf1356d0-4681-49b7-8d0a-78aa6ece4655"> | Agustina Mendez|
+| <img width="100" height="100" alt="brisa" src="https://github.com/user-attachments/assets/12db9556-c13c-44bd-ae07-60302937eab0"> | Brisa Aylen Brussa |
+| <img width="100" height="100" alt="denise" src="https://github.com/user-attachments/assets/4e99fa19-9a6b-4a1a-a5a2-0b2632002e6d"> | Denise A Medina Mosquera |
+| <img width="100" height="100" alt="gustavo" src="https://github.com/user-attachments/assets/20e431fa-1b9a-4b54-b228-b2ac0a1c8500"> | Gustavo Ekiel |
+| <img width="100" height="100" alt="juanma" src="https://github.com/user-attachments/assets/9f87fd0c-90fb-48c4-8d5a-4062197bd646"> | Juan Martin Gutierrez |
 
 ## Capturas
 
-![screenshot1](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot2](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot3](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot4](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot5](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-
+Todavia no hay
 ## Game Play
 
-[![Watch the video](https://img.youtube.com/vi/pgEwUC0jvH4/0.jpg)](https://www.youtube.com/playlist?list=PLRM4L32DjvnazuMl8wZlbpEYL5Qh63ulG)
+Todavia no hay
