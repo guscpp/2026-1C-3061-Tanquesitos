@@ -21,8 +21,6 @@ public class House
 
     private Color _color;
 
-    private readonly Random _random = new();
-
     private Matrix _world;
 
     public void Initialize()
@@ -30,21 +28,13 @@ public class House
         Position = Vector3.Zero;
     }
 
-    public Color randomColor(){
-        int r = _random.Next(0,256);
-        int b = _random.Next(0,256);
-        int g = _random.Next(0,256);
-
-        return (new Color(r,g,b));
-    }
-
-    public void LoadContent(Model model, Vector3 position, float angle, Effect effect)
+    public void LoadContent(Model model, Vector3 position, float angle, Effect effect, Color color)
     {
         Model = model;
 
         _effect = effect;
 
-        _color = randomColor();
+        _color = color;
 
         Position = position;
         _world = Matrix.CreateScale(250f) * Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) * Matrix.CreateRotationY(angle) * Matrix.CreateTranslation(Position);

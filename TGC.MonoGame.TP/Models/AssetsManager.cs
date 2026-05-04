@@ -64,6 +64,10 @@ public class AssetsManager
 
     private readonly Random _random = new();
 
+    public Color randomColor(){
+        return (new Color(_random.Next(0,256),_random.Next(0,256),_random.Next(0,256)));
+    }    
+
     // sobre el terreno
     private Terrain _terrain;
 
@@ -232,7 +236,7 @@ public class AssetsManager
         foreach(var house in _houseModels)
         {
             var houseModel = content.Load<Model>(ContentFolder3D + GetRandomHousePath());
-            house.LoadContent(houseModel, houseModelPositions[i], _random.NextSingle(), effect);
+            house.LoadContent(houseModel, houseModelPositions[i], _random.NextSingle(), effect, randomColor());
             i++;
         }
         i = 0;
@@ -240,7 +244,7 @@ public class AssetsManager
         foreach(var asset in _decorationModels)
         {
             var assetModel = content.Load<Model>(ContentFolder3D + GetRandomAssetPath());
-            asset.LoadContent(assetModel, decorationModelPositions[i], _random.NextSingle(), effect);
+            asset.LoadContent(assetModel, decorationModelPositions[i], _random.NextSingle(), effect, randomColor());
             i++;
         }
     }
