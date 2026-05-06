@@ -100,9 +100,9 @@ public class TGCGame : Game
         var effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
 
         //Cargad de modelo tanque
-        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank");
+        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
         //Carga de texturas tanque
-        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta");
+        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x256");
         //Creamos el tanque
         _tank = new Tank();
         //Le pasamos el modelo, la textura y el efecto
