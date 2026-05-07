@@ -108,7 +108,7 @@ public class AssetsManager
     private List<Vector3> GetValidHousePositions()
     {
         var positions = new List<Vector3> {};
-        var minDistanceBetween = 4500f;
+        var minDistanceBetween = 45f; // GE 4500f
         // inicializacion
         for (int i = 0; i < NumberOfHouseModels; i++)
             positions.Add(GetRandomPosition(_random));
@@ -162,8 +162,8 @@ public class AssetsManager
     private List<Vector3> GetValidDecorationPositions()
     {
         var positions = new List<Vector3> {};
-        var minDistanceToHouses = 3000f; 
-        var minDistanceBetween = 1000f;
+        var minDistanceToHouses = 30f;
+        var minDistanceBetween = 10f;
   
         for(int i = 0; i < NumberOfDecorations; i++)
         {

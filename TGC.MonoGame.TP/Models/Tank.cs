@@ -13,11 +13,11 @@ public class Tank
 
     public Model Model { get; private set; }
     //configuracion de movimiento
-    public float MaxSpeed { get; set; } = 25000f;
-    public float Acceleration { get; set; } = 3500f;
-    public float Friction { get; set; } = 0.96f;
-    public float TurnSpeed { get; set; } = 2.8f;
-    public float VerticalSpeed = 1000f;
+    public float MaxSpeed { get; set; } = GameConfig.Tank.MaxSpeed; //25000f;
+    public float Acceleration { get; set; } = GameConfig.Tank.Acceleration; //3500f;
+    public float Friction { get; set; } = GameConfig.Tank.Friction; //0.96f;
+    public float TurnSpeed { get; set; } = GameConfig.Tank.TurnSpeed; //2.8f;
+    public float VerticalSpeed = GameConfig.Tank.VerticalSpeed; //1000f;
 
     //estado interno
     public Vector3 Position { get; private set; }
@@ -25,16 +25,16 @@ public class Tank
     public float Speed { get; private set; }
 
     //Propieda de escalado - el valor puede variar
-    public float Scale { get; set; } = 100f;
+    public float Scale { get; set; } = GameConfig.Assets.DefaultScale; //100f;
 
     /// <summary>
     ///     Matriz de mundo lista para pasar al Draw de un Model.
     /// </summary>
     public Matrix WorldMatrix => 
-        Matrix.CreateScale(Scale) * //Primero lo escalo porque sino se ve diminuto
-        Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) * //Para que no se vea acostado xd
-        Matrix.CreateRotationY(RotationY) *  //Luego lo roto
-        Matrix.CreateTranslation(Position); //Finalmente lo traslado
+        Matrix.CreateScale(Scale) *                             //Primero lo escalo porque sino se ve diminuto
+        Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *    //Para que no se vea acostado xd
+        Matrix.CreateRotationY(RotationY) *                     //Luego lo roto
+        Matrix.CreateTranslation(Position);                     //Finalmente lo traslado
 
     /// <summary>
     ///     Carga el modelo compilado y aplica la iluminacion basica.

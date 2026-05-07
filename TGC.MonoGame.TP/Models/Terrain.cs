@@ -12,8 +12,8 @@ namespace TGC.MonoGame.TP.Models;
 public class Terrain
 {
     //escalas para controlar el tamano y relieve del terreno
-    private const float TerrainScale = 100f;
-    private const float HeightScale = 3500f;
+    private const float TerrainScale = GameConfig.Terrain.CellSizeMeters;       //100f
+    private const float HeightScale = GameConfig.Terrain.MaxHeightMeters;       //3500f
     private float _heightmapWidth;
     private float _heightmapHeight;
 

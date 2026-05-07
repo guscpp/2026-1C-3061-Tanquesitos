@@ -18,6 +18,8 @@ public class Decoration
     public Vector3 Position { get; private set; }
     public float Rotation { get; set; }     // rotacion que se le quiera dar para generar variacion entre los modelos
 
+    private const float Scale = GameConfig.Assets.DecorationScale;
+
     private Matrix _world;
 
     private Color _color;
@@ -36,7 +38,10 @@ public class Decoration
         _color = color;
 
         Position = position;
-        _world = Matrix.CreateScale(250f) * Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) * Matrix.CreateRotationY(angle) * Matrix.CreateTranslation(Position);
+        _world = Matrix.CreateScale(Scale) * 
+            Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) * 
+            Matrix.CreateRotationY(angle) * 
+            Matrix.CreateTranslation(Position);
 
         //Para cada malla de mi coleccion de mallas del modelo
         foreach (var mesh in Model.Meshes)

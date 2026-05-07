@@ -21,6 +21,8 @@ public class House
 
     private Color _color;
 
+    private const float Scale = GameConfig.Assets.HouseScale;
+
     private Matrix _world;
 
     public void Initialize()
@@ -37,7 +39,10 @@ public class House
         _color = color;
 
         Position = position;
-        _world = Matrix.CreateScale(250f) * Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) * Matrix.CreateRotationY(angle) * Matrix.CreateTranslation(Position);
+        _world = Matrix.CreateScale(Scale) * 
+            Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) * 
+            Matrix.CreateRotationY(angle) * 
+            Matrix.CreateTranslation(Position);
 
         //Para cada malla de mi coleccion de mallas del modelo
         foreach (var mesh in Model.Meshes)

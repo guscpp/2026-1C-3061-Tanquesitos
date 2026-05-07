@@ -9,15 +9,15 @@ namespace TGC.MonoGame.TP.Cameras;
 public class TankFollowCamera
 {
     //configuracion de la camara
-    public float Distance { get; set; } = 1800f;
-    public float HeightOffset { get; set; } = 1250f;
-    public float LookAtHeight { get; set; } = 8f;
-    public float Smoothness { get; set; } = 8f;
+    public float Distance { get; set; } = GameConfig.Camera.DefaultDistance;        //1800f
+    public float HeightOffset { get; set; } = GameConfig.Camera.HeightOffset;       //1250f
+    public float LookAtHeight { get; set; } = GameConfig.Camera.LookAtHeight;       //8f
+    public float Smoothness { get; set; } = GameConfig.Camera.Smoothness;           //8f
 
     //configuracion del zoom
-    public float MinDistance { get; set; } = 20f;
-    public float MaxDistance { get; set; } = 4500f;
-    public float ZoomSensitivity { get; set; } = 250f;
+    public float MinDistance { get; set; } = GameConfig.Camera.MinDistance;         //20f
+    public float MaxDistance { get; set; } = GameConfig.Camera.MaxDistance;         //4500f
+    public float ZoomSensitivity { get; set; } = GameConfig.Camera.ZoomSensitivity; //250f
 
     private Vector3 _currentPosition;
     private Vector3 _targetPosition;
