@@ -22,20 +22,20 @@ public class Decoration
 
     private Matrix _world;
 
-    private Color _color;
+    private Texture2D _texture;
 
     public void Initialize()
     {
         Position = Vector3.Zero;
     }
 
-    public void LoadContent(Model model, Vector3 position, float angle, Effect effect, Color color)
+    public void LoadContent(Model model, Vector3 position, float angle, Effect effect, Texture2D texture)
     {
         Model = model;
 
         _effect = effect;
 
-        _color = color;
+        _texture = texture;
 
         Position = position;
         _world = Matrix.CreateScale(Scale) * 
@@ -74,7 +74,7 @@ public class Decoration
                 effect.Parameters["World"].SetValue(_world);
                 effect.Parameters["View"].SetValue(view);
                 effect.Parameters["Projection"].SetValue(projection);
-                effect.Parameters["DiffuseColor"].SetValue(_color.ToVector3()); //Un color porque aun no sé ponerle las texturas
+                effect.Parameters["ModelTexture"].SetValue(_texture); //Un color porque aun no sé ponerle las texturas
             }
             mesh.Draw();
         }

@@ -19,7 +19,7 @@ public class House
 
     public string Path { get; set; }
 
-    private Color _color;
+    private Texture2D _texture;
 
     private const float Scale = GameConfig.Assets.HouseScale;
 
@@ -30,13 +30,13 @@ public class House
         Position = Vector3.Zero;
     }
 
-    public void LoadContent(Model model, Vector3 position, float angle, Effect effect, Color color)
+    public void LoadContent(Model model, Vector3 position, float angle, Effect effect, Texture2D texture)
     {
         Model = model;
 
         _effect = effect;
 
-        _color = color;
+        _texture = texture;
 
         Position = position;
         _world = Matrix.CreateScale(Scale) * 
@@ -75,7 +75,7 @@ public class House
                 effect.Parameters["World"].SetValue(_world);
                 effect.Parameters["View"].SetValue(view);
                 effect.Parameters["Projection"].SetValue(projection);
-                effect.Parameters["DiffuseColor"].SetValue(_color.ToVector3()); //Un color porque aun no sé ponerle las texturas
+                effect.Parameters["ModelTexture"].SetValue(_texture);
             }
             mesh.Draw();
         }

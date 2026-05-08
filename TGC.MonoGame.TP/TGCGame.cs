@@ -27,10 +27,7 @@ public class TGCGame : Game
     
     private readonly GraphicsDeviceManager _graphics;
 
-    private Effect _effect;
-    private Model _model;
     private Matrix _projection;
-    private float _rotation;
     private SpriteBatch _spriteBatch;
     private Matrix _view;
     private Matrix _world;
@@ -96,17 +93,17 @@ public class TGCGame : Game
         // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-        //Cargo el BasicShader para reemplazar el BasicEffect, debo pasarle este shader tanto al tanque como al terreno (Lo hago en su load pero no se si conviene más en un set)
-        var effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+        var effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //Shader para modelos sin texturas
+        var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //Shader para modelos con textura
 
         //Cargad de modelo tanque
         var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
         //Carga de texturas tanque
-        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x256");
+        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
         //Creamos el tanque
         _tank = new Tank();
-        //Le pasamos el modelo, la textura y el efecto
-        _tank.Load(tankModel, tankTexture, effect);
+        //Le pasamos el modelo, la textura y el efecto2
+        _tank.Load(tankModel, tankTexture, effect2);
 
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
 
@@ -198,7 +195,6 @@ public class TGCGame : Game
 
         _terrain?.Dispose();
         _hud?.Dispose();
-        _effect?.Dispose();
 
         base.UnloadContent();
     }

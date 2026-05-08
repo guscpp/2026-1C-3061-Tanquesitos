@@ -10,6 +10,7 @@ namespace TGC.MonoGame.TP.Models;
 public class Tank
 {
     private Effect _effect;
+    private Texture2D _texture;
 
     public Model Model { get; private set; }
     //configuracion de movimiento
@@ -43,6 +44,7 @@ public class Tank
     {
         Model = model;
         _effect = effect; //Mi efecto ahora es el BasicShader que le pase por parametro
+        _texture = texture;
 
         //Para cada malla de mi coleccion de mallas del modelo
         foreach (var mesh in Model.Meshes)
@@ -73,7 +75,7 @@ public class Tank
                 effect.Parameters["World"].SetValue(WorldMatrix);
                 effect.Parameters["View"].SetValue(view);
                 effect.Parameters["Projection"].SetValue(projection);
-                effect.Parameters["DiffuseColor"].SetValue(Color.Red.ToVector3()); //Un color porque aun no sé ponerle las texturas
+                effect.Parameters["ModelTexture"].SetValue(_texture); //Un color porque aun no sé ponerle las texturas
             }
             mesh.Draw();
         }
