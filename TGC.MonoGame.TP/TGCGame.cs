@@ -5,11 +5,16 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using BepuPhysics;
+using BepuPhysics.CollisionDetection;
+using BepuPhysics.Constraints;
+using BepuUtilities.Memory;
 
 using TGC.MonoGame.TP.Cameras;
 using TGC.MonoGame.TP.Models;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
+using TGC.MonoGame.Samples.Physics.Bepu;
 
 namespace TGC.MonoGame.TP;
 
@@ -47,6 +52,16 @@ public class TGCGame : Game
     private Hud _hud;
     private AssetsManager _assets;
 
+    // multiplayer :o
+    private bool twoPlayers = false;
+
+    // sobre fisica
+    public Simulation simulation;
+    private BufferPool _bufferPool;
+    private List<StaticHandle> _houseHandlers;
+    private List<BodyHandle> _bodyHandlers;
+    private BodyHandle _tankHandle;
+
     /// <summary>
     ///     Constructor del juego.
     /// </summary>
@@ -82,7 +97,23 @@ public class TGCGame : Game
         _projection =
             Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
 
+        InitializePhysics();
+
         base.Initialize();
+    }
+
+    public void InitializePhysics()
+    {
+        _bufferPool = new BufferPool();
+        _houseHandlers = new List<StaticHandle>();
+        if(!twoPlayers)
+            _bodyHandlers = new List<BodyHandle>();
+
+        simulation = 
+            Simulation.Create(_bufferPool,
+            new NarrowPhaseCallbacks(),
+            new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -9.8f, 0)),
+            new SolveDescription(8, 1));
     }
 
     /// <summary>
@@ -98,17 +129,6 @@ public class TGCGame : Game
         var effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //Shader para modelos sin texturas
         var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //Shader para modelos con textura
 
-        //Cargad de modelo tanque
-        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
-        //Carga de texturas tanque
-        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        //Creamos el tanque
-        _tank = new Tank();
-        //Le pasamos el modelo, la textura y el efecto2
-        _tank.Load(tankModel, tankTexture, effect2);
-
-        _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
-
         //Cargo las texturas del terreno
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
         //Creo el terreno
@@ -122,7 +142,28 @@ public class TGCGame : Game
         // creo modelos
         _assets = new AssetsManager(_terrain);
         _assets.Initialize();
-        _assets.LoadContent(Content);
+        _assets.LoadContent(Content, simulation);
+
+        //Cargad de modelo tanque
+        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
+        //Carga de texturas tanque
+        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+        //Creamos el tanque
+        _tank = new Tank();
+        //Le pasamos el modelo, la textura y el efecto2
+        _tank.Load(tankModel, tankTexture, effect2, simulation);
+
+        // handlers
+        var houses = _assets._houses;
+        for (int i=0; i<AssetsManager.NumberOfHouseModels; i++)
+        {
+            _houseHandlers.Add(houses[i].HouseHandler);
+        }
+        //if(!twoPlayers)
+        //    _bodyHandlers.Add(_tank.TankHandler);
+        _tankHandle = _tank.TankHandler;
+
+        _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
 
         // preparo gizmos
         _gizmos.LoadContent(GraphicsDevice, Content);
@@ -157,8 +198,10 @@ public class TGCGame : Game
         // Basado en el tiempo que paso se va generando una rotacion.
         //_rotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
         //_world = Matrix.CreateRotationY(_rotation);
+        simulation.Timestep(1 / 60f);
 
-        _tank.Update(gameTime, kb, _assets);
+        _tank.Update(gameTime, kb, simulation);
+        _assets.Update(gameTime, simulation);
 
         // Actualiza la posicionY del tanque según el terreno
         float terrainHeight = _terrain.GetHeight(_tank.Position); //Altura correcta que debe usar
@@ -166,7 +209,6 @@ public class TGCGame : Game
         //Actualmente el tanque hace esto, primero dice donde quiere moverse (tanl.Update) y luego nosotros le corregimos la posicion segun el mapa
 
         _camera.Update(gameTime, _tank.Position, _tank.RotationY);
-
         _assets.UpdateCollisions(_tank._tankSphere);
 
         _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
@@ -204,7 +246,9 @@ public class TGCGame : Game
     {
         // Libero los recursos.
         Content.Unload();
-
+        simulation?.Dispose();
+        simulation = null;
+        _bufferPool.Clear();
         _terrain?.Dispose();
         _hud?.Dispose();
 

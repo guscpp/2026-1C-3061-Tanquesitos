@@ -29,9 +29,9 @@ public static class GameConfig
         public const float Width = 2f;          // metros
         public const float Height = 2.25f;      // metros
         public const float Mass = 5000f;        // kg (tanque real ~60t, ya lo vamos a ir ajustando)
-        public const float MaxSpeed = 100f;     // m/s (referencia: 100 m/s = 360 km/h)
+        public const float MaxSpeed = 90f;     // m/s (referencia: 100 m/s = 360 km/h)
         public const float VerticalSpeed = 25f; // m/s (~90 km/h) para God Mode
-        public const float Acceleration = 75f;  // m/s²
+        public const float Acceleration = 40f;  // m/s²
         public const float TurnSpeed = 1.2f;    // rad/s
         public const float Friction = 0.95f;    // coeficiente por frame
     }

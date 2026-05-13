@@ -2,11 +2,15 @@ using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using BepuPhysics.Collidables;
+using System.Numerics;
 
 using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Gizmos.Geometry;
 using TGC.MonoGame.TP.Models.Decorations;
+using Vector3 = Microsoft.Xna.Framework.Vector3;
+using BepuPhysics;
 namespace TGC.MonoGame.TP.Models;
 
 /// <summary>
@@ -37,6 +41,8 @@ public class Tank
 
     public float CollisionChamberScale { get; set; } = GameConfig.Tank.TankChamberScale;
 
+    public BodyHandle TankHandler;
+
     /// <summary>
     ///     Matriz de mundo lista para pasar al Draw de un Model.
     /// </summary>
@@ -49,7 +55,7 @@ public class Tank
     /// <summary>
     ///     Carga el modelo compilado y aplica la iluminacion basica.
     /// </summary>
-    public void Load(Model model, Texture2D texture, Effect effect)
+    public void Load(Model model, Texture2D texture, Effect effect, Simulation simulation)
     {
         Model = model;
         _effect = effect; //Mi efecto ahora es el BasicShader que le pase por parametro
@@ -67,6 +73,24 @@ public class Tank
                 meshPart.Effect = _effect;
             }
         }
+        CreateTank(VectorExtensions.ToNumerics(Position), simulation);
+    }
+
+    public void CreateTank(Vector3 position, Simulation simulation)
+    {
+        var sphere = new Sphere(2f);
+
+        var shape = simulation.Shapes.Add(sphere);
+
+        var inertia = sphere.ComputeInertia(1f);
+
+        TankHandler = simulation.Bodies.Add(
+            BodyDescription.CreateDynamic(new RigidPose(new System.Numerics.Vector3(position.X, position.Y, position.Z)),
+                inertia,
+                new CollidableDescription(shape, 0.1f),
+                new BodyActivityDescription(0.01f)
+            )
+        );
     }
 
     /// <summary>
@@ -108,7 +132,7 @@ public class Tank
         gizmos.DrawSphere(_tankSphere.Center, _tankSphere.Radius * Vector3.One, Color.Blue);
     }
 
-    public void Update(GameTime gameTime, KeyboardState keyboard, AssetsManager assets)
+    public void Update(GameTime gameTime, KeyboardState keyboard, Simulation simulation)
     {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -126,15 +150,24 @@ public class Tank
         Speed += forwardInput * Acceleration * dt;
         Speed *= System.MathF.Pow(Friction, dt * 60f);
         Speed = MathHelper.Clamp(Speed, -MaxSpeed * 0.4f, MaxSpeed);
-
         //actualizar posicion
         Vector3 forward = Vector3.TransformNormal(Vector3.Forward, Matrix.CreateRotationY(RotationY));
-        var increment = forward * Speed * dt;
-        Position += increment;
+        // var increment = forward * Speed * dt;
+        // Position += increment; // comentado para realizar el movimiento con Bepu
+
+        var velocity = forward * Speed;
+
+        // colision con Bepu Physics
+        var body = simulation.Bodies.GetBodyReference(TankHandler);
+        body.Velocity.Linear = new System.Numerics.Vector3(velocity.X, body.Velocity.Linear.Y, velocity.Z);
+        body.Awake = true;
+
+        var pose = body.Pose;
+        Position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
 
         // SOBRE EL TANK VOLUME -> TEMPORAL!!
-        _tankSphere.Center = Position;
-        assets.UpdateCollisions(_tankSphere);
+        //_tankSphere.Center = Position;
+        //assets.UpdateCollisions(_tankSphere);
 
         //mantener flotando en y = 0
         //Position = new Vector3(Position.X, 0f, Position.Z);

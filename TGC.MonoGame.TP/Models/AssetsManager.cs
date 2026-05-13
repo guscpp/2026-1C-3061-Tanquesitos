@@ -5,6 +5,11 @@ using System.Numerics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using BepuPhysics;
+using BepuPhysics.CollisionDetection;
+using BepuPhysics.Constraints;
+using BepuUtilities.Memory;
+
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
@@ -83,8 +88,11 @@ public class AssetsManager
         "casas/Large Building B",
         "casas/Medium Building B"
     };
-    private const int NumberOfHouseModels = 15;
-    public List<House> _houseModels = new();
+    public const int NumberOfHouseModels = 15;
+    public List<House> _houses = new();
+
+    public List<StaticHandle> houseHandlers;
+
 
     public AssetsManager(Terrain terrain)
     {
@@ -93,10 +101,12 @@ public class AssetsManager
 
     public void Initialize()
     {
+        houseHandlers = new List<StaticHandle>();
+
         var houseModelPositions = GetValidHousePositions();
         for (int i = 0; i < NumberOfHouseModels; i++)
         {
-            _houseModels.Add(GetHouse(houseModelPositions[i]));
+            _houses.Add(GetHouse(houseModelPositions[i]));
         }
         var decorationModelPositions = GetValidDecorationPositions();
         for (int i = 0; i < NumberOfDecorations; i++)
@@ -204,7 +214,7 @@ public class AssetsManager
     {
         for(int i=0; i<NumberOfHouseModels; i++)
         {
-            if(Vector3.Distance(position, _houseModels[i].Position) < minDistance)
+            if(Vector3.Distance(position, _houses[i].Position) < minDistance)
                 return true;
         }
         return false;
@@ -253,15 +263,15 @@ public class AssetsManager
         };
     }
 
-    public void LoadContent(ContentManager content)
+    public void LoadContent(ContentManager content, Simulation simulation)
     {
         var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
         var texture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        
-        foreach(var house in _houseModels)
+        foreach(var house in _houses)
         {
             var houseModel = content.Load<Model>(ContentFolder3D + house._path);
             house.LoadContent(houseModel, _random.NextSingle(), effect, texture);
+            house.CreateHouse(VectorExtensions.ToNumerics(house.Position), simulation);
         }
         foreach(var asset in _decorationModels)
         {
@@ -270,7 +280,14 @@ public class AssetsManager
         }
     }
 
-    public void Update() { }
+    public void Update(GameTime elapsedTime, Simulation simulation)
+    {
+        float dt = (float)elapsedTime.ElapsedGameTime.TotalSeconds;
+        if (dt <= 0f)
+            return;
+
+        simulation.Timestep(dt);
+    }
 
     public bool UpdateCollisions(BoundingSphere tankSphere)
     {
@@ -279,7 +296,7 @@ public class AssetsManager
             if(decoration.UpdateCollisions(tankSphere))
                 return true;
         }
-        foreach(var house in _houseModels)
+        foreach(var house in _houses)
         {
             if(house.UpdateCollisions(tankSphere))
                 return true;
@@ -289,7 +306,7 @@ public class AssetsManager
 
     public void Draw(Matrix view, Matrix projection, Gizmo gizmos)
     {
-        foreach (var house in _houseModels)
+        foreach (var house in _houses)
         {
             house.Draw(view, projection);
             house.DrawCollisionChamber(gizmos);
@@ -301,3 +318,5 @@ public class AssetsManager
         }
     }
 }
+
+
