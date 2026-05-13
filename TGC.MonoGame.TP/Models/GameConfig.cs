@@ -23,6 +23,8 @@ public static class GameConfig
     // TANQUEsITO (valores en unidades SI)
     public static class Tank
     {
+        public const float TankScale = 1f;
+        public const float TankChamberScale = TankScale/100;
         public const float Length = 2f;         // metros
         public const float Width = 2f;          // metros
         public const float Height = 2.25f;      // metros
@@ -61,7 +63,9 @@ public static class GameConfig
     {
         public const float DefaultScale = 1f;       // exportar 1:1 desde Blender
         public const float MinSpacingMeters = 10f;
-        public const float HouseScale = 1f;
-        public const float DecorationScale = 1f;
+        public const float HouseScale = 2f;
+        public const float HouseChamberScale = 0.1f;
+        public const float DecorationScale = 1.5f;
+        public const float DecorationChamberScale = DecorationScale/100f;
     }
 }

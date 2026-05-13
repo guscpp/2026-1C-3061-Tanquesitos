@@ -5,31 +5,44 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
+using TGC.MonoGame.TP.Collisions;
+using TGC.MonoGame.TP.Gizmos;
 
-namespace TGC.MonoGame.TP.Models;
+namespace TGC.MonoGame.TP.Models.Decorations;
 /// <summary>
 /// Decoraciones dentro de escenario: rocas, arboles, cactus, etc.
 /// </summary>
 public class Decoration
 {
+    public Decoration(Vector3 position, string name)
+    {
+        Position = position;
+        _path = name;
+    }
     private Effect _effect;
 
+    public string _path;
+
+    public bool _touchingDecoration = false;
+
+    public Color CollisionChamberColor => Color.Green;
+    public Color CollisionedChamberColor => Color.Violet;
+
+    public bool IsPassthrought;
+
     public Model Model { get; private set; }
-    public Vector3 Position { get; private set; }
+    public Vector3 Position;
     public float Rotation { get; set; }     // rotacion que se le quiera dar para generar variacion entre los modelos
 
-    private const float Scale = GameConfig.Assets.DecorationScale;
+    public const float Scale = GameConfig.Assets.DecorationScale;
+
+    public const float CollisionChamberScale = GameConfig.Assets.DecorationChamberScale;
 
     private Matrix _world;
 
     private Texture2D _texture;
 
-    public void Initialize()
-    {
-        Position = Vector3.Zero;
-    }
-
-    public void LoadContent(Model model, Vector3 position, float angle, Effect effect, Texture2D texture)
+    public void LoadContent(Model model, float angle, Effect effect, Texture2D texture)
     {
         Model = model;
 
@@ -37,7 +50,6 @@ public class Decoration
 
         _texture = texture;
 
-        Position = position;
         _world = Matrix.CreateScale(Scale) * 
             Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) * 
             Matrix.CreateRotationY(angle) * 
@@ -53,9 +65,15 @@ public class Decoration
                 meshPart.Effect = _effect;
             }
         }
+
+        InitializeCollisionChamber(model);
     }
 
-    public void Update()
+    public virtual void InitializeCollisionChamber(Model model) {}
+
+    public virtual bool UpdateCollisions(BoundingSphere tankSphere) { return false; }
+
+    public virtual void Update()
     {
         
     }
@@ -79,4 +97,6 @@ public class Decoration
             mesh.Draw();
         }
     }
+
+    public virtual void DrawCollisionChamber(Gizmo gizmos) {}
 }

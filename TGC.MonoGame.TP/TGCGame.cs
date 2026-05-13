@@ -8,6 +8,8 @@ using Microsoft.Xna.Framework.Input;
 
 using TGC.MonoGame.TP.Cameras;
 using TGC.MonoGame.TP.Models;
+using TGC.MonoGame.TP.Gizmos;
+using TGC.MonoGame.TP.Models.Decorations;
 
 namespace TGC.MonoGame.TP;
 
@@ -27,6 +29,8 @@ public class TGCGame : Game
     
     private readonly GraphicsDeviceManager _graphics;
 
+    private Gizmo _gizmos = new();
+
     private Matrix _projection;
     private SpriteBatch _spriteBatch;
     private Matrix _view;
@@ -37,13 +41,11 @@ public class TGCGame : Game
     private KeyboardState _lastKeyboardState;
     private readonly Random _random = new();
 
-    private Tank _tank;
+    public Tank _tank;
     private TankFollowCamera _camera;
     private Terrain _terrain;
     private Hud _hud;
     private AssetsManager _assets;
-
-    private List<House> _modelosCasitas = new();
 
     /// <summary>
     ///     Constructor del juego.
@@ -122,6 +124,9 @@ public class TGCGame : Game
         _assets.Initialize();
         _assets.LoadContent(Content);
 
+        // preparo gizmos
+        _gizmos.LoadContent(GraphicsDevice, Content);
+
         _klaxonSound = Content.Load<SoundEffect>(ContentFolderSounds + "klaxon");
         _hornSound = Content.Load<SoundEffect>(ContentFolderSounds + "horn");
 
@@ -153,7 +158,7 @@ public class TGCGame : Game
         //_rotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
         //_world = Matrix.CreateRotationY(_rotation);
 
-        _tank.Update(gameTime, kb);
+        _tank.Update(gameTime, kb, _assets);
 
         // Actualiza la posicionY del tanque según el terreno
         float terrainHeight = _terrain.GetHeight(_tank.Position); //Altura correcta que debe usar
@@ -161,6 +166,10 @@ public class TGCGame : Game
         //Actualmente el tanque hace esto, primero dice donde quiere moverse (tanl.Update) y luego nosotros le corregimos la posicion segun el mapa
 
         _camera.Update(gameTime, _tank.Position, _tank.RotationY);
+
+        _assets.UpdateCollisions(_tank._tankSphere);
+
+        _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
 
         base.Update(gameTime);
     }
@@ -178,10 +187,13 @@ public class TGCGame : Game
         // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);
-        _assets.Draw(_camera.View, _camera.Projection);
+        _tank.DrawCollisionChamber(_gizmos);
+        _assets.Draw(_camera.View, _camera.Projection, _gizmos);
         // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
         _hud.Draw();
 
+        _gizmos.Draw();
+        
         //base.Draw();
     }
 

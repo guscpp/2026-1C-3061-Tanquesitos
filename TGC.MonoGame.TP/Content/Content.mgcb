@@ -25,6 +25,12 @@
 /processorParam:DebugMode=Auto
 /build:Effects/BasicShaderTexture.fx
 
+#begin Effects/Gizmos.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/Gizmos.fx
+
 #begin Models/casas/casita_mediana.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -410,6 +416,30 @@
 /processorParam:TextureFormat=Color
 /build:Models/heightmaps/heightmap-3.jpg
 
+#begin Models/tanques/tank v3.fbm/horsey-game-general-palette-32x - square.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/tanques/tank v3.fbm/horsey-game-general-palette-32x - square.png;Models/tanques/tank v3.fbm/horsey-game-general-palette-32x - square
+
+#begin Models/tanques/tank v3.fbm/paleta_256x512.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/tanques/tank v3.fbm/paleta_256x512.png;Models/tanques/tank v3.fbm/paleta_256x512
+
 #begin Models/tanques/tank v3.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -428,25 +458,6 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Models/tanques/tank v3.fbx;Models/tanques/tank v3
-
-#begin Models/tanques/tank.fbx
-/importer:FbxImporter
-/processor:ModelProcessor
-/processorParam:ColorKeyColor=0,0,0,0
-/processorParam:ColorKeyEnabled=True
-/processorParam:DefaultEffect=BasicEffect
-/processorParam:GenerateMipmaps=True
-/processorParam:GenerateTangentFrames=False
-/processorParam:PremultiplyTextureAlpha=True
-/processorParam:PremultiplyVertexColors=True
-/processorParam:ResizeTexturesToPowerOfTwo=False
-/processorParam:RotationX=0
-/processorParam:RotationY=0
-/processorParam:RotationZ=0
-/processorParam:Scale=1
-/processorParam:SwapWindingOrder=False
-/processorParam:TextureFormat=Compressed
-/build:Models/tanques/tank.fbx
 
 #begin Models/tgc-logo/tgc-logo.fbx
 /importer:FbxImporter

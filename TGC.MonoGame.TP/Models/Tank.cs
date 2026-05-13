@@ -1,7 +1,12 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
+using TGC.MonoGame.TP.Collisions;
+using TGC.MonoGame.TP.Gizmos;
+using TGC.MonoGame.TP.Gizmos.Geometry;
+using TGC.MonoGame.TP.Models.Decorations;
 namespace TGC.MonoGame.TP.Models;
 
 /// <summary>
@@ -11,6 +16,8 @@ public class Tank
 {
     private Effect _effect;
     private Texture2D _texture;
+
+    public BoundingSphere _tankSphere;
 
     public Model Model { get; private set; }
     //configuracion de movimiento
@@ -26,12 +33,14 @@ public class Tank
     public float Speed { get; private set; }
 
     //Propieda de escalado - el valor puede variar
-    public float Scale { get; set; } = GameConfig.Assets.DefaultScale; //100f;
+    public float Scale { get; set; } = GameConfig.Tank.TankScale;
+
+    public float CollisionChamberScale { get; set; } = GameConfig.Tank.TankChamberScale;
 
     /// <summary>
     ///     Matriz de mundo lista para pasar al Draw de un Model.
     /// </summary>
-    public Matrix WorldMatrix => 
+    public Matrix WorldMatrix =>
         Matrix.CreateScale(Scale) *                             //Primero lo escalo porque sino se ve diminuto
         Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *    //Para que no se vea acostado xd
         Matrix.CreateRotationY(RotationY) *                     //Luego lo roto
@@ -46,6 +55,8 @@ public class Tank
         _effect = effect; //Mi efecto ahora es el BasicShader que le pase por parametro
         _texture = texture;
 
+        InitializeCollisionChamber(model);
+
         //Para cada malla de mi coleccion de mallas del modelo
         foreach (var mesh in Model.Meshes)
         {
@@ -56,6 +67,17 @@ public class Tank
                 meshPart.Effect = _effect;
             }
         }
+    }
+
+    /// <summary>
+    ///     Dibuja el tanque usando las matrices de la camara.
+    /// </summary>
+    public void InitializeCollisionChamber(Model model)
+    {
+        // TEMPORAL!!
+        _tankSphere = BoundingVolumesUtils.CreateSphereFrom(model);
+        _tankSphere = BoundingVolumesUtils.Scale(_tankSphere, CollisionChamberScale);
+        _tankSphere.Radius = _tankSphere.Radius * 0.7f;
     }
 
     /// <summary>
@@ -81,7 +103,12 @@ public class Tank
         }
     }
 
-    public void Update(GameTime gameTime, KeyboardState keyboard)
+    public void DrawCollisionChamber(Gizmo gizmos)
+    {
+        gizmos.DrawSphere(_tankSphere.Center, _tankSphere.Radius * Vector3.One, Color.Blue);
+    }
+
+    public void Update(GameTime gameTime, KeyboardState keyboard, AssetsManager assets)
     {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -102,7 +129,12 @@ public class Tank
 
         //actualizar posicion
         Vector3 forward = Vector3.TransformNormal(Vector3.Forward, Matrix.CreateRotationY(RotationY));
-        Position += forward * Speed * dt;
+        var increment = forward * Speed * dt;
+        Position += increment;
+
+        // SOBRE EL TANK VOLUME -> TEMPORAL!!
+        _tankSphere.Center = Position;
+        assets.UpdateCollisions(_tankSphere);
 
         //mantener flotando en y = 0
         //Position = new Vector3(Position.X, 0f, Position.Z);

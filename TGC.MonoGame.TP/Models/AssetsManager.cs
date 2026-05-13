@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using TGC.MonoGame.TP.Gizmos;
+using TGC.MonoGame.TP.Models.Decorations;
+using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Models;
 
@@ -19,11 +23,11 @@ public class AssetsManager
     public const string ContentFolderSpriteFonts = "SpriteFonts/";
     public const string ContentFolderTextures = "Textures/";
 
-    private const int NumberOfAssets = 400;
+    private const int NumberOfAssets = 200;
 
     // sobre modelos de decoraciones
     private int NumberOfDecorations => NumberOfAssets - NumberOfHouseModels;
-    private List<Decoration> _decorationModels = new();
+    public List<Decoration> _decorationModels = new();
     private string[] DecorationModelPaths =
     {
         "decoraciones/arbol_muerto_1",
@@ -79,9 +83,8 @@ public class AssetsManager
         "casas/Large Building B",
         "casas/Medium Building B"
     };
-    private const int NumberOfHouseModels = 25;
-    private List<House> _houseModels = new();
-
+    private const int NumberOfHouseModels = 15;
+    public List<House> _houseModels = new();
 
     public AssetsManager(Terrain terrain)
     {
@@ -90,15 +93,15 @@ public class AssetsManager
 
     public void Initialize()
     {
+        var houseModelPositions = GetValidHousePositions();
         for (int i = 0; i < NumberOfHouseModels; i++)
         {
-            _houseModels.Add(new House());
-            _houseModels[i].Initialize();
+            _houseModels.Add(GetHouse(houseModelPositions[i]));
         }
+        var decorationModelPositions = GetValidDecorationPositions();
         for (int i = 0; i < NumberOfDecorations; i++)
         {
-            _decorationModels.Add(new Decoration());
-            _decorationModels[i].Initialize();
+            _decorationModels.Add(GetDecoration(decorationModelPositions[i]));
         } 
     }
 
@@ -227,40 +230,74 @@ public class AssetsManager
         return DecorationModelPaths[index];
     }
 
+    public House GetHouse(Vector3 position)
+    {
+        var path = GetRandomHousePath();
+        return new House(position, path);
+    }
+
+    public Decoration GetDecoration(Vector3 position)
+    {
+        var path = GetRandomAssetPath();
+        return path switch
+        {
+            var p when p.Contains("arbol")      => new Tree(position, path),
+            var p when p.Contains("cactus")     => new Cactus(position, path),
+            var p when p.Contains("roca")       => new Rock(position, path),
+            var p when p.Contains("barril")     => new Barrel(position, path),
+            var p when p.Contains("carreta")    => new Cart(position, path),
+            var p when p.Contains("planta")     => new Plant(position, path),
+            var p when p.Contains("caja")       => new WoodenBox(position, path),
+            var p when p.Contains("escaleras")  => new Stairs(position, path),
+            _                                   => new Decoration(position, path)
+        };
+    }
+
     public void LoadContent(ContentManager content)
     {
         var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
         var texture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-
-        int i = 0;
-        var houseModelPositions = GetValidHousePositions();
+        
         foreach(var house in _houseModels)
         {
-            var houseModel = content.Load<Model>(ContentFolder3D + GetRandomHousePath());
-            house.LoadContent(houseModel, houseModelPositions[i], _random.NextSingle(), effect, texture);
-            i++;
+            var houseModel = content.Load<Model>(ContentFolder3D + house._path);
+            house.LoadContent(houseModel, _random.NextSingle(), effect, texture);
         }
-        i = 0;
-        var decorationModelPositions = GetValidDecorationPositions();
         foreach(var asset in _decorationModels)
         {
-            var assetModel = content.Load<Model>(ContentFolder3D + GetRandomAssetPath());
-            asset.LoadContent(assetModel, decorationModelPositions[i], _random.NextSingle(), effect, texture);
-            i++;
+            var assetModel = content.Load<Model>(ContentFolder3D + asset._path);
+            asset.LoadContent(assetModel, _random.NextSingle(), effect, texture);
         }
     }
 
     public void Update() { }
 
-    public void Draw(Matrix view, Matrix projection)
+    public bool UpdateCollisions(BoundingSphere tankSphere)
+    {
+        foreach(var decoration in _decorationModels)
+        {
+            if(decoration.UpdateCollisions(tankSphere))
+                return true;
+        }
+        foreach(var house in _houseModels)
+        {
+            if(house.UpdateCollisions(tankSphere))
+                return true;
+        }
+        return false;
+    }
+
+    public void Draw(Matrix view, Matrix projection, Gizmo gizmos)
     {
         foreach (var house in _houseModels)
         {
             house.Draw(view, projection);
+            house.DrawCollisionChamber(gizmos);
         }
         foreach(var asset in _decorationModels)
         {
             asset.Draw(view, projection);
+            asset.DrawCollisionChamber(gizmos);
         }
     }
 }
