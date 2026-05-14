@@ -204,9 +204,42 @@ public class TGCGame : Game
         _assets.Update(gameTime, simulation);
 
         // Actualiza la posicionY del tanque según el terreno
-        float terrainHeight = _terrain.GetHeight(_tank.Position); //Altura correcta que debe usar
-        _tank.SetHeight(terrainHeight);
-        //Actualmente el tanque hace esto, primero dice donde quiere moverse (tanl.Update) y luego nosotros le corregimos la posicion segun el mapa
+        // --- CORRECCION DE SUELO SUAVE (esto es lo que reemplaza al anterior SetHeight) ---
+
+        // 1. Obtener altura del terreno en la posicion X,Z del tanque
+        float terrainHeight = _terrain.GetHeight(_tank.Position);
+
+        // 2. Altura minima permitida para el centro del tanque
+        //    Radio aproximado del compound: mitad de la altura del chasis (1.2m / 2 = 0.6) + margen de seguridad
+        float tankBaseHalfHeight = 0.7f;
+        float minAllowedY = terrainHeight + tankBaseHalfHeight;
+
+        // 3. Obtener el cuerpo fisico del tanque en BEPU
+        var body = simulation.Bodies.GetBodyReference(_tank.TankHandler);
+        var currentPose = body.Pose;
+        var currentPos = new Vector3(currentPose.Position.X, currentPose.Position.Y, currentPose.Position.Z);
+
+        // 4. Verificar si esta dentro de los limites del mapa (para permitir caidas en los bordes)
+        // --(dejo una funcion dummy ApplyMapBounds() en Tank.cs que va a impedir que los tanques puedan salirse de los limites del terreno)--
+        bool isWithinMapBounds = Math.Abs(currentPos.X) < _terrain.WidthUnits &&
+                                 Math.Abs(currentPos.Z) < _terrain.WidthUnits;
+
+        // 5. Correccion suave: si penetra el suelo, lo empujamos hacia arriba sin romper la fisica
+        if (isWithinMapBounds && currentPos.Y < minAllowedY)
+        {
+            // Ajustamos solo la posicion Y
+            body.Pose.Position = new System.Numerics.Vector3(currentPos.X, minAllowedY, currentPos.Z);
+
+            // Si estaba cayendo, anulamos la velocidad vertical negativa para evitar hundimiento/rebotes
+            if (body.Velocity.Linear.Y < 0)
+            {
+                body.Velocity.Linear = new System.Numerics.Vector3(
+                    body.Velocity.Linear.X,
+                    0,
+                    body.Velocity.Linear.Z
+                );
+            }
+        }
 
         _camera.Update(gameTime, _tank.Position, _tank.RotationY);
         _assets.UpdateCollisions(_tank._tankSphere);
@@ -229,7 +262,6 @@ public class TGCGame : Game
         // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);
-        _tank.DrawCollisionChamber(_gizmos);
         _assets.Draw(_camera.View, _camera.Projection, _gizmos);
         // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
         _hud.Draw();
