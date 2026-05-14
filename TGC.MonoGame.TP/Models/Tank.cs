@@ -34,7 +34,7 @@ public class Tank
     public float VerticalSpeed = GameConfig.Tank.VerticalSpeed;
 
     //estado interno
-    public Vector3 Position { get; private set; }
+    public Vector3 Position { get; set; } = Vector3.Zero;
     public float RotationY { get; private set; }
     public float Speed { get; private set; }
 

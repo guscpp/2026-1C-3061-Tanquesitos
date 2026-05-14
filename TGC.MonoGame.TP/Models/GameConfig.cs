@@ -34,6 +34,7 @@ public static class GameConfig
         public const float Acceleration = 40f;  // m/s²
         public const float TurnSpeed = 1.2f;    // rad/s
         public const float Friction = 0.95f;    // coeficiente por frame
+        public const float SpawnZMargin = 7f;   // metros, se spawnea esta altura por encima del terreno
 
         //Bepu
         public const float PhysicsChassisWidth  = 2f;       // metros
@@ -51,6 +52,7 @@ public static class GameConfig
         public const float CellSizeMeters = 1f;   // 1 píxel del heightmap = 1 metro
         public const float MaxHeightMeters = 35f; // relieve maximo
         public const float PhysicsMargin = 0.2f;  // margen de seguridad para Bepu
+        public const int PhysicsSubsampleStep = 2;// cuanto dividir la resolucion del heightmap, (1, 2, 4, 8, ...)
     }
 
     // CAMARA

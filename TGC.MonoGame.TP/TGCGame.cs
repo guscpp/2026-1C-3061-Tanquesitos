@@ -61,6 +61,7 @@ public class TGCGame : Game
     private List<StaticHandle> _houseHandlers;
     private List<BodyHandle> _bodyHandlers;
     private BodyHandle _tankHandle;
+    private StaticHandle _terrainStaticHandle;
 
     /// <summary>
     ///     Constructor del juego.
@@ -135,6 +136,7 @@ public class TGCGame : Game
         _terrain = new Terrain(GraphicsDevice);
         //Le paso la textura y el efecto
         _terrain.LoadContent(terrainTexture, effect);
+        _terrainStaticHandle = _terrain.CreatePhysicsTerrain(simulation);
 
         _hud = new Hud();
         _hud.LoadContent(Content, GraphicsDevice);
@@ -150,6 +152,12 @@ public class TGCGame : Game
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
         //Creamos el tanque
         _tank = new Tank();
+
+        Vector3 spawnPos = new Vector3(0, 0, 0);
+        float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);
+
+        //Se spawnea unos metros por encima del terreno
+        _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
         //Le pasamos el modelo, la textura y el efecto2
         _tank.Load(tankModel, tankTexture, effect2, simulation);
 
@@ -202,44 +210,6 @@ public class TGCGame : Game
 
         _tank.Update(gameTime, kb, simulation);
         _assets.Update(gameTime, simulation);
-
-        // Actualiza la posicionY del tanque según el terreno
-        // --- CORRECCION DE SUELO SUAVE (esto es lo que reemplaza al anterior SetHeight) ---
-
-        // 1. Obtener altura del terreno en la posicion X,Z del tanque
-        float terrainHeight = _terrain.GetHeight(_tank.Position);
-
-        // 2. Altura minima permitida para el centro del tanque
-        //    Radio aproximado del compound: mitad de la altura del chasis (1.2m / 2 = 0.6) + margen de seguridad
-        float tankBaseHalfHeight = 0.7f;
-        float minAllowedY = terrainHeight + tankBaseHalfHeight;
-
-        // 3. Obtener el cuerpo fisico del tanque en BEPU
-        var body = simulation.Bodies.GetBodyReference(_tank.TankHandler);
-        var currentPose = body.Pose;
-        var currentPos = new Vector3(currentPose.Position.X, currentPose.Position.Y, currentPose.Position.Z);
-
-        // 4. Verificar si esta dentro de los limites del mapa (para permitir caidas en los bordes)
-        // --(dejo una funcion dummy ApplyMapBounds() en Tank.cs que va a impedir que los tanques puedan salirse de los limites del terreno)--
-        bool isWithinMapBounds = Math.Abs(currentPos.X) < _terrain.WidthUnits &&
-                                 Math.Abs(currentPos.Z) < _terrain.WidthUnits;
-
-        // 5. Correccion suave: si penetra el suelo, lo empujamos hacia arriba sin romper la fisica
-        if (isWithinMapBounds && currentPos.Y < minAllowedY)
-        {
-            // Ajustamos solo la posicion Y
-            body.Pose.Position = new System.Numerics.Vector3(currentPos.X, minAllowedY, currentPos.Z);
-
-            // Si estaba cayendo, anulamos la velocidad vertical negativa para evitar hundimiento/rebotes
-            if (body.Velocity.Linear.Y < 0)
-            {
-                body.Velocity.Linear = new System.Numerics.Vector3(
-                    body.Velocity.Linear.X,
-                    0,
-                    body.Velocity.Linear.Z
-                );
-            }
-        }
 
         _camera.Update(gameTime, _tank.Position, _tank.RotationY);
         _assets.UpdateCollisions(_tank._tankSphere);
