@@ -29,9 +29,9 @@ namespace TGC.MonoGame.TP.Models.Decorations
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             // BoundingBox box = ... (aun no xd)
-            _width = 2f;
-            _height = 2f;
-            _lenght = 2f;
+            _width = _dimensions.X;
+            _height = _dimensions.Y;
+            _lenght = _dimensions.Z;
             _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
 
             // Creo el cuerpo en Bepu (Es la configuracion de la fisica)
@@ -69,7 +69,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal
 
             Matrix gizmoWorld = Matrix.CreateScale(_width, _height, _lenght) 
-                                * Matrix.CreateTranslation(_position + new Vector3(0, _height / 2, 0));
+                                * Matrix.CreateTranslation(_position + _modelCenter);
 
             gizmos.DrawCube(gizmoWorld, Color.Violet);
         }

@@ -29,9 +29,9 @@ namespace TGC.MonoGame.TP.Models.Decorations
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             // BoundingBox box = ... (aun no xd)
-            _width = 2f;
-            _height = 2f;
-            _lenght = 2f;
+            _width = _dimensions.X;
+            _height = _dimensions.Y;
+            _lenght = _dimensions.Z;
             _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
 
             // Creo el cuerpo en Bepu (Es la configuracion de la fisica)
@@ -44,10 +44,15 @@ namespace TGC.MonoGame.TP.Models.Decorations
             // Posicion inicial, se ajusta el centro (Bepu usa el centro, MonoGame la base)
             //Uso la posicion del modelo visual para definir donde ubico el modelo fisico al inicio, pero la altura no por lo del pivote (el centro del modelo)
             var initialPos = new System.Numerics.Vector3(_position.X, _position.Y + (_height / 2), _position.Z);
+
+            //Para que no consuma recursos a lo loco cuando no lo estoy tocando y asegurarme de que se va quedar quieto hasta que el tanque lo choque
+            //Primer parametro --> umbral de sueño --> si no se mueve demasiado bepu lo congela
+            //Segundo parametro --> estado inicial --> es 0 porque esta dormido
+            var activity = new BodyActivityDescription(0.01f, 0);
             
             //Añado el cuerpo dinamico a la simulacion
             _bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(
-                initialPos, inertia, shapeIndex, 0.01f));
+                initialPos, inertia, shapeIndex, activity)); //si colocamos el 0.01f solamente en vez del activity se verá algunos objetos "temblar" 
 
             // Le doy una identidad al cuerpo para reconocerlo en colisiones
             simulation.Bodies[_bodyHandle].Collidable.Continuity = ContinuousDetection.Passive;
@@ -70,7 +75,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             // Calculo de la matriz de mundo
             _world = Matrix.CreateScale(_visualScale) //Se escala el modelo
-                     * Matrix.CreateTranslation(0, -_height / 2f, 0) //Se baja el modelo visual para que coincida con el modelo fisico
+                     * Matrix.CreateTranslation(-_modelCenter) //Se baja el modelo visual para que coincida con el modelo fisico
                      * rotationCorrect //Lo roto
                      * Matrix.CreateTranslation(position); //Lo muevo a donde esta el modelo fisico
         }

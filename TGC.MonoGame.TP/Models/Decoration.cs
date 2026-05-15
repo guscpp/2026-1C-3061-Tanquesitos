@@ -25,6 +25,9 @@ public class Decoration
     protected Vector3 _position; //Vector3 de monogame por si en la terminal me vuelve a tirar "qui ni sibi bujuju"
     protected float _visualScale;
     protected string _path;
+    protected BoundingBox _boundingBox; //la cajita xd
+    protected Vector3 _dimensions; //guarda el ancho, alto y largo del modelo
+    protected Vector3 _modelCenter; //ubicacion del pivote
 
     public Vector3 Position => _position; //Es la variable de solo lectura de la posicion
 
@@ -51,6 +54,10 @@ public class Decoration
                 meshPart.Effect = instanciaEffect;
             } 
         }
+
+        _boundingBox = CreateBoundingBox(_model);
+        _dimensions = _boundingBox.Max - _boundingBox.Min; //tomo el punto maximo y el punto minimo de mi caja y luego calculo la diferencia para saber la distancia, se usa el Min porque el modelo puede estar un poquito mal posicionado y no lo voy andar corrigiendo 80 veces en blender, ya lo intente
+        _modelCenter = (_boundingBox.Max + _boundingBox.Min) / 2f; //ajustamos el pivote que originalmente esta en los pies del modelo visual para que concuerde con el del modelo fisico que es en el centro
     }
 
     //ACTUALIZO (Modificable)
@@ -79,5 +86,21 @@ public class Decoration
             }
             mesh.Draw();
         }
+    }
+
+    //Funcion que crea una caja segun los parametros de mi modelo, me ayuda a determinar el tamaño de mis modelos fisicos y automatizar en caso de que cambie un modelo
+    public static BoundingBox CreateBoundingBox(Model model)
+    {
+        var min = new Vector3(float.MaxValue);
+        var max = new Vector3(float.MinValue);
+
+        foreach (var mesh in model.Meshes)
+        {
+            // Creamos una caja a partir de la esfera de cada malla del modelo
+            var meshBox = BoundingBox.CreateFromSphere(mesh.BoundingSphere);
+            min = Vector3.Min(min, meshBox.Min);
+            max = Vector3.Max(max, meshBox.Max);
+        }
+        return new BoundingBox(min, max);
     }
 }
