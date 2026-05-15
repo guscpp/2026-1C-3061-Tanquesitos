@@ -91,8 +91,6 @@ public class AssetsManager
     public const int NumberOfHouseModels = 15;
     public List<House> _houses = new();
 
-    public List<StaticHandle> houseHandlers;
-
 
     public AssetsManager(Terrain terrain)
     {
@@ -101,7 +99,6 @@ public class AssetsManager
 
     public void Initialize()
     {
-        houseHandlers = new List<StaticHandle>();
 
         var houseModelPositions = GetValidHousePositions();
         for (int i = 0; i < NumberOfHouseModels; i++)
@@ -265,56 +262,41 @@ public class AssetsManager
 
     public void LoadContent(ContentManager content, Simulation simulation)
     {
+        //Cargo el efecto una vez
         var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
-        var texture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        foreach(var house in _houses)
+
+        foreach (var house in _houses)
         {
-            var houseModel = content.Load<Model>(ContentFolder3D + house._path);
-            house.LoadContent(houseModel, _random.NextSingle(), effect, texture);
-            house.CreateHouse(VectorExtensions.ToNumerics(house.Position), simulation);
+            house.LoadContent(content, simulation, effect);
         }
-        foreach(var asset in _decorationModels)
+
+        foreach (var asset in _decorationModels)
         {
-            var assetModel = content.Load<Model>(ContentFolder3D + asset._path);
-            asset.LoadContent(assetModel, _random.NextSingle(), effect, texture);
+            asset.LoadContent(content, simulation, effect);
         }
+
     }
 
     public void Update(GameTime elapsedTime, Simulation simulation)
     {
-        float dt = (float)elapsedTime.ElapsedGameTime.TotalSeconds;
-        if (dt <= 0f)
-            return;
-
-        simulation.Timestep(dt);
+        //simulation.Timestep(dt); //Se elimina porque ya lo controla el tgc game
+        foreach (var asset in _decorationModels)
+        {
+            asset.Update(simulation);
+        }
     }
 
-    public bool UpdateCollisions(BoundingSphere tankSphere)
-    {
-        foreach(var decoration in _decorationModels)
-        {
-            if(decoration.UpdateCollisions(tankSphere))
-                return true;
-        }
-        foreach(var house in _houses)
-        {
-            if(house.UpdateCollisions(tankSphere))
-                return true;
-        }
-        return false;
-    }
-
-    public void Draw(Matrix view, Matrix projection, Gizmo gizmos)
+    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation)
     {
         foreach (var house in _houses)
         {
             house.Draw(view, projection);
-            house.DrawCollisionChamber(gizmos);
+            house.DrawCollisionChamber(gizmos, null); //Como las casas ninguna se mueve la simulacion puede ser nula
         }
-        foreach(var asset in _decorationModels)
+        foreach (var asset in _decorationModels)
         {
             asset.Draw(view, projection);
-            asset.DrawCollisionChamber(gizmos);
+            asset.DrawCollisionChamber(gizmos, simulation);
         }
     }
 }

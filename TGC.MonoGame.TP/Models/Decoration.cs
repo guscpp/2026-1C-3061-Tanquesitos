@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-
+using BepuPhysics;
+using BepuPhysics.Collidables;
+// Alias para evitar la ambigüedad molesta entre los dos motores que no se como solucionar ;_;
+using Vector3 = Microsoft.Xna.Framework.Vector3;
+using BepuVector3 = System.Numerics.Vector3;
+//No entiendo por que debo agregar otra vez estas librerias si ya estan en decorationnnn
 using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
@@ -14,89 +18,66 @@ namespace TGC.MonoGame.TP.Models.Decorations;
 /// </summary>
 public class Decoration
 {
-    public Decoration(Vector3 position, string name)
+
+    protected Model _model;
+    protected Texture2D _texture;
+    protected Matrix _world;
+    protected Vector3 _position; //Vector3 de monogame por si en la terminal me vuelve a tirar "qui ni sibi bujuju"
+    protected float _visualScale;
+    protected string _path;
+
+    public Vector3 Position => _position; //Es la variable de solo lectura de la posicion
+
+    public Decoration(Vector3 position, string path)
     {
-        Position = position;
-        _path = name;
+        _position = position;
+        _path = path;
+        _visualScale = 1f; //Hasta delimitar el tamaño de cada modelo con el modelo fisico
     }
-    private Effect _effect;
 
-    public string _path;
-
-    public bool _touchingDecoration = false;
-
-    public Color CollisionChamberColor => Color.Green;
-    public Color CollisionedChamberColor => Color.Violet;
-
-    public bool IsPassthrought;
-
-    public Model Model { get; private set; }
-    public Vector3 Position;
-    public float Rotation { get; set; }     // rotacion que se le quiera dar para generar variacion entre los modelos
-
-    public const float Scale = GameConfig.Assets.DecorationScale;
-
-    public const float CollisionChamberScale = GameConfig.Assets.DecorationChamberScale;
-
-    private Matrix _world;
-
-    private Texture2D _texture;
-
-    public void LoadContent(Model model, float angle, Effect effect, Texture2D texture)
+    //CARGA DE CONTENIDO (Modificable)
+    public virtual void LoadContent(ContentManager content, Simulation simulation, Effect effect)
     {
-        Model = model;
-
-        _effect = effect;
-
-        _texture = texture;
-
-        _world = Matrix.CreateScale(Scale) * 
-            Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) * 
-            Matrix.CreateRotationY(angle) * 
-            Matrix.CreateTranslation(Position);
-
+        _model = content.Load<Model>(AssetsManager.ContentFolder3D + _path);
+        _texture = content.Load<Texture2D>(AssetsManager.ContentFolderTextures + "paleta_256x512"); //Aprovechando que todos usan la misma imagen
+        var instanciaEffect = effect.Clone(); //Como lo clono en vez de usar el mismo comparto el codigo pero no el parametro world ni view que varian de modelo a modelo
         //Para cada malla de mi coleccion de mallas del modelo
-        foreach (var mesh in Model.Meshes)
+        foreach (var mesh in _model.Meshes) 
         {
-            //Para cada parte de la malla de mi coleccion de partes de la malla
+           //Para cada parte de la malla de mi coleccion de partes de la malla
             foreach (var meshPart in mesh.MeshParts)
             {
                 // Reemplazamos el efecto por defecto del modelo por el nuestro
-                meshPart.Effect = _effect;
-            }
+                meshPart.Effect = instanciaEffect;
+            } 
         }
-
-        InitializeCollisionChamber(model);
     }
 
-    public virtual void InitializeCollisionChamber(Model model) {}
+    //ACTUALIZO (Modificable)
+    public virtual void Update(Simulation simulation) { } //Varia de modelo a modelo
 
-    public virtual bool UpdateCollisions(BoundingSphere tankSphere) { return false; }
+    //DIBUJO LAS COLISIONES (Modificable)
+    public virtual void DrawCollisionChamber(Gizmo gizmos, Simulation simulation) {}
 
-    public virtual void Update()
-    {
-        
-    }
-
+    //DIBUJO (No se toca por los hijos)
     public void Draw(Matrix view, Matrix projection)
     {
-        if (Model == null) return;
+        if (_model == null) return;
 
         //Para cada malla en la coleccion de mallas del modelo
-        foreach (var mesh in Model.Meshes)
+        foreach (var mesh in _model.Meshes)
         {
-            //Para cada efecto en la coleccion de efectos de la malla
-            foreach (var effect in mesh.Effects)
+            //En contraposicion a lo que estabamos haciendo en la clase Decoration, ahora buscamos el efecto de cada parte ya que lo asignamos en el LoadContent
+            foreach (var meshPart in mesh.MeshParts)
             {
+                var effect = meshPart.Effect;
                 //Coloco los parametros de world, view y projection
                 effect.Parameters["World"].SetValue(_world);
                 effect.Parameters["View"].SetValue(view);
                 effect.Parameters["Projection"].SetValue(projection);
-                effect.Parameters["ModelTexture"].SetValue(_texture); //Un color porque aun no sé ponerle las texturas
+                effect.Parameters["ModelTexture"].SetValue(_texture);
             }
             mesh.Draw();
         }
     }
-
-    public virtual void DrawCollisionChamber(Gizmo gizmos) {}
 }
