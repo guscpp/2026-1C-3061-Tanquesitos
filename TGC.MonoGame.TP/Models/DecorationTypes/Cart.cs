@@ -42,7 +42,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             // Posicion inicial, se ajusta el centro (Bepu usa el centro, MonoGame la base)
             //Uso la posicion del modelo visual para definir donde ubico el modelo fisico al inicio, pero la altura no por lo del pivote (el centro del modelo)
-            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y + (_height / 2), _position.Z);
+            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
 
             //Para que no consuma recursos a lo loco cuando no lo estoy tocando y asegurarme de que se va quedar quieto hasta que el tanque lo choque
             //Primer parametro --> umbral de sueño --> si no se mueve demasiado bepu lo congela
@@ -68,12 +68,10 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             // Convierto la orientacion (uso Quaternianos para que gire como se debe) y pose de Bepu a Monogame
             Matrix rotation = Matrix.CreateFromQuaternion(new Quaternion(pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
-            //Problema, mis modelos visuales estan rotados, asi que debo "levantarlos" (girarlos 90 grados)
-            Matrix rotationCorrect = Matrix.CreateRotationX(MathHelper.ToRadians(-90)) * rotation;
             Vector3 position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
 
             // Calculo de la matriz de mundo
-            modificarMatrixWorld(rotationCorrect, position);
+            modificarMatrixWorld(rotation, position);
         }
         
         //DIBUJO LAS COLISIONES (Modificacion de la funcion en DECORATION)
