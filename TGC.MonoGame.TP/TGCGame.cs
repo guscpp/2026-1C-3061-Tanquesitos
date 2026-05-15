@@ -60,6 +60,7 @@ public class TGCGame : Game
     private BufferPool _bufferPool;
     private List<BodyHandle> _bodyHandlers;
     private BodyHandle _tankHandle;
+    private StaticHandle _terrainStaticHandle;
 
     /// <summary>
     ///     Constructor del juego.
@@ -133,6 +134,7 @@ public class TGCGame : Game
         _terrain = new Terrain(GraphicsDevice);
         //Le paso la textura y el efecto
         _terrain.LoadContent(terrainTexture, effect);
+        _terrainStaticHandle = _terrain.CreatePhysicsTerrain(_simulation);
 
         _hud = new Hud();
         _hud.LoadContent(Content, GraphicsDevice);
@@ -148,6 +150,12 @@ public class TGCGame : Game
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
         //Creamos el tanque
         _tank = new Tank();
+
+        Vector3 spawnPos = new Vector3(0, 0, 0);
+        float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);
+
+        //Se spawnea unos metros por encima del terreno
+        _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
         //Le pasamos el modelo, la textura y el efecto2
         _tank.Load(tankModel, tankTexture, effect2, _simulation);
 
@@ -196,11 +204,6 @@ public class TGCGame : Game
         _tank.Update(gameTime, kb, _simulation);
         _assets.Update(gameTime, _simulation);
 
-        // Actualiza la posicionY del tanque según el terreno
-        float terrainHeight = _terrain.GetHeight(_tank.Position); //Altura correcta que debe usar
-        _tank.SetHeight(terrainHeight);
-        //Actualmente el tanque hace esto, primero dice donde quiere moverse (tanl.Update) y luego nosotros le corregimos la posicion segun el mapa
-
         _camera.Update(gameTime, _tank.Position, _tank.RotationY);
 
         _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
@@ -221,7 +224,6 @@ public class TGCGame : Game
         // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);
-        _tank.DrawCollisionChamber(_gizmos);
         _assets.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
         // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
         _hud.Draw();

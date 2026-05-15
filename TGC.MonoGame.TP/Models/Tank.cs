@@ -11,6 +11,8 @@ using TGC.MonoGame.TP.Gizmos.Geometry;
 using TGC.MonoGame.TP.Models.Decorations;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 using BepuPhysics;
+using BepuPhysics.Constraints;
+
 namespace TGC.MonoGame.TP.Models;
 
 /// <summary>
@@ -25,21 +27,20 @@ public class Tank
 
     public Model Model { get; private set; }
     //configuracion de movimiento
-    public float MaxSpeed { get; set; } = GameConfig.Tank.MaxSpeed; //25000f;
-    public float Acceleration { get; set; } = GameConfig.Tank.Acceleration; //3500f;
-    public float Friction { get; set; } = GameConfig.Tank.Friction; //0.96f;
-    public float TurnSpeed { get; set; } = GameConfig.Tank.TurnSpeed; //2.8f;
-    public float VerticalSpeed = GameConfig.Tank.VerticalSpeed; //1000f;
+    public float MaxSpeed { get; set; } = GameConfig.Tank.MaxSpeed;
+    public float Acceleration { get; set; } = GameConfig.Tank.Acceleration;
+    public float Friction { get; set; } = GameConfig.Tank.Friction;
+    public float TurnSpeed { get; set; } = GameConfig.Tank.TurnSpeed;
+    public float VerticalSpeed = GameConfig.Tank.VerticalSpeed;
 
     //estado interno
-    public Vector3 Position { get; private set; }
+    public Vector3 Position { get; set; } = Vector3.Zero;
     public float RotationY { get; private set; }
     public float Speed { get; private set; }
 
-    //Propieda de escalado - el valor puede variar
     public float Scale { get; set; } = GameConfig.Tank.TankScale;
 
-    public float CollisionChamberScale { get; set; } = GameConfig.Tank.TankChamberScale;
+    private System.Numerics.Quaternion _physicsOrientation = System.Numerics.Quaternion.Identity;
 
     public BodyHandle TankHandler;
 
@@ -47,10 +48,11 @@ public class Tank
     ///     Matriz de mundo lista para pasar al Draw de un Model.
     /// </summary>
     public Matrix WorldMatrix =>
-        Matrix.CreateScale(Scale) *                             //Primero lo escalo porque sino se ve diminuto
-        Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *    //Para que no se vea acostado xd
-        Matrix.CreateRotationY(RotationY) *                     //Luego lo roto
-        Matrix.CreateTranslation(Position);                     //Finalmente lo traslado
+        Matrix.CreateScale(Scale) *
+        Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *
+        Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(
+            _physicsOrientation.X, _physicsOrientation.Y, _physicsOrientation.Z, _physicsOrientation.W)) *
+        Matrix.CreateTranslation(Position);
 
     /// <summary>
     ///     Carga el modelo compilado y aplica la iluminacion basica.
@@ -60,8 +62,6 @@ public class Tank
         Model = model;
         _effect = effect; //Mi efecto ahora es el BasicShader que le pase por parametro
         _texture = texture;
-
-        InitializeCollisionChamber(model);
 
         //Para cada malla de mi coleccion de mallas del modelo
         foreach (var mesh in Model.Meshes)
@@ -78,30 +78,68 @@ public class Tank
 
     public void CreateTank(Vector3 position, Simulation simulation)
     {
-        var sphere = new Sphere(2f);
+        // 1. Inicializamos el CompoundBuilder
+        using (var compoundBuilder = new CompoundBuilder(simulation.BufferPool, simulation.Shapes, 2))
+        {
+            // 2. Creamos las formas de las partes del tanque
+            var chassisBox = new Box(
+                GameConfig.Tank.PhysicsChassisWidth,
+                GameConfig.Tank.PhysicsChassisHeight,
+                GameConfig.Tank.PhysicsChassisLength);
 
-        var shape = simulation.Shapes.Add(sphere);
+            var turretBox = new Box(
+                GameConfig.Tank.PhysicsTurretWidth,
+                GameConfig.Tank.PhysicsTurretHeight,
+                GameConfig.Tank.PhysicsTurretLength);
 
-        var inertia = sphere.ComputeInertia(1f);
+            // 3. Definimos las poses locales
+            var chassisPose = new RigidPose
+            {
+                Position = System.Numerics.Vector3.Zero,
+                Orientation = System.Numerics.Quaternion.Identity
+            };
+            var turretPose = new RigidPose
+            {
+                Position = new System.Numerics.Vector3(0, GameConfig.Tank.PhysicsTurretOffsetY, 0),
+                Orientation = System.Numerics.Quaternion.Identity
+            };
 
-        TankHandler = simulation.Bodies.Add(
-            BodyDescription.CreateDynamic(new RigidPose(new System.Numerics.Vector3(position.X, position.Y, position.Z)),
-                inertia,
-                new CollidableDescription(shape, 0.1f),
-                new BodyActivityDescription(0.01f)
-            )
-        );
+            // 4. Agregamos las partes al builder con sus masas
+            compoundBuilder.Add(chassisBox, chassisPose, GameConfig.Tank.ChassisMass);
+            compoundBuilder.Add(turretBox, turretPose, GameConfig.Tank.TurretMass);
+
+            // 5. Construimos el cuerpo compuesto
+            compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var compoundCenter);
+
+            // 6. Registramos el Compound shape
+            var compoundShapeIndex = simulation.Shapes.Add(new Compound(compoundChildren));
+
+            // 7. Creamos el cuerpo dinámico del tanque
+            TankHandler = simulation.Bodies.Add(
+                BodyDescription.CreateDynamic(
+                    new RigidPose(position.ToNumerics() + compoundCenter, System.Numerics.Quaternion.Identity),
+                    compoundInertia,
+                    new CollidableDescription(compoundShapeIndex, 0.1f),
+                    new BodyActivityDescription(0.01f)
+                )
+            );
+        }
     }
 
     /// <summary>
-    ///     Dibuja el tanque usando las matrices de la camara.
+    ///     [DUMMY FUNCTION] Evita que el tanque se salga de los limites del terreno.
+    ///     Se implementara mas adelante aplicando clamp() a la posición segun los 
+    ///     limites del heightmap y un margen de seguridad.
     /// </summary>
-    public void InitializeCollisionChamber(Model model)
+    public void ApplyMapBounds(Simulation simulation, Terrain terrain, float margin = 5f)
     {
-        // TEMPORAL!!
-        _tankSphere = BoundingVolumesUtils.CreateSphereFrom(model);
-        _tankSphere = BoundingVolumesUtils.Scale(_tankSphere, CollisionChamberScale);
-        _tankSphere.Radius = _tankSphere.Radius * 0.7f;
+        // TODO: Implementar clamp de limites de mapa
+        // 1. Obtener el BodyReference usando TankHandler
+        // 2. Leer pose.Position actual (X, Y, Z)
+        // 3. Calcular limites: [-terrain.WidthUnits + margin, terrain.WidthUnits - margin]
+        // 4. Clampear X y Z (Y queda libre para gravedad/correccion de suelo)
+        // 5. Asignar nueva posicion clampeada a body.Pose.Position
+        // 6. Opcional: el tanque puede rebotar o sino perder toda su velocidad lineal
     }
 
     /// <summary>
@@ -127,57 +165,49 @@ public class Tank
         }
     }
 
-    public void DrawCollisionChamber(Gizmo gizmos)
-    {
-        gizmos.DrawSphere(_tankSphere.Center, _tankSphere.Radius * Vector3.One, Color.Blue);
-    }
-
     public void Update(GameTime gameTime, KeyboardState keyboard, Simulation simulation)
     {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (keyboard.IsKeyDown(Keys.A)) RotationY += TurnSpeed * dt;
-        if (keyboard.IsKeyDown(Keys.D)) RotationY -= TurnSpeed * dt;
 
         float forwardInput = 0f;
         if (keyboard.IsKeyDown(Keys.W)) forwardInput += 1f;
         if (keyboard.IsKeyDown(Keys.S)) forwardInput -= 1f;
 
-        if (keyboard.IsKeyDown(Keys.Q)) Position += Vector3.Up * VerticalSpeed * dt;
-        if (keyboard.IsKeyDown(Keys.E)) Position -= Vector3.Up * VerticalSpeed * dt;
-
-        //fisica sencilla
+        // Física simple de aceleración/fricción para la velocidad lineal
         Speed += forwardInput * Acceleration * dt;
-        Speed *= System.MathF.Pow(Friction, dt * 60f);
+        Speed *= MathF.Pow(Friction, dt * 60f);
         Speed = MathHelper.Clamp(Speed, -MaxSpeed * 0.4f, MaxSpeed);
-        //actualizar posicion
-        Vector3 forward = Vector3.TransformNormal(Vector3.Forward, Matrix.CreateRotationY(RotationY));
-        // var increment = forward * Speed * dt;
-        // Position += increment; // comentado para realizar el movimiento con Bepu
 
-        var velocity = forward * Speed;
-
-        // colision con Bepu Physics
+        // Dirección actual del tanque (según su orientación en el motor físico)
+        // Usamos el quaternion de Bepu para obtener el vector forward
         var body = simulation.Bodies.GetBodyReference(TankHandler);
-        body.Velocity.Linear = new System.Numerics.Vector3(velocity.X, body.Velocity.Linear.Y, velocity.Z);
+        var orientation = body.Pose.Orientation;
+        Vector3 forwardBepu = Vector3.Transform(Vector3.Forward, orientation); // forward en System.Numerics
+        Vector3 forwardXna = new Vector3(forwardBepu.X, forwardBepu.Y, forwardBepu.Z); // convertir a XNA
+
+        // Velocidad lineal deseada
+        Vector3 desiredLinearVelocity = forwardXna * Speed;
+        // Mantenemos la componente Y actual (para gravedad)
+        body.Velocity.Linear = new System.Numerics.Vector3(desiredLinearVelocity.X, body.Velocity.Linear.Y, desiredLinearVelocity.Z);
         body.Awake = true;
 
+        float turnInput = 0f;
+        if (keyboard.IsKeyDown(Keys.A)) turnInput += 1f;
+        if (keyboard.IsKeyDown(Keys.D)) turnInput -= 1f;
+
+        // Velocidad angular máxima (rad/s)
+        float maxAngularSpeed = TurnSpeed;
+        body.Velocity.Angular = new System.Numerics.Vector3(0, turnInput * maxAngularSpeed, 0);
+
+        // --- Leer la posición y orientación actualizadas por Bepu ---
         var pose = body.Pose;
         Position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
+        _physicsOrientation = pose.Orientation;
 
-        // SOBRE EL TANK VOLUME -> TEMPORAL!!
-        //_tankSphere.Center = Position;
-        //assets.UpdateCollisions(_tankSphere);
-
-        //mantener flotando en y = 0
-        //Position = new Vector3(Position.X, 0f, Position.Z);
-    }
-
-    /// <summary>
-    ///     Corrige la Y de la posicion, como Tanque no tiene una referencial al terreno, no puedo ponerlo en Update (Aunque sería lo ideal... creo xd)
-    /// </summary>
-    public void SetHeight(float y)
-    {
-        Position = new Vector3(Position.X, y, Position.Z);
+        // Extraer el ángulo Yaw (RotationY) para la cámara
+        // Usamos la misma fórmula que ya tenías
+        float sinYaw = 2f * (_physicsOrientation.W * _physicsOrientation.Z + _physicsOrientation.X * _physicsOrientation.Y);
+        float cosYaw = 1f - 2f * (_physicsOrientation.Y * _physicsOrientation.Y + _physicsOrientation.Z * _physicsOrientation.Z);
+        RotationY = MathF.Atan2(sinYaw, cosYaw);
     }
 }

@@ -23,17 +23,27 @@ public static class GameConfig
     // TANQUEsITO (valores en unidades SI)
     public static class Tank
     {
-        public const float TankScale = 1f;
-        public const float TankChamberScale = TankScale/100;
+        public const float TankScale = 1f;      // metros
         public const float Length = 2f;         // metros
         public const float Width = 2f;          // metros
         public const float Height = 2.25f;      // metros
-        public const float Mass = 5000f;        // kg (tanque real ~60t, ya lo vamos a ir ajustando)
-        public const float MaxSpeed = 90f;     // m/s (referencia: 100 m/s = 360 km/h)
+        public const float ChassisMass = 4000f; // kg (tanque real ~60t, ya lo vamos a ir ajustando)
+        public const float TurretMass = 1000f;  // kg 
+        public const float MaxSpeed = 90f;      // m/s (referencia: 100 m/s = 360 km/h)
         public const float VerticalSpeed = 25f; // m/s (~90 km/h) para God Mode
         public const float Acceleration = 40f;  // m/s²
         public const float TurnSpeed = 1.2f;    // rad/s
         public const float Friction = 0.95f;    // coeficiente por frame
+        public const float SpawnZMargin = 7f;   // metros, se spawnea esta altura por encima del terreno
+
+        //Bepu
+        public const float PhysicsChassisWidth  = 2f;       // metros
+        public const float PhysicsChassisLength = 2f;       // metros
+        public const float PhysicsChassisHeight = 1.2f;     // metros
+        public const float PhysicsTurretWidth   = 1.4f;     // metros
+        public const float PhysicsTurretLength  = 2f;       // metros
+        public const float PhysicsTurretHeight  = 1f;       // metros
+        public const float PhysicsTurretOffsetY = PhysicsChassisHeight;     // justo encima del chasis
     }
 
     // TERRENO
@@ -42,6 +52,7 @@ public static class GameConfig
         public const float CellSizeMeters = 1f;   // 1 píxel del heightmap = 1 metro
         public const float MaxHeightMeters = 35f; // relieve maximo
         public const float PhysicsMargin = 0.2f;  // margen de seguridad para Bepu
+        public const int PhysicsSubsampleStep = 2;// cuanto dividir la resolucion del heightmap, (1, 2, 4, 8, ...)
     }
 
     // CAMARA
