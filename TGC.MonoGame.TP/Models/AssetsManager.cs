@@ -28,7 +28,7 @@ public class AssetsManager
     public const string ContentFolderSpriteFonts = "SpriteFonts/";
     public const string ContentFolderTextures = "Textures/";
 
-    private const int NumberOfAssets = 200;
+    private const int NumberOfAssets = 400; //Entrega 1: exige 400 minimo
 
     // sobre modelos de decoraciones
     private int NumberOfDecorations => NumberOfAssets - NumberOfHouseModels;

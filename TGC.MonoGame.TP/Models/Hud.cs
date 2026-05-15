@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Input;
 namespace TGC.MonoGame.TP.Models;
 
 /// <summary>
-/// hud simple que muestra los controles del juego en pantalla.
+///     hud simple que muestra los controles del juego en pantalla.
 /// </summary>
 public class Hud
 {
@@ -15,6 +15,11 @@ public class Hud
     private readonly string[] _instructions;
     private readonly Color _textColor = Color.White;
     private readonly Vector2 _padding = new Vector2(20f, 20f);
+
+    // === VARIABLES PARA FPS ===
+    private float _fps;
+    private float _fpsAccumulator;
+    private int _fpsFrameCount;
 
     public Hud()
     {
@@ -33,6 +38,23 @@ public class Hud
         _font = content.Load<SpriteFont>("SpriteFonts/ArialFont");
     }
 
+    /// <summary>
+    ///     Actualiza el contador de FPS. Llamar desde TGCGame.Update()
+    /// </summary>
+    public void Update(GameTime gameTime)
+    {
+        _fpsAccumulator += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _fpsFrameCount++;
+
+        // Recalcular el promedio cada segundo
+        if (_fpsAccumulator >= 1f)
+        {
+            _fps = _fpsFrameCount / _fpsAccumulator;
+            _fpsAccumulator = 0f;
+            _fpsFrameCount = 0;
+        }
+    }
+
     public void Draw()
     {
         // Esta linea es la que desactiva el Z-Buffer
@@ -46,6 +68,23 @@ public class Hud
             _spriteBatch.DrawString(_font, line, drawPosition, _textColor);
             drawPosition.Y += _font.LineSpacing + 5f;
         }
+
+        // === INDICADOR DE FPS (esquina superior derecha) ===
+        string fpsText = $"FPS: {_fps:F0}";
+        var fpsSize = _font.MeasureString(fpsText);
+        var fpsPosition = new Vector2(
+            _spriteBatch.GraphicsDevice.Viewport.Width - fpsSize.X - _padding.X,
+            _padding.Y
+        );
+
+        // Color según rendimiento (verde/amarillo/rojo)
+        Color fpsColor = _fps >= 60 ? Color.Lime :
+                         _fps >= 30 ? Color.Yellow :
+                         Color.Red;
+
+        // Sombra para mejor legibilidad
+        _spriteBatch.DrawString(_font, fpsText, fpsPosition + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_font, fpsText, fpsPosition, fpsColor);
 
         _spriteBatch.End();
     }

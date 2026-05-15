@@ -208,6 +208,8 @@ public class TGCGame : Game
 
         _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
 
+        _hud.Update(gameTime);
+
         base.Update(gameTime);
     }
 

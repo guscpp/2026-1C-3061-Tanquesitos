@@ -79,7 +79,7 @@ public class Tank
     public void CreateTank(Vector3 position, Simulation simulation)
     {
         // 1. Inicializamos el CompoundBuilder
-        using (var compoundBuilder = new CompoundBuilder(simulation.BufferPool, simulation.Shapes, 2))
+        using (var compoundBuilder = new CompoundBuilder(simulation.BufferPool, simulation.Shapes, 3)) // ⬅️ CAMBIO: 3 partes ahora (chasis + torreta + base)
         {
             // 2. Creamos las formas de las partes del tanque
             var chassisBox = new Box(
@@ -95,7 +95,7 @@ public class Tank
             // 3. Definimos las poses locales
             var chassisPose = new RigidPose
             {
-                Position = System.Numerics.Vector3.Zero,
+                Position = new System.Numerics.Vector3(0, -0.4f, 0),    //bajar 40cm el centro de masa
                 Orientation = System.Numerics.Quaternion.Identity
             };
             var turretPose = new RigidPose
@@ -103,6 +103,15 @@ public class Tank
                 Position = new System.Numerics.Vector3(0, GameConfig.Tank.PhysicsTurretOffsetY, 0),
                 Orientation = System.Numerics.Quaternion.Identity
             };
+
+            // 3.1 Crear base invisible para mejorar sustentacion del tanque
+            var stabilizerBox = new Box(2.6f, 0.3f, 2.6f);
+            var stabilizerPose = new RigidPose
+            {
+                Position = new System.Numerics.Vector3(0, -0.9f, 0), // -0.9f para que quede por debajo del chasis (-0.4f)
+                Orientation = System.Numerics.Quaternion.Identity
+            };
+            compoundBuilder.Add(stabilizerBox, stabilizerPose, 6000f); // 6000kg para bajar aun mas el centro de masa
 
             // 4. Agregamos las partes al builder con sus masas
             compoundBuilder.Add(chassisBox, chassisPose, GameConfig.Tank.ChassisMass);
@@ -198,6 +207,22 @@ public class Tank
         // Velocidad angular máxima (rad/s)
         float maxAngularSpeed = TurnSpeed;
         body.Velocity.Angular = new System.Numerics.Vector3(0, turnInput * maxAngularSpeed, 0);
+
+
+        // Correcion para que no se caiga de trompa cuando avanza (al tener proporciones cartoon es inestable)
+        // y ya que estamos, que sea mas estable lateralmente sobre desniveles (que no caiga sobre su lateral)
+        ref var vel = ref body.Velocity;
+        
+        vel.Angular.X = MathHelper.Clamp(vel.Angular.X, -0.5f, 0.5f);   //clamp al pitch
+        vel.Angular.Z = MathHelper.Clamp(vel.Angular.Z, -0.3f, 0.3f);   //clamp al roll
+
+        //damping
+        vel.Angular.X *= 0.88f; //pitch
+        vel.Angular.Y *= 0.98f; //yaw (correccion mas suave que X y Z para que el jugador pueda rotarlo) 
+        vel.Angular.Z *= 0.88f; //roll
+
+        body.Awake = true; //fuerza que procese los cambios
+
 
         // --- Leer la posición y orientación actualizadas por Bepu ---
         var pose = body.Pose;
