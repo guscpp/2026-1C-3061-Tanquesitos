@@ -21,6 +21,9 @@ public class Hud
     private float _fpsAccumulator;
     private int _fpsFrameCount;
 
+    // === VARIABLES PARA DEBUG ===
+    public Vector3 TankPosition { get; set; }
+
     public Hud()
     {
         _instructions = new[]
@@ -85,6 +88,14 @@ public class Hud
         // Sombra para mejor legibilidad
         _spriteBatch.DrawString(_font, fpsText, fpsPosition + Vector2.One, Color.Black);
         _spriteBatch.DrawString(_font, fpsText, fpsPosition, fpsColor);
+
+        // === COORDENADAS DEL TANQUE ===
+        string posText = $"X: {TankPosition.X:F1}  Y: {TankPosition.Y:F1}  Z: {TankPosition.Z:F1}";
+        var posSize = _font.MeasureString(posText);
+        var posPosition = new Vector2(fpsPosition.X - 150, fpsPosition.Y + fpsSize.Y + 8f); // 8px debajo del FPS
+
+        _spriteBatch.DrawString(_font, posText, posPosition + Vector2.One, Color.Black); // Sombra
+        _spriteBatch.DrawString(_font, posText, posPosition, _textColor); // Texto blanco
 
         _spriteBatch.End();
     }
