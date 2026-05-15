@@ -48,9 +48,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90));
 
             //Como mi modelo es estatico calculo la matriz de mundo una sola vez
-            _world = Matrix.CreateScale(_visualScale) 
-                * rotation 
-                * Matrix.CreateTranslation(_position);
+            modificarMatrixWorld(rotation);
         }
 
         //ACTUALIZO (Modificacion de la funcion en DECORATION)
@@ -65,12 +63,10 @@ namespace TGC.MonoGame.TP.Models.Decorations
         {   
             //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal
 
-            Vector3 centro = _position + _modelCenter;
-
             //Tamaño (yo pensaba que se dibujaba igual que el resto XD)
-            Vector3 diametro = new Vector3(_radius * 2);
+            Vector3 diametro = new Vector3(_radius);
 
-            gizmos.DrawSphere(centro, diametro, Color.Violet);
+            gizmos.DrawSphere(_position, diametro, Color.Violet);
         }
 
         //No hace nada si el tanque lo choca por lo que no existe HandleCollision

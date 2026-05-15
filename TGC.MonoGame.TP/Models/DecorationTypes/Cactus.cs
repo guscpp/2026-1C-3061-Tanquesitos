@@ -50,9 +50,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90));
 
             //Como mi modelo es estatico calculo la matriz de mundo una sola vez
-            _world = Matrix.CreateScale(_visualScale) 
-                * rotation
-                * Matrix.CreateTranslation(_position);
+            modificarMatrixWorld(rotation);
         }
 
         //ACTUALIZO (Modificacion de la funcion en DECORATION)
@@ -67,8 +65,8 @@ namespace TGC.MonoGame.TP.Models.Decorations
         {   
             //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal - para cuando cree _touchingDecoration
 
-            Matrix gizmoWorld = Matrix.CreateScale(_radius * 2, _height, _radius * 2) 
-                                * Matrix.CreateTranslation(_position + _modelCenter);
+            Matrix gizmoWorld = Matrix.CreateScale(_radius, _height, _radius)
+                                * Matrix.CreateTranslation(_position);
 
             gizmos.DrawCylinder(gizmoWorld, Color.Violet); //Por ahora voy a usar el verde para los dinamicos y el violeta para los estaticos
         }

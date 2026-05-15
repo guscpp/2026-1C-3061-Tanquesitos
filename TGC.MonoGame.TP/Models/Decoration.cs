@@ -96,11 +96,42 @@ public class Decoration
 
         foreach (var mesh in model.Meshes)
         {
-            // Creamos una caja a partir de la esfera de cada malla del modelo
-            var meshBox = BoundingBox.CreateFromSphere(mesh.BoundingSphere);
+            // La opcion de la esfera es la más optimo porque ya viene con el modelo, el tema, me crea cubos, no tenemos cubos perfectos, tenemos cubos rectangulo, no sirve
+            /*var meshBox = BoundingBox.CreateFromSphere(mesh.BoundingSphere);
             min = Vector3.Min(min, meshBox.Min);
-            max = Vector3.Max(max, meshBox.Max);
+            max = Vector3.Max(max, meshBox.Max);*/
+            foreach (var part in mesh.MeshParts)
+            {
+                // Creamos un arreglo con las posiciones de los puntos de la malla
+                // Esto es mucho más limpio que leer bytes crudos
+                var vertices = new Vector3[part.NumVertices];
+                part.VertexBuffer.GetData(part.VertexOffset * part.VertexBuffer.VertexDeclaration.VertexStride, 
+                                        vertices, 0, part.NumVertices, 
+                                        part.VertexBuffer.VertexDeclaration.VertexStride);
+
+                // 2. Le pedimos a MonoGame que calcule la caja exacta para estos puntos
+                var meshBox = BoundingBox.CreateFromPoints(vertices);
+                
+                min = Vector3.Min(min, meshBox.Min);
+                max = Vector3.Max(max, meshBox.Max);
+            }
         }
         return new BoundingBox(min, max);
+    }
+
+    //Estaticos
+    public void modificarMatrixWorld(Matrix rotation){
+        _world = Matrix.CreateScale(_visualScale)
+                * Matrix.CreateTranslation(-_modelCenter)
+                * rotation 
+                * Matrix.CreateTranslation(_position);
+    }
+
+    //Dinamicos
+    public void modificarMatrixWorld(Matrix rotation, Vector3 position){
+        _world = Matrix.CreateScale(_visualScale)
+                * Matrix.CreateTranslation(-_modelCenter)
+                * rotation 
+                * Matrix.CreateTranslation(position);
     }
 }

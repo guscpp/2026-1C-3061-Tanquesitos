@@ -74,10 +74,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Vector3 position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
 
             // Calculo de la matriz de mundo
-            _world = Matrix.CreateScale(_visualScale) //Se escala el modelo
-                     * Matrix.CreateTranslation(-_modelCenter) //Se baja el modelo visual para que coincida con el modelo fisico
-                     * rotationCorrect //Lo roto
-                     * Matrix.CreateTranslation(position); //Lo muevo a donde esta el modelo fisico
+            modificarMatrixWorld(rotationCorrect, position);
         }
         
         //DIBUJO LAS COLISIONES (Modificacion de la funcion en DECORATION)

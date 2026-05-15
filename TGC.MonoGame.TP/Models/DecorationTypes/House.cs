@@ -51,9 +51,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90));
 
             //Como mi modelo es estatico calculo la matriz de mundo una sola vez
-            _world = Matrix.CreateScale(_visualScale) 
-                * rotation 
-                * Matrix.CreateTranslation(_position);
+            modificarMatrixWorld(rotation);
         }
 
         //ACTUALIZO (Modificacion de la funcion en DECORATION)
