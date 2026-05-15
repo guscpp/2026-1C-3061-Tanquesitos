@@ -47,7 +47,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             // Posicion inicial, se ajusta el centro (Bepu usa el centro, MonoGame la base)
             //Uso la posicion del modelo visual para definir donde ubico el modelo fisico al inicio, pero la altura no por lo del pivote (el centro del modelo)
-            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y + (_height / 2), _position.Z);
+            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
             
             //Añado el cuerpo dinamico a la simulacion
             _bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(

@@ -30,7 +30,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             // BoundingBox box = ... (aun no xd)
             _height = _dimensions.Y;
-            _radius = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z)) / 2f;
+            _radius = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z)) / 4f;
             _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
 
             // Creo el cuerpo en Bepu (Es la configuracion de la fisica)
@@ -41,7 +41,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             // Posicion inicial, se ajusta el centro (Bepu usa el centro, MonoGame la base)
             //Uso la posicion del modelo visual para definir donde ubico el modelo fisico al inicio, pero la altura no por lo del pivote (el centro del modelo)
-            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y + (_height / 2), _position.Z);
+            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
             
             //Añado el cuerpo estatico a la simulacion
             _staticHandle = simulation.Statics.Add(new StaticDescription(initialPos, shapeIndex));

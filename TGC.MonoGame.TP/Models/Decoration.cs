@@ -121,16 +121,16 @@ public class Decoration
 
     //Estaticos
     public void modificarMatrixWorld(Matrix rotation){
-        _world = Matrix.CreateScale(_visualScale)
-                * Matrix.CreateTranslation(-_modelCenter)
+        _world = Matrix.CreateTranslation(-_modelCenter)
+                * Matrix.CreateScale(_visualScale)
                 * rotation 
                 * Matrix.CreateTranslation(_position);
     }
 
     //Dinamicos
     public void modificarMatrixWorld(Matrix rotation, Vector3 position){
-        _world = Matrix.CreateScale(_visualScale)
-                * Matrix.CreateTranslation(-_modelCenter)
+        _world = Matrix.CreateTranslation(-_modelCenter)
+                * Matrix.CreateScale(_visualScale)
                 * rotation 
                 * Matrix.CreateTranslation(position);
     }

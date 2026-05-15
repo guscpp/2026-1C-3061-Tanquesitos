@@ -69,12 +69,10 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             // Convierto la orientacion (uso Quaternianos para que gire como se debe) y pose de Bepu a Monogame
             Matrix rotation = Matrix.CreateFromQuaternion(new Quaternion(pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
-            //Problema, mis modelos visuales estan rotados, asi que debo "levantarlos" (girarlos 90 grados)
-            Matrix rotationCorrect = Matrix.CreateRotationX(MathHelper.ToRadians(-90)) * rotation;
             Vector3 position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
 
             // Calculo de la matriz de mundo
-            modificarMatrixWorld(rotationCorrect, position);
+            modificarMatrixWorld(rotation, position);
         }
         
         //DIBUJO LAS COLISIONES (Modificacion de la funcion en DECORATION)
