@@ -17,6 +17,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
     {
         private BodyHandle _bodyHandle;
         private float _radius;
+        private readonly Random _random = new();
         public bool IsDead { get; private set; } //La banderita que determina si fue o no colisionado
 
         public Plant(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
@@ -57,6 +58,14 @@ namespace TGC.MonoGame.TP.Models.Decorations
             // Tomo la posicion actual en la simulacion
             var bodyReference = simulation.Bodies[_bodyHandle];
             var pose = bodyReference.Pose;
+
+            //Reviso la velocidad del objeto, si su velocidad disminuyo hasta ser menor a 5 le doy un empujoncito
+            if (bodyReference.Velocity.Linear.Length() < 5f) 
+            {
+                //Use el random para que el empuje sea hacia distintos lados (Ahora estan locas)
+                bodyReference.ApplyLinearImpulse(new BepuVector3(_random.Next(-5,6), 0, 0)); // Empujoncito diagonal a derecha o izquierda
+                bodyReference.ApplyAngularImpulse(new BepuVector3(0.5f, 0, 0.5f)); // Esto hace que la planta ruede, impulsando a que siga moviendose luego del empujoncito
+            }
 
             // Convierto la orientacion (uso Quaternianos para que gire como se debe) y pose de Bepu a Monogame
             Matrix rotation = Matrix.CreateFromQuaternion(new Quaternion(pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
