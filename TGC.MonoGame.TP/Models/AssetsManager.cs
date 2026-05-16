@@ -27,12 +27,7 @@ public class AssetsManager
     public const string ContentFolderSounds = "Sounds/";
     public const string ContentFolderSpriteFonts = "SpriteFonts/";
     public const string ContentFolderTextures = "Textures/";
-
-    private const int NumberOfAssets = 400; //Entrega 1: exige 400 minimo
-
-    // sobre modelos de decoraciones
-    private int NumberOfDecorations => NumberOfAssets - NumberOfHouseModels;
-    public List<Decoration> _decorationModels = new();
+    //PATHS
     private string[] DecorationModelPaths =
     {
         "decoraciones/arbol_muerto_1",
@@ -51,7 +46,14 @@ public class AssetsManager
         "decoraciones/roca_2",
         "decoraciones/roca_3"
     };
-
+    private string[] HouseModelPaths =
+    {
+        "casas/casita_mediana",
+        "casas/casita_pequeña",
+        "casas/Large Building B",
+        "casas/Medium Building B"
+    };
+    //SPAWRATES
     private readonly float[] _decorationSpawrates =
     {
         0.03f,  // arbol_muerto_1
@@ -70,27 +72,22 @@ public class AssetsManager
         0.13f,  // roca_2         
         0.03f,  // roca_3         
     };
-
+    //Entrega 1: exige 400 minimo
+    private const int NumberOfAssets = 400; 
+    // sobre modelos de decoraciones
+    private int NumberOfDecorations => NumberOfAssets - NumberOfHouseModels;
+    public List<Decoration> _decorationModels = new();
+    // sobre modelos de casas
+    public const int NumberOfHouseModels = 15;
+    public List<House> _houses = new();
+    // sobre el terreno
+    private Terrain _terrain;
+    //Random
     private readonly Random _random = new();
 
     public Color randomColor(){
         return (new Color(_random.Next(0,256),_random.Next(0,256),_random.Next(0,256)));
     }    
-
-    // sobre el terreno
-    private Terrain _terrain;
-
-    // sobre modelos de casas
-    private string[] HouseModelPaths =
-    {
-        "casas/casita_mediana",
-        "casas/casita_pequeña",
-        "casas/Large Building B",
-        "casas/Medium Building B"
-    };
-    public const int NumberOfHouseModels = 15;
-    public List<House> _houses = new();
-
 
     public AssetsManager(Terrain terrain)
     {
@@ -112,63 +109,116 @@ public class AssetsManager
         } 
     }
 
-    /// <summary>
-    ///     Genera posiciones aleatorias para todas las casas dentro del terreno
-    /// </summary>
-    private List<Vector3> GetValidHousePositions()
+    public void LoadContent(ContentManager content, Simulation simulation)
     {
-        var positions = new List<Vector3> {};
-        var minDistanceBetween = 45f; // GE 4500f
-        // inicializacion
-        for (int i = 0; i < NumberOfHouseModels; i++)
-            positions.Add(GetRandomPosition(_random));
+        var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
 
-        // chequeo
-        for (int i = 0; i < NumberOfHouseModels; i++)
+        foreach (var house in _houses)
         {
-            bool valid = false;
-            while (!valid)
-            {
-                valid = true;
-                for (int j = 0; j < i; j++)  // solo compara contra las anteriores ya validadas
-                {
-                    if (Vector3.Distance(positions[i], positions[j]) < minDistanceBetween)
-                    {
-                        positions[i] = GetRandomPosition(_random);
-                        valid = false;
-                        break;
-                    }
-                }
-            }
+            house.LoadContent(content, simulation, effect);
         }
 
-        return positions;
+        foreach (var asset in _decorationModels)
+        {
+            asset.LoadContent(content, simulation, effect);
+        }
+
     }
 
-    private Vector3 GetRandomPosition(Random random)
+    public void Update(GameTime elapsedTime, Simulation simulation)
+    {
+        // Recorremos la lista de atrás hacia adelante para poder borrar elementos de forma segura
+        //Recorro la lista de elementos decorativos (conforme los mato la lista disminuye)
+        for (int i = _decorationModels.Count - 1; i >= 0; i--)
+        /*Tuve que quitar el foreach porque se rompia al colisionar con el objeto xdd, no decia porque, intuyo que era porque el ciclo ya no era el mismo
+        al eliminar objetos de la lista, no se, la ia me recomendo cambiar a for y funco :D*/
+        {
+            //Tomo el asset
+            var asset = _decorationModels[i];
+
+            // Reviso que sea dinamico, sino me importa poco
+            if (asset is Dinamic dinamicAsset)
+            {
+                // Reviso si esta muerto
+                if (dinamicAsset.IsDead)
+                {
+                    // Lo borro de bepu
+                    simulation.Bodies.Remove(dinamicAsset.bodyHandle);
+
+                    //Lo borro de la lista
+                    _decorationModels.RemoveAt(i);
+                    continue; 
+                }
+            }
+
+            // Si es estatico o no esta muerto se actualiza normal
+            asset.Update(simulation);
+        }
+    }
+
+    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation)
+    {
+        foreach (var house in _houses)
+        {
+            house.Draw(view, projection);
+            house.DrawCollisionChamber(gizmos, simulation);
+        }
+        foreach (var asset in _decorationModels)
+        {
+            asset.Draw(view, projection);
+            asset.DrawCollisionChamber(gizmos, simulation);
+        }
+    }
+
+    //Me da una posicion aleatoria sobre el terreno
+    private Vector3 GetRandomPosition()
     {
         var minHorizontal = -_terrain.WidthUnits;
         var maxHorizontal = _terrain.WidthUnits;
         var horizontalRange = maxHorizontal - minHorizontal;
 
-        var x = random.NextSingle() * horizontalRange + minHorizontal;
-        var z = random.NextSingle() * horizontalRange + minHorizontal;
+        var x = _random.NextSingle() * horizontalRange + minHorizontal;
+        var z = _random.NextSingle() * horizontalRange + minHorizontal;
         return new Vector3(x, _terrain.GetHeight(x, z), z);
     }
 
-    /// <summary>
-    /// Genera el path dentro del directorio Models de un modelo de casa para colocar en el mapa  
-    /// </summary>
-    /// <param name="content"></param>
-    private string GetRandomHousePath()
+    //Me genera una nueva decoracion con la posicion que le paso
+    public Decoration GetDecoration(Vector3 position)
     {
-        var index =  _random.Next(0, HouseModelPaths.Length);
-        return HouseModelPaths[index];
+        var path = GetRandomAssetPath();
+        return path switch
+        {
+            var p when p.Contains("arbol")      => new Tree(position, path),
+            var p when p.Contains("cactus")     => new Cactus(position, path),
+            var p when p.Contains("roca")       => new Rock(position, path),
+            var p when p.Contains("barril")     => new Barrel(position, path),
+            var p when p.Contains("carreta")    => new Cart(position, path),
+            var p when p.Contains("planta")     => new Plant(position, path),
+            var p when p.Contains("caja")       => new WoodenBox(position, path),
+            var p when p.Contains("escaleras")  => new Stairs(position, path),
+            var p when p.Contains("pozo")       => new Pozo(position, path),
+            _                                   => new Decoration(position, path)
+        };
     }
 
-    /// <summary>
-    ///     Genera posiciones aleatorias para una casa dentro del terreno en un rango establecido 
-    /// </summary>
+    // Me da un path aleatorio para una decoracion
+    private string GetRandomAssetPath()
+    {
+        var aux = _random.NextSingle();
+        var acum = 0f;
+        var index =  _random.Next(0, DecorationModelPaths.Length);
+        
+        for(int i=0; i<DecorationModelPaths.Length; i++)
+        {
+            acum += _decorationSpawrates[i];
+            if(aux<acum)
+                return DecorationModelPaths[i];   
+        }
+
+        return DecorationModelPaths[index];
+    }
+    
+    // Genera posiciones para las decoraciones
     private List<Vector3> GetValidDecorationPositions()
     {
         var positions = new List<Vector3> {};
@@ -181,7 +231,7 @@ public class AssetsManager
             bool valid;
             do
             {
-                candidate = GetRandomPosition(_random);
+                candidate = GetRandomPosition();
                 valid = true;
                 // chequeo contra casas
                 if(IsTooNearToAHouse(candidate, minDistanceToHouses))
@@ -207,6 +257,7 @@ public class AssetsManager
         return positions;
     }
 
+    //Me dice si la posicion esta muy cerca de una casa
     private bool IsTooNearToAHouse(Vector3 position, float minDistance)
     {
         for(int i=0; i<NumberOfHouseModels; i++)
@@ -217,88 +268,51 @@ public class AssetsManager
         return false;
     }
 
-    /// <summary>
-    /// Genera el path dentro del directorio Models de un modelo de asset para colocar en el mapa  
-    /// </summary>
-    /// <param name="content"></param>
-    private string GetRandomAssetPath()
-    {
-        var aux = _random.NextSingle();
-        var acum = 0f;
-        var index =  _random.Next(0, DecorationModelPaths.Length);
-        
-        for(int i=0; i<DecorationModelPaths.Length; i++)
-        {
-            acum += _decorationSpawrates[i];
-            if(aux<acum)
-                return DecorationModelPaths[i];   
-        }
-
-        return DecorationModelPaths[index];
-    }
-
+    //Genero una nueva casa segun una posicion
     public House GetHouse(Vector3 position)
     {
-        var path = GetRandomHousePath();
-        return new House(position, path);
+        return new House(position, GetRandomHousePath());
     }
 
-    public Decoration GetDecoration(Vector3 position)
+    // Genera el path dentro del directorio Models de un modelo de casa para colocar en el mapa  
+    private string GetRandomHousePath()
     {
-        var path = GetRandomAssetPath();
-        return path switch
-        {
-            var p when p.Contains("arbol")      => new Tree(position, path),
-            var p when p.Contains("cactus")     => new Cactus(position, path),
-            var p when p.Contains("roca")       => new Rock(position, path),
-            var p when p.Contains("barril")     => new Barrel(position, path),
-            var p when p.Contains("carreta")    => new Cart(position, path),
-            var p when p.Contains("planta")     => new Plant(position, path),
-            var p when p.Contains("caja")       => new WoodenBox(position, path),
-            var p when p.Contains("escaleras")  => new Stairs(position, path),
-            _                                   => new Decoration(position, path)
-        };
+        var index =  _random.Next(0, HouseModelPaths.Length);
+        return HouseModelPaths[index];
     }
-
-    public void LoadContent(ContentManager content, Simulation simulation)
+    
+    // Genera posiciones aleatorias para todas las casas dentro del terreno
+    private List<Vector3> GetValidHousePositions()
     {
-        //Cargo el efecto una vez
-        var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+        var positions = new List<Vector3> {};
+        var minDistanceBetween = 45f; // GE 4500f
+        // inicializacion
+        for (int i = 0; i < NumberOfHouseModels; i++)
+            positions.Add(GetRandomPosition());
 
-        foreach (var house in _houses)
+        // chequeo
+        for (int i = 0; i < NumberOfHouseModels; i++)
         {
-            house.LoadContent(content, simulation, effect);
+            bool valid = false;
+            while (!valid)
+            {
+                valid = true;
+                for (int j = 0; j < i; j++)  // solo compara contra las anteriores ya validadas
+                {
+                    if (Vector3.Distance(positions[i], positions[j]) < minDistanceBetween)
+                    {
+                        positions[i] = GetRandomPosition();
+                        valid = false;
+                        break;
+                    }
+                }
+            }
         }
 
-        foreach (var asset in _decorationModels)
-        {
-            asset.LoadContent(content, simulation, effect);
-        }
-
+        return positions;
     }
 
-    public void Update(GameTime elapsedTime, Simulation simulation)
-    {
-        //simulation.Timestep(dt); //Se elimina porque ya lo controla el tgc game
-        foreach (var asset in _decorationModels)
-        {
-            asset.Update(simulation);
-        }
-    }
 
-    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation)
-    {
-        foreach (var house in _houses)
-        {
-            house.Draw(view, projection);
-            house.DrawCollisionChamber(gizmos, null); //Como las casas ninguna se mueve la simulacion puede ser nula
-        }
-        foreach (var asset in _decorationModels)
-        {
-            asset.Draw(view, projection);
-            asset.DrawCollisionChamber(gizmos, simulation);
-        }
-    }
 }
 
 

@@ -66,8 +66,8 @@ public class Decoration
     //DIBUJO LAS COLISIONES (Modificable)
     public virtual void DrawCollisionChamber(Gizmo gizmos, Simulation simulation) {}
 
-    //DIBUJO (No se toca por los hijos)
-    public void Draw(Matrix view, Matrix projection)
+    //DIBUJO (Modificable)
+    public virtual void Draw(Matrix view, Matrix projection)
     {
         if (_model == null) return;
 
@@ -119,19 +119,5 @@ public class Decoration
         return new BoundingBox(min, max);
     }
 
-    //Estaticos
-    public void modificarMatrixWorld(Matrix rotation){
-        _world = Matrix.CreateTranslation(-_modelCenter)
-                * Matrix.CreateScale(_visualScale)
-                * rotation 
-                * Matrix.CreateTranslation(_position);
-    }
-
-    //Dinamicos
-    public void modificarMatrixWorld(Matrix rotation, Vector3 position){
-        _world = Matrix.CreateTranslation(-_modelCenter)
-                * Matrix.CreateScale(_visualScale)
-                * rotation 
-                * Matrix.CreateTranslation(position);
-    }
+    
 }

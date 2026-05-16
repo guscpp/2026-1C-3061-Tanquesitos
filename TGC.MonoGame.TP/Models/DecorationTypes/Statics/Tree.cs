@@ -14,9 +14,8 @@ using TGC.MonoGame.TP.Gizmos;
 namespace TGC.MonoGame.TP.Models.Decorations
 {//Estaticos - Cilindro
 
-    public class Tree : Decoration
+    public class Tree : Static
     {
-        private StaticHandle _staticHandle;
         private float _radius;
         private float _height;
         //No tiene bandera porque no muere
@@ -59,6 +58,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Los objetos dinamicos pueden salir volando en mil pedazos, desaparecer, moverse. Los objetos estaticos no hacen
             nada de eso, por eso no actualizo nada, no necesito hacerlo porque siempre se queda ahi... existiendo
         */
+        public void HandleCollision() { }
         
         //DIBUJO LAS COLISIONES (Modificacion de la funcion en DECORATION)
         public override void DrawCollisionChamber(Gizmo gizmos, Simulation simulation)

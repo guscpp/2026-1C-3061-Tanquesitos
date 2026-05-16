@@ -25,69 +25,62 @@ namespace TGC.MonoGame.TP;
 /// </summary>
 public class TGCGame : Game
 {
+    //Carpetas
     public const string ContentFolder3D = "Models/";
     public const string ContentFolderEffects = "Effects/";
     public const string ContentFolderMusic = "Music/";
     public const string ContentFolderSounds = "Sounds/";
     public const string ContentFolderSpriteFonts = "SpriteFonts/";
     public const string ContentFolderTextures = "Textures/";
-    
+    //-----------JUEGO
+    //graficos
     private readonly GraphicsDeviceManager _graphics;
-
-    private Gizmo _gizmos = new();
-
+    //escena
     private Matrix _projection;
-    private SpriteBatch _spriteBatch;
     private Matrix _view;
     private Matrix _world;
-
+    //Sonido
     private SoundEffect _klaxonSound;
     private SoundEffect _hornSound;
+    //teclado
     private KeyboardState _lastKeyboardState;
-    private readonly Random _random = new();
-
-    public Tank _tank;
-    private TankFollowCamera _camera;
-    private Terrain _terrain;
+    //hud
     private Hud _hud;
-    private AssetsManager _assets;
-
     // multiplayer :o
     private bool twoPlayers = false;
-
-    // sobre fisica
+    //-----------TANQUE
+    public Tank _tank;
+    private TankFollowCamera _camera;
+    //-----------TERRENO
+    private Terrain _terrain;
+    //-----------DECORACIONES
+    public AssetsManager _assets;
+    private readonly Random _random = new();
+    //-----------FISICAS
     private Simulation _simulation;
     private BufferPool _bufferPool;
     private List<BodyHandle> _bodyHandlers;
     private BodyHandle _tankHandle;
     private StaticHandle _terrainStaticHandle;
+    public static TGCGame Instance { get; private set; } //Esto es para que lo use NarrowPhaseCallbacks
+    //gizmos
+    private Gizmo _gizmos = new();
 
-    /// <summary>
-    ///     Constructor del juego.
-    /// </summary>
     public TGCGame()
     {
-        // Maneja la configuracion y la administracion del dispositivo grafico.
         _graphics = new GraphicsDeviceManager(this);
+        Instance = this;
 
         _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
         _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
 
-        // Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
-        // Carpeta raiz donde va a estar toda la Media.
         Content.RootDirectory = "Content";
-        // Hace que el mouse sea visible.
+
         IsMouseVisible = true;
     }
 
-    /// <summary>
-    ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo.
-    ///     Escribir aqui el codigo de inicializacion: el procesamiento que podemos pre calcular para nuestro juego.
-    /// </summary>
     protected override void Initialize()
     {
-        // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
-
         // Se activa el Backface Culling en sentido anti-horario (se renderizan las caras frontales de los triangulos)
         GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
@@ -100,6 +93,102 @@ public class TGCGame : Game
         InitializePhysics();
 
         base.Initialize();
+    }
+
+    protected override void LoadContent()
+    {
+        //RECURSOS
+        //shaders
+        var effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //modelos sin texturas
+        var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
+        //texturas
+        var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
+        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+        //sonidos
+        _klaxonSound = Content.Load<SoundEffect>(ContentFolderSounds + "klaxon");
+        _hornSound = Content.Load<SoundEffect>(ContentFolderSounds + "horn");
+        //modelos
+        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
+
+        //AUXILIARES
+        Vector3 spawnPos = new Vector3(0, 0, 0);
+
+        //TERRENO
+            //Creo un terreno (suelo)
+        _terrain = new Terrain(GraphicsDevice);
+            //Le paso la textura y el efecto
+        _terrain.LoadContent(terrainTexture, effect);
+            //fisicas
+        _terrainStaticHandle = _terrain.CreatePhysicsTerrain(_simulation);
+        //ASSETS DECORATIVOS
+            //Creamos el manager
+        _assets = new AssetsManager(_terrain);
+            //Iniciamos
+        _assets.Initialize();
+            //Cargamos los assets
+        _assets.LoadContent(Content, _simulation);
+        //TANQUE
+            //Creamos el tanque
+        _tank = new Tank();
+            //Determino una posicion para el tanque
+        float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);//Se spawnea unos metros por encima del terreno
+        _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
+            //Cargo el tanque
+        _tank.Load(tankModel, tankTexture, effect2, _simulation);
+            //fisicas
+        _tankHandle = _tank.TankHandler;
+
+        //HUD
+        _hud = new Hud();
+        _hud.LoadContent(Content, GraphicsDevice);
+        
+        //CAMARA
+        _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
+        //GIZMOS
+        _gizmos.LoadContent(GraphicsDevice, Content);
+
+        base.LoadContent();
+    }
+
+    protected override void Update(GameTime gameTime)
+    {
+        var kb = Keyboard.GetState();
+        if (kb.IsKeyDown(Keys.Escape)) Exit();
+        if (kb.IsKeyDown(Keys.Space) && _lastKeyboardState.IsKeyUp(Keys.Space))
+        {
+            int chance = _random.Next(0, 100);
+            if (chance < 90) _klaxonSound.Play();
+            else _hornSound.Play();
+        }
+
+        _lastKeyboardState = kb;
+
+        _simulation.Timestep(1 / 60f);
+
+        _tank.Update(gameTime, kb, _simulation);
+        _assets.Update(gameTime, _simulation);
+
+        _camera.Update(gameTime, _tank.Position, _tank.RotationY);
+        _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
+        _hud.Update(gameTime);
+
+        base.Update(gameTime);
+    }
+
+    protected override void Draw(GameTime gameTime)
+    {
+        // Aca deberiamos poner toda la logia de renderizado del juego.
+        var totalTime = (float)gameTime.TotalGameTime.TotalSeconds;
+        GraphicsDevice.Clear(Color.Goldenrod);
+
+        // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
+        _terrain.Draw(_camera.View, _camera.Projection);
+        _tank.Draw(_camera.View, _camera.Projection);
+        _assets.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
+        // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
+        _hud.Draw();
+
+        _gizmos.Draw();
     }
 
     public void InitializePhysics()
@@ -115,129 +204,6 @@ public class TGCGame : Game
             new SolveDescription(8, 1));
     }
 
-    /// <summary>
-    ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
-    ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
-    ///     que podemos pre calcular para nuestro juego.
-    /// </summary>
-    protected override void LoadContent()
-    {
-        // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
-        _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-        var effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //Shader para modelos sin texturas
-        var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //Shader para modelos con textura
-
-        //Cargo las texturas del terreno
-        var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
-        //Creo el terreno
-        _terrain = new Terrain(GraphicsDevice);
-        //Le paso la textura y el efecto
-        _terrain.LoadContent(terrainTexture, effect);
-        _terrainStaticHandle = _terrain.CreatePhysicsTerrain(_simulation);
-
-        _hud = new Hud();
-        _hud.LoadContent(Content, GraphicsDevice);
-
-        // creo modelos
-        _assets = new AssetsManager(_terrain);
-        _assets.Initialize();
-        _assets.LoadContent(Content, _simulation);
-
-        //Cargad de modelo tanque
-        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
-        //Carga de texturas tanque
-        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        //Creamos el tanque
-        _tank = new Tank();
-
-        Vector3 spawnPos = new Vector3(0, 0, 0);
-        float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);
-
-        //Se spawnea unos metros por encima del terreno
-        _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
-        //Le pasamos el modelo, la textura y el efecto2
-        _tank.Load(tankModel, tankTexture, effect2, _simulation);
-
-        // handlers
-        //if(!twoPlayers)
-        //    _bodyHandlers.Add(_tank.TankHandler);
-        _tankHandle = _tank.TankHandler;
-
-        _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
-
-        // preparo gizmos
-        _gizmos.LoadContent(GraphicsDevice, Content);
-
-        _klaxonSound = Content.Load<SoundEffect>(ContentFolderSounds + "klaxon");
-        _hornSound = Content.Load<SoundEffect>(ContentFolderSounds + "horn");
-
-        base.LoadContent();
-    }
-
-    /// <summary>
-    ///     Se llama en cada frame.
-    ///     Se debe escribir toda la logica de computo del modelo, asi como tambien verificar entradas del usuario y reacciones
-    ///     ante ellas.
-    /// </summary>
-    protected override void Update(GameTime gameTime)
-    {
-        // Aca deberiamos poner toda la logica de actualizacion del juego.
-
-        // Capturar Input teclado
-        var kb = Keyboard.GetState();
-        if (kb.IsKeyDown(Keys.Escape)) Exit();
-        if (kb.IsKeyDown(Keys.Space) && _lastKeyboardState.IsKeyUp(Keys.Space))
-        {
-            int chance = _random.Next(0, 100);
-            if (chance < 90) _klaxonSound.Play();
-            else _hornSound.Play();
-        }
-
-        _lastKeyboardState = kb;
-
-        // Basado en el tiempo que paso se va generando una rotacion.
-        //_rotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-        //_world = Matrix.CreateRotationY(_rotation);
-        _simulation.Timestep(1 / 60f);
-
-        _tank.Update(gameTime, kb, _simulation);
-        _assets.Update(gameTime, _simulation);
-
-        _camera.Update(gameTime, _tank.Position, _tank.RotationY);
-
-        _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
-
-        _hud.Update(gameTime);
-
-        base.Update(gameTime);
-    }
-
-    /// <summary>
-    ///     Se llama cada vez que hay que refrescar la pantalla.
-    ///     Escribir aqui el codigo referido al renderizado.
-    /// </summary>
-    protected override void Draw(GameTime gameTime)
-    {
-        // Aca deberiamos poner toda la logia de renderizado del juego.
-        var totalTime = (float)gameTime.TotalGameTime.TotalSeconds;
-        GraphicsDevice.Clear(Color.Goldenrod);
-
-        // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
-        _terrain.Draw(_camera.View, _camera.Projection);
-        _tank.Draw(_camera.View, _camera.Projection);
-        _assets.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
-        // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
-        _hud.Draw();
-
-        _gizmos.Draw();
-        
-        //base.Draw();
-    }
-
-    /// <summary>
-    ///     Libero los recursos que se cargaron en el juego.
-    /// </summary>
     protected override void UnloadContent()
     {
         // Libero los recursos.

@@ -13,13 +13,13 @@ using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Decorations
 {//Dinamico - Caja
-    public class Stairs : Decoration
+    public class Stairs : Dinamic
     {
-        private BodyHandle _bodyHandle;
+        //private BodyHandle bodyHandle;
         private float _width;
         private float _height;
         private float _lenght;
-        public bool IsDead { get; private set; } //La banderita que determina si fue o no colisionado
+        //public bool IsDead { get; private set; } //La banderita que determina si fue o no colisionado
 
         public Stairs(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
         
@@ -51,11 +51,11 @@ namespace TGC.MonoGame.TP.Models.Decorations
             var activity = new BodyActivityDescription(0.01f, 0);
             
             //Añado el cuerpo dinamico a la simulacion
-            _bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(
+            bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(
                 initialPos, inertia, shapeIndex, activity)); //si colocamos el 0.01f solamente en vez del activity se verá algunos objetos "temblar" 
 
             // Le doy una identidad al cuerpo para reconocerlo en colisiones
-            simulation.Bodies[_bodyHandle].Collidable.Continuity = ContinuousDetection.Passive;
+            simulation.Bodies[bodyHandle].Collidable.Continuity = ContinuousDetection.Passive;
         }
 
         //ACTUALIZO (Modificacion de la funcion en DECORATION)
@@ -64,7 +64,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             if (IsDead) return;
 
             // Tomo la posicion actual en la simulacion
-            var bodyReference = simulation.Bodies[_bodyHandle];
+            var bodyReference = simulation.Bodies[bodyHandle];
             var pose = bodyReference.Pose;
 
             // Convierto la orientacion (uso Quaternianos para que gire como se debe) y pose de Bepu a Monogame
@@ -82,7 +82,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal
 
             // Tomo solo la rotacion y posicion que vienen de la Pose de Bepu (el modelo se supone que ya concuerda con el modelo fisico).            
-            var pose = simulation.Bodies[_bodyHandle].Pose;
+            var pose = simulation.Bodies[bodyHandle].Pose;
             
             Matrix rotation = Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(
                 pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
@@ -96,14 +96,6 @@ namespace TGC.MonoGame.TP.Models.Decorations
                                 * Matrix.CreateTranslation(position);
 
             gizmos.DrawCube(gizmoWorld, Color.Green);
-        }
-
-        //LOGICA DE COLISION
-        public void HandleCollision()
-        {
-            // Aqui ira la logica de la colision, deberia (deberia xd) desaparecer si el tanque lo toca, lo mismo para todos los dinamicos
-            IsDead = true;
-            // La remocion de Bepu debe hacerse fuera del timestep
         }
 
     }

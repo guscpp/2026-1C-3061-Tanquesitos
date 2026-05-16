@@ -1,11 +1,16 @@
 using System;
 using System.Numerics;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
 using BepuUtilities;
+
+using TGC.MonoGame.TP;
+using TGC.MonoGame.TP.Models.Decorations;
 
 public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
 {
@@ -59,6 +64,35 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
         pairMaterial.FrictionCoefficient = FrictionCoefficient;
         pairMaterial.MaximumRecoveryVelocity = MaximumRecoveryVelocity;
         pairMaterial.SpringSettings = ContactSpringiness;
+
+        // Si hay contacto, reviso si los dos elementos que hicieron contacto son dinamicos, si uno no lo es entonces no me interesa lo que ocurra
+        if (pair.A.Mobility == CollidableMobility.Dynamic && pair.B.Mobility == CollidableMobility.Dynamic)
+        { //Si ambos lo son actuamos yeii
+            // Agarro el bodyHandle de cada elemento
+            BodyHandle handleA = pair.A.BodyHandle;
+            BodyHandle handleB = pair.B.BodyHandle;
+
+            // Agarro el bodyHanldle del tanque para comparar
+            BodyHandle tankHandle = TGCGame.Instance._tank.TankHandler;
+
+            // Reviso si alguna de las dos partes es el tanque
+            if (handleA == tankHandle || handleB == tankHandle)
+            {
+                // Identifico el obstaculo
+                BodyHandle obstacleHandle = (handleA == tankHandle) ? handleB : handleA;
+
+                // Reviso la lista de decoraciones del AssetsManager
+                var objetoChocado = TGCGame.Instance._assets._decorationModels
+                    .OfType<Dinamic>() //Tomo solo los dinamicos
+                    .FirstOrDefault(d => d.bodyHandle == obstacleHandle); //El objeto de la lista debe ser el chocado
+
+                // Si lo encontre y el objeto vive lo mando a matar
+                if (objetoChocado != null && !objetoChocado.IsDead)
+                {
+                    objetoChocado.HandleCollision(); //Aca lo declaro muerto
+                }
+            }
+        }
         return true;
     }
 

@@ -14,14 +14,13 @@ using TGC.MonoGame.TP.Gizmos;
 namespace TGC.MonoGame.TP.Models.Decorations
 {//Estaticos (3 tipos) - Cilindros
 
-    public class Cactus : Decoration
+    public class Pozo : Static
     {
-        private StaticHandle _staticHandle;
         private float _radius;
         private float _height;
         //No tiene bandera porque no muere
 
-        public Cactus(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
+        public Pozo(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
 
         //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
@@ -30,7 +29,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             // BoundingBox box = ... (aun no xd)
             _height = _dimensions.Y;
-            _radius = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z)) / 4f;
+            _radius = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z)) / 2f;
             _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
 
             // Creo el cuerpo en Bepu (Es la configuracion de la fisica)

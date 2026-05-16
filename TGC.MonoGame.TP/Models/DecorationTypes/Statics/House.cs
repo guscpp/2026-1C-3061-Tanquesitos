@@ -13,9 +13,8 @@ using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Decorations
 {//Estaticos(4 tipos) - Caja
-    public class House : Decoration
+    public class House : Static
     {
-        private StaticHandle _staticHandle;
         private float _width;
         private float _height;
         private float _lenght;
