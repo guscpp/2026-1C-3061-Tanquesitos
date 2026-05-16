@@ -36,7 +36,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             var shapeIndex = simulation.Shapes.Add(shape);
 
             // offset y: bepu usa centro geometrico, el terrain.getheight devuelve base
-            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y + (_height / 2f), _position.Z);
+            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
             _staticHandle = simulation.Statics.Add(new StaticDescription(initialPos, shapeIndex));
 
             // correccion de orientacion: fbx exportado en z-up, mono game usa y-up
