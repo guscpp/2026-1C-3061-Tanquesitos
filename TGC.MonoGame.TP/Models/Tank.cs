@@ -146,22 +146,45 @@ public class Tank
     /// <summary>
     ///     Dibuja el tanque usando las matrices de la camara.
     /// </summary>
+  /// <summary>
+    ///     Dibuja el tanque usando las matrices de la camara.
+    /// </summary>
     public void Draw(Matrix view, Matrix projection)
     {
         if (Model == null) return;
 
-        //Para cada malla en la coleccion de mallas del modelo
+        // Para cada malla (pieza) en la coleccion de mallas del modelo
         foreach (var mesh in Model.Meshes)
         {
-            //Para cada efecto en la coleccion de efectos de la malla
+            // Convertimos el nombre de la pieza a minusculas para evitar errores de tipeo
+            string nombrePieza = mesh.Name.ToLower();
+
+            // Para cada efecto en la coleccion de efectos de la malla
             foreach (var effect in mesh.Effects)
             {
-                //Coloco los parametros de world, view y projection
+                // Coloco los parametros obligatorios de posicion
                 effect.Parameters["World"].SetValue(WorldMatrix);
                 effect.Parameters["View"].SetValue(view);
                 effect.Parameters["Projection"].SetValue(projection);
+<<<<<<< Updated upstream
                 effect.Parameters["ModelTexture"].SetValue(_texture); //Un color porque aun no sé ponerle las texturas
+=======
+
+                // 🔍 INTERCEPTAMOS LAS ORUGAS Y LAS RUEDAS
+                if (nombrePieza.Contains("cadena") || nombrePieza.Contains("rueda"))
+                {
+                    // Si es la oruga (cadena_i/d) o las ruedas, las pintamos de Gris Oscuro (R:0.2, G:0.2, B:0.2)
+                    effect.Parameters["DiffuseColor"].SetValue(new Vector3(0.2f, 0.2f, 0.2f));
+                }
+                else
+                {
+                    // Si es cualquier otra parte (Chasis, Cañón, Torreta), se queda con el Rojo original
+                    effect.Parameters["DiffuseColor"].SetValue(Color.Red.ToVector3());
+                }
+>>>>>>> Stashed changes
             }
+            
+            // Dibuja la pieza actual con el color que le asignamos arriba
             mesh.Draw();
         }
     }
