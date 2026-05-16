@@ -338,7 +338,7 @@ public class AssetsManager
             bool valid;
             do
             {
-                pos = GetRandomPosition(_random);
+                pos = GetRandomPosition();
                 valid = true;
 
                 // Validar distancia contra casas

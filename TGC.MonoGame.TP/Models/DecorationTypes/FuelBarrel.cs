@@ -88,8 +88,15 @@ namespace TGC.MonoGame.TP.Models.Decorations
         {
             if (IsCollected) return;
             Matrix gizmoWorld = Matrix.CreateScale(GameConfig.FuelBarrel.Radius, _height, GameConfig.FuelBarrel.Radius)
-                * Matrix.CreateTranslation(_position.X, _position.Y + _height / 2f, _position.Z);
+                * Matrix.CreateTranslation(_position.X, _position.Y, _position.Z);
             gizmos.DrawCylinder(gizmoWorld, Color.Orange);
         }
+
+        public void modificarMatrixWorld(Matrix rotation){
+        _world = Matrix.CreateTranslation(-_modelCenter)
+                * Matrix.CreateScale(_visualScale)
+                * rotation 
+                * Matrix.CreateTranslation(_position);
+    }
     }
 }
