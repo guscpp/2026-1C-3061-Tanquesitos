@@ -7,6 +7,7 @@ namespace TGC.MonoGame.TP.Models;
 
 /// <summary>
 ///     hud simple que muestra los controles del juego en pantalla.
+///     TODO: hacerlo responsive reemplazando los valores absolutos por relativos
 /// </summary>
 public class Hud
 {
@@ -20,6 +21,10 @@ public class Hud
     private float _fps;
     private float _fpsAccumulator;
     private int _fpsFrameCount;
+
+    // === VARIABLES PARA DEBUG ===
+    public Vector3 TankPosition { get; set; }
+    public float TankFuel { get; set; }
 
     public Hud()
     {
@@ -85,6 +90,25 @@ public class Hud
         // Sombra para mejor legibilidad
         _spriteBatch.DrawString(_font, fpsText, fpsPosition + Vector2.One, Color.Black);
         _spriteBatch.DrawString(_font, fpsText, fpsPosition, fpsColor);
+
+        // === COORDENADAS DEL TANQUE ===
+        string posText = $"X: {TankPosition.X:F1}  Y: {TankPosition.Y:F1}  Z: {TankPosition.Z:F1}";
+        var posSize = _font.MeasureString(posText);
+        var posPosition = new Vector2(fpsPosition.X - 150, fpsPosition.Y + fpsSize.Y + 8f); // 8px debajo del FPS
+
+        _spriteBatch.DrawString(_font, posText, posPosition + Vector2.One, Color.Black); // Sombra
+        _spriteBatch.DrawString(_font, posText, posPosition, _textColor);                // Texto blanco
+
+        // === COMBUSTIBLE DEL TANQUE ===
+        string fuelText = $"FUEL: {(int)TankFuel} / 100";
+        var fuelSize = _font.MeasureString(fuelText);
+        var fuelPosition = new Vector2(posPosition.X, posPosition.Y + posSize.Y + 8f);
+
+        Color fuelColor = TankFuel > 30f ? Color.Lime : TankFuel > 10f ? Color.Yellow : Color.Red;
+
+        _spriteBatch.DrawString(_font, fuelText, fuelPosition + Vector2.One, Color.Black); // Sombra
+        _spriteBatch.DrawString(_font, fuelText, fuelPosition, fuelColor);                // Texto blanco
+
 
         _spriteBatch.End();
     }

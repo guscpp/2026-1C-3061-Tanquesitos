@@ -1,23 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
 using BepuUtilities.Memory;
-
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
+using static TGC.MonoGame.TP.GameConfig;
+using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Models;
 
 /// <summary>
-/// Genera todas las clases de assets dentro del escenario aleatoriamente
+///     Genera todas las clases de assets dentro del escenario aleatoriamente
 /// </summary>
 public class AssetsManager
 {
@@ -76,6 +77,7 @@ public class AssetsManager
     private const int NumberOfAssets = 400; 
     // sobre modelos de decoraciones
     private int NumberOfDecorations => NumberOfAssets - NumberOfHouseModels;
+    public List<FuelBarrel> _fuelBarrels = new();
     public List<Decoration> _decorationModels = new();
     // sobre modelos de casas
     public const int NumberOfHouseModels = 15;
@@ -123,6 +125,11 @@ public class AssetsManager
             asset.LoadContent(content, simulation, effect);
         }
 
+        foreach (var barrel in _fuelBarrels)
+        {
+            barrel.LoadContent(content, simulation, effect);
+        }
+
     }
 
     public void Update(GameTime elapsedTime, Simulation simulation)
@@ -168,6 +175,12 @@ public class AssetsManager
             asset.Draw(view, projection);
             asset.DrawCollisionChamber(gizmos, simulation);
         }
+
+        foreach (var barrel in _fuelBarrels)
+        {
+            if (!barrel.IsCollected) barrel.Draw(view, projection);
+            barrel.DrawCollisionChamber(gizmos, simulation);
+        }
     }
 
     //Me da una posicion aleatoria sobre el terreno
@@ -185,18 +198,19 @@ public class AssetsManager
     //Me genera una nueva decoracion con la posicion que le paso
     public Decoration GetDecoration(Vector3 position)
     {
+        Vector3 dynamicPos = position + Vector3.Up * GameConfig.Assets.DynamicSpawnOffset;
         var path = GetRandomAssetPath();
         return path switch
         {
             var p when p.Contains("arbol")      => new Tree(position, path),
             var p when p.Contains("cactus")     => new Cactus(position, path),
             var p when p.Contains("roca")       => new Rock(position, path),
-            var p when p.Contains("barril")     => new Barrel(position, path),
-            var p when p.Contains("carreta")    => new Cart(position, path),
-            var p when p.Contains("planta")     => new Plant(position, path),
-            var p when p.Contains("caja")       => new WoodenBox(position, path),
-            var p when p.Contains("escaleras")  => new Stairs(position, path),
             var p when p.Contains("pozo")       => new Pozo(position, path),
+            var p when p.Contains("barril")     => new Barrel(dynamicPos, path),
+            var p when p.Contains("carreta")    => new Cart(dynamicPos, path),
+            var p when p.Contains("planta")     => new Plant(dynamicPos, path),
+            var p when p.Contains("caja")       => new WoodenBox(dynamicPos, path),
+            var p when p.Contains("escaleras")  => new Stairs(dynamicPos, path),
             _                                   => new Decoration(position, path)
         };
     }
@@ -310,6 +324,52 @@ public class AssetsManager
         }
 
         return positions;
+    }
+
+    public void SpawnFuelBarrels()
+    {
+        float minDistToDecorations = 8f;
+        float minDistToHouses = 20f;
+        float minDistToBarrels = 6f;
+
+        for (int i = 0; i < GameConfig.FuelBarrel.SpawnCount; i++)
+        {
+            Vector3 pos;
+            bool valid;
+            do
+            {
+                pos = GetRandomPosition(_random);
+                valid = true;
+
+                // Validar distancia contra casas
+                if (IsTooNearToAHouse(pos, minDistToHouses)) { valid = false; continue; }
+
+                // Validar distancia contra decoraciones existentes
+                foreach (var dec in _decorationModels)
+                {
+                    if (Vector3.Distance(pos, dec.Position) < minDistToDecorations) { valid = false; break; }
+                }
+                if (!valid) continue;
+
+                // Validar distancia contra otros barriles ya colocados
+                foreach (var barrel in _fuelBarrels)
+                {
+                    if (Vector3.Distance(pos, barrel.Position) < minDistToBarrels) { valid = false; break; }
+                }
+            } while (!valid);
+
+            pos.Y += GameConfig.FuelBarrel.Height / 2f;
+
+            _fuelBarrels.Add(new FuelBarrel(pos));
+        }
+    }
+
+    public void UpdateFuelBarrels(float dt)
+    {
+        foreach (var barrel in _fuelBarrels)
+        {
+            barrel.UpdateRecharge(dt);
+        }
     }
 
 
