@@ -37,7 +37,7 @@ public class Tank
     public Vector3 Position { get; set; } = Vector3.Zero;
     public float RotationY { get; private set; }
     public float Speed { get; private set; }
-
+    public float CurrentFuel { get; private set; } = GameConfig.Tank.MaxFuel;
     public float Scale { get; set; } = GameConfig.Tank.TankScale;
 
     private System.Numerics.Quaternion _physicsOrientation = System.Numerics.Quaternion.Identity;
@@ -79,7 +79,7 @@ public class Tank
     public void CreateTank(Vector3 position, Simulation simulation)
     {
         // 1. Inicializamos el CompoundBuilder
-        using (var compoundBuilder = new CompoundBuilder(simulation.BufferPool, simulation.Shapes, 3)) // ⬅️ CAMBIO: 3 partes ahora (chasis + torreta + base)
+        using (var compoundBuilder = new CompoundBuilder(simulation.BufferPool, simulation.Shapes, 3)) // 3 partes ahora (chasis + torreta + base)
         {
             // 2. Creamos las formas de las partes del tanque
             var chassisBox = new Box(
@@ -136,19 +136,11 @@ public class Tank
     }
 
     /// <summary>
-    ///     [DUMMY FUNCTION] Evita que el tanque se salga de los limites del terreno.
-    ///     Se implementara mas adelante aplicando clamp() a la posición segun los 
-    ///     limites del heightmap y un margen de seguridad.
+    ///     Hace la recarga con limite, el combustible que sobra se desperdicia
     /// </summary>
-    public void ApplyMapBounds(Simulation simulation, Terrain terrain, float margin = 5f)
+    public void AddFuel(float amount)
     {
-        // TODO: Implementar clamp de limites de mapa
-        // 1. Obtener el BodyReference usando TankHandler
-        // 2. Leer pose.Position actual (X, Y, Z)
-        // 3. Calcular limites: [-terrain.WidthUnits + margin, terrain.WidthUnits - margin]
-        // 4. Clampear X y Z (Y queda libre para gravedad/correccion de suelo)
-        // 5. Asignar nueva posicion clampeada a body.Pose.Position
-        // 6. Opcional: el tanque puede rebotar o sino perder toda su velocidad lineal
+        CurrentFuel = MathHelper.Clamp(CurrentFuel + amount, 0f, GameConfig.Tank.MaxFuel);
     }
 
     /// <summary>
@@ -182,8 +174,21 @@ public class Tank
         if (keyboard.IsKeyDown(Keys.W)) forwardInput += 1f;
         if (keyboard.IsKeyDown(Keys.S)) forwardInput -= 1f;
 
-        // Física simple de aceleración/fricción para la velocidad lineal
-        Speed += forwardInput * Acceleration * dt;
+        // La aceleracion del control del jugador (adelante/atras) se aplica solamente si queda combustible
+        if (CurrentFuel > 0f)
+        {
+            Speed += forwardInput * Acceleration * dt;
+            if (forwardInput!= 0f) CurrentFuel -= GameConfig.Tank.FuelConsumptionRate * dt;
+        }
+        else
+        {
+            forwardInput = 0f;
+        }
+
+        CurrentFuel = MathHelper.Clamp(CurrentFuel, 0f, GameConfig.Tank.MaxFuel);
+
+        // La friccion se aplica independientemente de la reserva de combustible, o sea:
+        // cuando se queda sin combustible no frena en seco
         Speed *= MathF.Pow(Friction, dt * 60f);
         Speed = MathHelper.Clamp(Speed, -MaxSpeed * 0.4f, MaxSpeed);
 

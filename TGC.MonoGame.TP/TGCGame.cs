@@ -170,9 +170,10 @@ public class TGCGame : Game
         // creo modelos
         _assets = new AssetsManager(_terrain);
         _assets.Initialize();
+        _assets.SpawnFuelBarrels();
         _assets.LoadContent(Content, _simulation);
 
-        //Cargad de modelo tanque
+        //Carga de modelo tanque
         var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
         //Carga de texturas tanque
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
@@ -230,12 +231,22 @@ public class TGCGame : Game
         _simulation.Timestep(1 / 60f);
 
         _tank.Update(gameTime, kb, _simulation);
+
+        //verificar si pueden recogerse los barriles
+        foreach (var barrel in _assets._fuelBarrels)
+        {
+            if (!barrel.IsCollected) barrel.TryCollect(_tank, _simulation);
+        }
+
+        _assets.UpdateFuelBarrels((float)gameTime.ElapsedGameTime.TotalSeconds);
+
         _assets.Update(gameTime, _simulation);
 
         _camera.Update(gameTime, _tank.Position, _tank.RotationY);
 
         _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
 
+        _hud.TankFuel = _tank.CurrentFuel;
         _hud.TankPosition = _tank.Position;
         _hud.Update(gameTime);
 

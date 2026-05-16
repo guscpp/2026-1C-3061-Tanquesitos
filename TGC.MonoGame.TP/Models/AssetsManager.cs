@@ -1,23 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
 using BepuUtilities.Memory;
-
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
+using static TGC.MonoGame.TP.GameConfig;
+using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Models;
 
 /// <summary>
-/// Genera todas las clases de assets dentro del escenario aleatoriamente
+///     Genera todas las clases de assets dentro del escenario aleatoriamente
 /// </summary>
 public class AssetsManager
 {
@@ -32,6 +33,7 @@ public class AssetsManager
 
     // sobre modelos de decoraciones
     private int NumberOfDecorations => NumberOfAssets - NumberOfHouseModels;
+    public List<FuelBarrel> _fuelBarrels = new();
     public List<Decoration> _decorationModels = new();
     private string[] DecorationModelPaths =
     {
@@ -157,7 +159,7 @@ public class AssetsManager
     }
 
     /// <summary>
-    /// Genera el path dentro del directorio Models de un modelo de casa para colocar en el mapa  
+    ///     Genera el path dentro del directorio Models de un modelo de casa para colocar en el mapa  
     /// </summary>
     /// <param name="content"></param>
     private string GetRandomHousePath()
@@ -218,7 +220,7 @@ public class AssetsManager
     }
 
     /// <summary>
-    /// Genera el path dentro del directorio Models de un modelo de asset para colocar en el mapa  
+    ///     Genera el path dentro del directorio Models de un modelo de asset para colocar en el mapa  
     /// </summary>
     /// <param name="content"></param>
     private string GetRandomAssetPath()
@@ -260,6 +262,57 @@ public class AssetsManager
         };
     }
 
+    /// <summary>
+    ///     Spawnea los barriles de combustible
+    /// </summary>
+    public void SpawnFuelBarrels()
+    {
+        float minDistToDecorations = 8f;
+        float minDistToHouses = 20f;
+        float minDistToBarrels = 6f;
+
+        for (int i = 0; i < GameConfig.FuelBarrel.SpawnCount; i++)
+        {
+            Vector3 pos;
+            bool valid;
+            do
+            {
+                pos = GetRandomPosition(_random);
+                valid = true;
+
+                // Validar distancia contra casas
+                if (IsTooNearToAHouse(pos, minDistToHouses)) { valid = false; continue; }
+
+                // Validar distancia contra decoraciones existentes
+                foreach (var dec in _decorationModels)
+                {
+                    if (Vector3.Distance(pos, dec.Position) < minDistToDecorations) { valid = false; break; }
+                }
+                if (!valid) continue;
+
+                // Validar distancia contra otros barriles ya colocados
+                foreach (var barrel in _fuelBarrels)
+                {
+                    if (Vector3.Distance(pos, barrel.Position) < minDistToBarrels) { valid = false; break; }
+                }
+            } while (!valid);
+
+            pos.Y += GameConfig.FuelBarrel.Height / 2f;
+
+            _fuelBarrels.Add(new FuelBarrel(pos));
+        }
+    }
+
+    /// <summary>
+    ///     Gestiona la recarga de combustible
+    /// </summary>
+    public void UpdateFuelBarrels(float dt)
+    {
+        foreach (var barrel in _fuelBarrels)
+        {
+            barrel.UpdateRecharge(dt);
+        }
+    }
     public void LoadContent(ContentManager content, Simulation simulation)
     {
         //Cargo el efecto una vez
@@ -273,6 +326,11 @@ public class AssetsManager
         foreach (var asset in _decorationModels)
         {
             asset.LoadContent(content, simulation, effect);
+        }
+
+        foreach (var barrel in _fuelBarrels)
+        {
+            barrel.LoadContent(content, simulation, effect);
         }
 
     }
@@ -293,10 +351,17 @@ public class AssetsManager
             house.Draw(view, projection);
             house.DrawCollisionChamber(gizmos, null); //Como las casas ninguna se mueve la simulacion puede ser nula
         }
+
         foreach (var asset in _decorationModels)
         {
             asset.Draw(view, projection);
             asset.DrawCollisionChamber(gizmos, simulation);
+        }
+
+        foreach (var barrel in _fuelBarrels)
+        {
+            if (!barrel.IsCollected) barrel.Draw(view, projection);
+            barrel.DrawCollisionChamber(gizmos, simulation);
         }
     }
 }
