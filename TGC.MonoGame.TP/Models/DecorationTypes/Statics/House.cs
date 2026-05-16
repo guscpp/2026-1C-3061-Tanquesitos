@@ -29,8 +29,8 @@ namespace TGC.MonoGame.TP.Models.Decorations
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             // BoundingBox box = ... (aun no xd)
             _width = _dimensions.X;
-            _height = _dimensions.Y;
-            _lenght = _dimensions.Z;
+            _height = _dimensions.Z; //en los fbx la altura esta 'acostada' por usar Y-up
+            _lenght = _dimensions.Y;
             _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
 
             // Creo el cuerpo en Bepu (Es la configuracion de la fisica)
@@ -47,10 +47,10 @@ namespace TGC.MonoGame.TP.Models.Decorations
             _staticHandle = simulation.Statics.Add(new StaticDescription(initialPos, shapeIndex));
 
             //Problema de que el modelo este acostado
-            Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(0));
+            Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90));
 
             //Como mi modelo es estatico calculo la matriz de mundo una sola vez
-            modificarMatrixWorld(rotation);
+            modificarMatrixWorld(rotation, _height / 2f);
         }
 
         //ACTUALIZO (Modificacion de la funcion en DECORATION)
@@ -68,6 +68,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Matrix gizmoWorld = Matrix.CreateScale(_width, _height, _lenght) 
                                 * Matrix.CreateTranslation(_position);
 
+            gizmos.DrawAxes(gizmoWorld);
             gizmos.DrawCube(gizmoWorld, Color.Violet);
         }
 

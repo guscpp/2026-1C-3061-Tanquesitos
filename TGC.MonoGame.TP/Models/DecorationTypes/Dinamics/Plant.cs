@@ -63,8 +63,13 @@ namespace TGC.MonoGame.TP.Models.Decorations
             if (bodyReference.Velocity.Linear.Length() < 5f) 
             {
                 //Use el random para que el empuje sea hacia distintos lados (Ahora estan locas)
-                bodyReference.ApplyLinearImpulse(new BepuVector3(_random.Next(-5,6), 0, 0)); // Empujoncito diagonal a derecha o izquierda
-                bodyReference.ApplyAngularImpulse(new BepuVector3(0.5f, 0, 0.5f)); // Esto hace que la planta ruede, impulsando a que siga moviendose luego del empujoncito
+                float impulseX = _random.Next(-5, 6);
+                float impulseZ = _random.Next(-5, 6);
+                bodyReference.ApplyLinearImpulse(new BepuVector3(impulseX, 0, impulseZ)); // Empujoncito medianamente diagonal
+
+                float angularX = _random.NextSingle() * 2f - 1f;
+                float angularZ = _random.NextSingle() * 2f - 1f;
+                bodyReference.ApplyAngularImpulse(new BepuVector3(angularX, 0, angularZ)); // Esto hace que la planta ruede, impulsando a que siga moviendose luego del empujoncito
             }
 
             // Convierto la orientacion (uso Quaternianos para que gire como se debe) y pose de Bepu a Monogame

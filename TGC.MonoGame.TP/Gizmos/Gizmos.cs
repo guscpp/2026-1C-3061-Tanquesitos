@@ -257,6 +257,8 @@ namespace TGC.MonoGame.TP.Gizmos
             // Draw our foreground geometry
             DrawBaseGizmosGeometries(_foregroundPass);
 
+            DrawPolyLines(_foregroundPass);
+
             CleanDrawInstances();
         }
 
@@ -312,6 +314,78 @@ namespace TGC.MonoGame.TP.Gizmos
             _cylinder.Dispose();
             _effect.Dispose();
             _content.Dispose();
+        }
+
+        /// <summary>
+        ///     Dibuja unos ejes XYZ de colores (R=x, G=y, B=z)
+        /// </summary>
+        public void DrawAxes(Matrix world, float size = 2f)
+        {
+            Vector3 origin = world.Translation;
+
+            // Ejes locales del objeto
+            Vector3 right = Vector3.Normalize(world.Right) * size;
+            Vector3 up = Vector3.Normalize(world.Up) * size;
+
+            // MonoGame usa Forward = -Z
+            Vector3 forward = -Vector3.Normalize(world.Forward) * size;
+
+            // X = rojo
+            DrawPolyLine(new[]
+            {
+                origin,
+                origin + right
+            }, Color.Red);
+
+            // Y = verde
+            DrawPolyLine(new[]
+            {
+                origin,
+                origin + up
+            }, Color.Lime);
+
+            // Z = azul
+            DrawPolyLine(new[]
+            {
+                origin,
+                origin + forward
+            }, Color.Blue);
+        }
+
+        private void DrawPolyLines(EffectPass pass)
+        {
+            foreach (var colorEntry in _polyLinesToDraw)
+            {
+                Color color = colorEntry.Key;
+
+                _colorParameter.SetValue(color.ToVector3());
+
+                foreach (var linePoints in colorEntry.Value)
+                {
+                    if (linePoints.Length < 2)
+                        continue;
+
+                    VertexPositionColor[] vertices =
+                        new VertexPositionColor[linePoints.Length];
+
+                    for (int i = 0; i < linePoints.Length; i++)
+                    {
+                        vertices[i] =
+                            new VertexPositionColor(linePoints[i], color);
+                    }
+
+                    _worldViewProjectionParameter.SetValue(_viewProjection);
+
+                    pass.Apply();
+
+                    _graphicsDevice.DrawUserPrimitives(
+                        PrimitiveType.LineStrip,
+                        vertices,
+                        0,
+                        linePoints.Length - 1
+                    );
+                }
+            }
         }
     }
 }

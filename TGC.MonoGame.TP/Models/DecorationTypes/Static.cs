@@ -46,11 +46,11 @@ namespace TGC.MonoGame.TP.Models.Decorations
         }
 
         //Estaticos
-        public void modificarMatrixWorld(Matrix rotation){
+        public void modificarMatrixWorld(Matrix rotation, float yOffset = 0f){
             _world = Matrix.CreateTranslation(-_modelCenter)
                     * Matrix.CreateScale(_visualScale)
                     * rotation 
-                    * Matrix.CreateTranslation(_position);
+                    * Matrix.CreateTranslation(_position + Vector3.Up * yOffset);
         }
     }
 }
