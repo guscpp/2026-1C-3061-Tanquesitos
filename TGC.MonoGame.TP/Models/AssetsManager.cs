@@ -248,16 +248,24 @@ public class AssetsManager
     public Decoration GetDecoration(Vector3 position)
     {
         var path = GetRandomAssetPath();
+
+        // aplicar pequeno offset vertical a los modelos dinamicos cuando spawnean
+        Vector3 dynamicPos = position + Vector3.Up * GameConfig.Assets.DynamicSpawnOffset;
+
         return path switch
         {
+            // estaticos, no necesitan el offset
             var p when p.Contains("arbol")      => new Tree(position, path),
             var p when p.Contains("cactus")     => new Cactus(position, path),
             var p when p.Contains("roca")       => new Rock(position, path),
-            var p when p.Contains("barril")     => new Barrel(position, path),
-            var p when p.Contains("carreta")    => new Cart(position, path),
-            var p when p.Contains("planta")     => new Plant(position, path),
-            var p when p.Contains("caja")       => new WoodenBox(position, path),
-            var p when p.Contains("escaleras")  => new Stairs(position, path),
+
+            // dinamicos, usan offset
+            var p when p.Contains("barril")     => new Barrel(dynamicPos, path),
+            var p when p.Contains("carreta")    => new Cart(dynamicPos, path),
+            var p when p.Contains("planta")     => new Plant(dynamicPos, path),
+            var p when p.Contains("caja")       => new WoodenBox(dynamicPos, path),
+            var p when p.Contains("escaleras")  => new Stairs(dynamicPos, path),
+
             _                                   => new Decoration(position, path)
         };
     }

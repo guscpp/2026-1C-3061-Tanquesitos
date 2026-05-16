@@ -82,6 +82,7 @@ public static class GameConfig
         public const float HouseChamberScale = 0.1f;
         public const float DecorationScale = 1.5f;
         public const float DecorationChamberScale = DecorationScale/100f;
+        public const float DynamicSpawnOffset = 0.5f;
     }
 
     // POWERUPS - BARRIL DE COMBUSTIBLE
