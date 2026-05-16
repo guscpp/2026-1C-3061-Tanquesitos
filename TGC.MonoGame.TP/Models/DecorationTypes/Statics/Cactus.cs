@@ -12,15 +12,15 @@ using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Decorations
-{//Estaticos(3 tipos) - Esfera
+{//Estaticos (3 tipos) - Cilindros
 
-    public class Rock : Decoration
+    public class Cactus : Static
     {
-        private StaticHandle _staticHandle;
         private float _radius;
+        private float _height;
         //No tiene bandera porque no muere
 
-        public Rock(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
+        public Cactus(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
 
         //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
@@ -28,11 +28,12 @@ namespace TGC.MonoGame.TP.Models.Decorations
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             // BoundingBox box = ... (aun no xd)
-            _radius = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z)) / 2f;
+            _height = _dimensions.Y;
+            _radius = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z)) / 4f;
             _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
 
             // Creo el cuerpo en Bepu (Es la configuracion de la fisica)
-            var shape = new Sphere(_radius);
+            var shape = new Cylinder(_radius, _height);
             var shapeIndex = simulation.Shapes.Add(shape);
 
             //Como es estatico no necesito la inercia
@@ -61,12 +62,12 @@ namespace TGC.MonoGame.TP.Models.Decorations
         //DIBUJO LAS COLISIONES (Modificacion de la funcion en DECORATION)
         public override void DrawCollisionChamber(Gizmo gizmos, Simulation simulation)
         {   
-            //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal
+            //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal - para cuando cree _touchingDecoration
 
-            //Tamaño (yo pensaba que se dibujaba igual que el resto XD)
-            Vector3 diametro = new Vector3(_radius);
+            Matrix gizmoWorld = Matrix.CreateScale(_radius, _height, _radius)
+                                * Matrix.CreateTranslation(_position);
 
-            gizmos.DrawSphere(_position, diametro, Color.Violet);
+            gizmos.DrawCylinder(gizmoWorld, Color.Violet); //Por ahora voy a usar el verde para los dinamicos y el violeta para los estaticos
         }
 
         //No hace nada si el tanque lo choca por lo que no existe HandleCollision

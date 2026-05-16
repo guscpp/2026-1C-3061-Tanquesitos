@@ -12,16 +12,15 @@ using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Decorations
-{ //Dinamico - Caja
-    public class WoodenBox : Decoration
+{//Dinamico - Esfera
+    public class Plant : Dinamic
     {
-        private BodyHandle _bodyHandle;
-        private float _width;
-        private float _height;
-        private float _lenght;
-        public bool IsDead { get; private set; } //La banderita que determina si fue o no colisionado
+        //private BodyHandle bodyHandle;
+        private float _radius;
+        private readonly Random _random = new();
+        //public bool IsDead { get; private set; } //La banderita que determina si fue o no colisionado
 
-        public WoodenBox(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
+        public Plant(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
 
         //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
@@ -29,33 +28,26 @@ namespace TGC.MonoGame.TP.Models.Decorations
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             // BoundingBox box = ... (aun no xd)
-            _width = _dimensions.X;
-            _height = _dimensions.Y;
-            _lenght = _dimensions.Z;
+            _radius = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z)) / 2f;
             _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
 
             // Creo el cuerpo en Bepu (Es la configuracion de la fisica)
-            var shape = new Box(_width, _height, _lenght);
+            var shape = new Sphere(_radius);
             var shapeIndex = simulation.Shapes.Add(shape);
 
-            //Calculo de la inercia (masa de 1kg porque si)
+            //Calculo de la inercia (masa de 1kg porque si) - en el caso de la esfera la inercia se distribuye igual en todos los lados
             var inertia = shape.ComputeInertia(1f);
 
             // Posicion inicial, se ajusta el centro (Bepu usa el centro, MonoGame la base)
             //Uso la posicion del modelo visual para definir donde ubico el modelo fisico al inicio, pero la altura no por lo del pivote (el centro del modelo)
-            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
-
-            //Para que no consuma recursos a lo loco cuando no lo estoy tocando y asegurarme de que se va quedar quieto hasta que el tanque lo choque
-            //Primer parametro --> umbral de sueño --> si no se mueve demasiado bepu lo congela
-            //Segundo parametro --> estado inicial --> es 0 porque esta dormido
-            var activity = new BodyActivityDescription(0.01f, 0);
+            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y + _radius, _position.Z);
             
             //Añado el cuerpo dinamico a la simulacion
-            _bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(
-                initialPos, inertia, shapeIndex, activity)); //si colocamos el 0.01f solamente en vez del activity se verá algunos objetos "temblar"
+            bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(
+                initialPos, inertia, shapeIndex, 0.01f));
 
             // Le doy una identidad al cuerpo para reconocerlo en colisiones
-            simulation.Bodies[_bodyHandle].Collidable.Continuity = ContinuousDetection.Passive;
+            simulation.Bodies[bodyHandle].Collidable.Continuity = ContinuousDetection.Passive;
         }
 
         //ACTUALIZO (Modificacion de la funcion en DECORATION)
@@ -64,8 +56,16 @@ namespace TGC.MonoGame.TP.Models.Decorations
             if (IsDead) return;
 
             // Tomo la posicion actual en la simulacion
-            var bodyReference = simulation.Bodies[_bodyHandle];
+            var bodyReference = simulation.Bodies[bodyHandle];
             var pose = bodyReference.Pose;
+
+            //Reviso la velocidad del objeto, si su velocidad disminuyo hasta ser menor a 5 le doy un empujoncito
+            if (bodyReference.Velocity.Linear.Length() < 5f) 
+            {
+                //Use el random para que el empuje sea hacia distintos lados (Ahora estan locas)
+                bodyReference.ApplyLinearImpulse(new BepuVector3(_random.Next(-5,6), 0, 0)); // Empujoncito diagonal a derecha o izquierda
+                bodyReference.ApplyAngularImpulse(new BepuVector3(0.5f, 0, 0.5f)); // Esto hace que la planta ruede, impulsando a que siga moviendose luego del empujoncito
+            }
 
             // Convierto la orientacion (uso Quaternianos para que gire como se debe) y pose de Bepu a Monogame
             Matrix rotation = Matrix.CreateFromQuaternion(new Quaternion(pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
@@ -82,28 +82,14 @@ namespace TGC.MonoGame.TP.Models.Decorations
             //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal
 
             // Tomo solo la rotacion y posicion que vienen de la Pose de Bepu (el modelo se supone que ya concuerda con el modelo fisico).            
-            var pose = simulation.Bodies[_bodyHandle].Pose;
-            
-            Matrix rotation = Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(
-                pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
+            var pose = simulation.Bodies[bodyHandle].Pose;
             
             Vector3 position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
 
-            // Matriz --> volumen real de colision en el motor fisico
-            // Uso el radio y altura para escalar el cilindro del Gizmo si es necesario
-            Matrix gizmoWorld = Matrix.CreateScale(_width, _height, _lenght) 
-                                * rotation 
-                                * Matrix.CreateTranslation(position);
+            //Tamaño (yo pensaba que se dibujaba igual que el resto XD)
+            Vector3 sphereSize = new Vector3(_radius);
 
-            gizmos.DrawCube(gizmoWorld, Color.Green);
-        }
-
-        //LOGICA DE COLISION
-        public void HandleCollision()
-        {
-            // Aqui ira la logica de la colision, deberia (deberia xd) desaparecer si el tanque lo toca, lo mismo para todos los dinamicos
-            IsDead = true;
-            // La remocion de Bepu debe hacerse fuera del timestep
+            gizmos.DrawSphere(position, sphereSize, Color.Green);
         }
 
     }
