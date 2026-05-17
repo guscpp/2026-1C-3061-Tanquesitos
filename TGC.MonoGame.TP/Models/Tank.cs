@@ -169,73 +169,72 @@ public class Tank
     public void Update(GameTime gameTime, KeyboardState keyboard, Simulation simulation)
     {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        var body = simulation.Bodies.GetBodyReference(TankHandler);
 
+        // 1. Lógica de entrada y combustible
         float forwardInput = 0f;
         if (keyboard.IsKeyDown(Keys.W)) forwardInput += 1f;
         if (keyboard.IsKeyDown(Keys.S)) forwardInput -= 1f;
 
-        // La aceleracion del control del jugador (adelante/atras) se aplica solamente si queda combustible
-        if (CurrentFuel > 0f)
-        {
-            Speed += forwardInput * Acceleration * dt;
-            if (forwardInput!= 0f) CurrentFuel -= GameConfig.Tank.FuelConsumptionRate * dt;
-        }
-        else
-        {
+        if (CurrentFuel <= 0f)
             forwardInput = 0f;
-        }
+        else if (forwardInput != 0f)
+            CurrentFuel -= GameConfig.Tank.FuelConsumptionRate * dt;
 
         CurrentFuel = MathHelper.Clamp(CurrentFuel, 0f, GameConfig.Tank.MaxFuel);
 
-        // La friccion se aplica independientemente de la reserva de combustible, o sea:
-        // cuando se queda sin combustible no frena en seco
-        Speed *= MathF.Pow(Friction, dt * 60f);
-        Speed = MathHelper.Clamp(Speed, -MaxSpeed * 0.4f, MaxSpeed);
-
-        // Dirección actual del tanque (según su orientación en el motor físico)
-        // Usamos el quaternion de Bepu para obtener el vector forward
-        var body = simulation.Bodies.GetBodyReference(TankHandler);
+        // 2. Movimiento lineal mediante fuerzas (convertidas a impulso)
         var orientation = body.Pose.Orientation;
-        Vector3 forwardBepu = Vector3.Transform(Vector3.Forward, orientation); // forward en System.Numerics
-        Vector3 forwardXna = new Vector3(forwardBepu.X, forwardBepu.Y, forwardBepu.Z); // convertir a XNA
+        // Dirección "forward" del tanque en coordenadas de mundo (sistema diestro: -Z es adelante)
+        System.Numerics.Vector3 forward = System.Numerics.Vector3.Transform(
+            new System.Numerics.Vector3(0, 0, -1), orientation);
 
-        // Velocidad lineal deseada
-        Vector3 desiredLinearVelocity = forwardXna * Speed;
-        // Mantenemos la componente Y actual (para gravedad)
-        body.Velocity.Linear = new System.Numerics.Vector3(desiredLinearVelocity.X, body.Velocity.Linear.Y, desiredLinearVelocity.Z);
-        body.Awake = true;
+        // Fuerza del motor
+        float motorForceMagnitude = GameConfig.Tank.MotorForce * forwardInput;
+        System.Numerics.Vector3 motorForce = forward * motorForceMagnitude;
 
+        // Fuerza de arrastre (drag) proporcional a la velocidad horizontal actual
+        // Obtener vectores locales del tanque (en coordenadas mundo)
+        var right = System.Numerics.Vector3.Normalize(System.Numerics.Vector3.Cross(new System.Numerics.Vector3(0, 1, 0), forward));
+
+        // Descomponer la velocidad actual en componentes local
+        var velocity = body.Velocity.Linear;
+        float forwardSpeed = System.Numerics.Vector3.Dot(velocity, forward);
+        float rightSpeed = System.Numerics.Vector3.Dot(velocity, right);
+
+        // Calcular fuerza de arrastre en espacio local
+        var dragForce = -forward * (GameConfig.Tank.ForwardDrag * forwardSpeed)
+                        - right * (GameConfig.Tank.LateralDrag * rightSpeed);
+
+        // Aplicamos el impulso equivalente a la fuerza durante este frame
+        System.Numerics.Vector3 impulse = (motorForce + dragForce) * dt;
+        body.ApplyLinearImpulse(impulse);
+
+        //System.Diagnostics.Debug.WriteLine($"Vel: {body.Velocity.Linear.Length()}");
+
+        // 3. Rotación (giro en el lugar, estilo orugas)
         float turnInput = 0f;
         if (keyboard.IsKeyDown(Keys.A)) turnInput += 1f;
         if (keyboard.IsKeyDown(Keys.D)) turnInput -= 1f;
 
-        // Velocidad angular máxima (rad/s)
-        float maxAngularSpeed = TurnSpeed;
-        body.Velocity.Angular = new System.Numerics.Vector3(0, turnInput * maxAngularSpeed, 0);
+        body.Velocity.Angular = new System.Numerics.Vector3(0, turnInput * TurnSpeed, 0);
 
-
-        // Correcion para que no se caiga de trompa cuando avanza (al tener proporciones cartoon es inestable)
-        // y ya que estamos, que sea mas estable lateralmente sobre desniveles (que no caiga sobre su lateral)
+        // 4. Estabilización de la carrocería
         ref var vel = ref body.Velocity;
-        
-        vel.Angular.X = MathHelper.Clamp(vel.Angular.X, -0.5f, 0.5f);   //clamp al pitch
-        vel.Angular.Z = MathHelper.Clamp(vel.Angular.Z, -0.3f, 0.3f);   //clamp al roll
+        vel.Angular.X = MathHelper.Clamp(vel.Angular.X, -0.5f, 0.5f);
+        vel.Angular.Z = MathHelper.Clamp(vel.Angular.Z, -0.3f, 0.3f);
+        vel.Angular.X *= 0.88f;
+        vel.Angular.Y *= 0.98f;
+        vel.Angular.Z *= 0.88f;
 
-        //damping
-        vel.Angular.X *= 0.88f; //pitch
-        vel.Angular.Y *= 0.98f; //yaw (correccion mas suave que X y Z para que el jugador pueda rotarlo) 
-        vel.Angular.Z *= 0.88f; //roll
+        body.Awake = true;
 
-        body.Awake = true; //fuerza que procese los cambios
-
-
-        // --- Leer la posición y orientación actualizadas por Bepu ---
+        // 5. Sincronizar estado visual
         var pose = body.Pose;
         Position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
         _physicsOrientation = pose.Orientation;
 
-        // Extraer el ángulo Yaw (RotationY) para la cámara
-        // Usamos la misma fórmula que ya tenías
+        // Rotación en Y para la cámara
         float sinYaw = 2f * (_physicsOrientation.W * _physicsOrientation.Z + _physicsOrientation.X * _physicsOrientation.Y);
         float cosYaw = 1f - 2f * (_physicsOrientation.Y * _physicsOrientation.Y + _physicsOrientation.Z * _physicsOrientation.Z);
         RotationY = MathF.Atan2(sinYaw, cosYaw);

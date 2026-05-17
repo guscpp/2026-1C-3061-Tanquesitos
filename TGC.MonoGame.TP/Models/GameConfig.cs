@@ -27,8 +27,8 @@ public static class GameConfig
         public const float Length = 2f;         // metros
         public const float Width = 2f;          // metros
         public const float Height = 2.25f;      // metros
-        public const float ChassisMass = 4000f; // kg (tanque real ~60t, ya lo vamos a ir ajustando)
-        public const float TurretMass = 1000f;  // kg
+        public const float ChassisMass = 2000f; // kg (tanque real ~60t, ya lo vamos a ir ajustando)
+        public const float TurretMass = 500f;   // kg
 
         public const float MaxSpeed = 90f;      // m/s (referencia: 100 m/s = 360 km/h)
         public const float VerticalSpeed = 25f; // m/s (~90 km/h) para God Mode
@@ -48,6 +48,9 @@ public static class GameConfig
         public const float PhysicsTurretLength  = 2f;       // metros
         public const float PhysicsTurretHeight  = 1f;       // metros
         public const float PhysicsTurretOffsetY = PhysicsChassisHeight;     // justo encima del chasis
+        public const float MotorForce = 150000f;            // Newton
+        public const float ForwardDrag = 5000f;              // Coeficiente de arrastre (para velocidad terminal = MotorForce / Drag)
+        public const float LateralDrag = 250000f;            // evitar derrape
     }
 
     // TERRENO
