@@ -94,8 +94,6 @@ public class TGCGame : Game
 
         InitializePhysics();
 
-        IsMouseVisible = false;
-
         base.Initialize();
     }
 

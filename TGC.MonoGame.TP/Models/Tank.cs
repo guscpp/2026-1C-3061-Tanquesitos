@@ -267,27 +267,36 @@ public class Tank
         RotationY = MathF.Atan2(sinYaw, cosYaw);
 
         // 6. Torreta, movimiento con mouse
-        var currentMouseState = Mouse.GetState();
+        if(TGCGame.Instance.IsActive){
+            TGCGame.Instance.IsMouseVisible = false;
 
-        // Busco el centro de la pantalla actual usando el Viewport estatico de la tarjeta grafica
-        int centerX = simulation.Bodies.GetBodyReference(TankHandler).Awake ? TGCGame.Instance.GraphicsDevice.Viewport.Width / 2 : 0;
-        int centerY = TGCGame.Instance.GraphicsDevice.Viewport.Height / 2;
-        centerX = TGCGame.Instance.GraphicsDevice.Viewport.Width / 2;
+            var currentMouseState = Mouse.GetState();
 
-        // Calculo del desplazamiento del mouse desde el centro de la pantalla
-        float deltaX = currentMouseState.X - centerX;
-        float deltaY = currentMouseState.Y - centerY;
+                    // Busco el centro de la pantalla actual usando el Viewport estatico de la tarjeta grafica
+                    int centerX = simulation.Bodies.GetBodyReference(TankHandler).Awake ? TGCGame.Instance.GraphicsDevice.Viewport.Width / 2 : 0;
+                    int centerY = TGCGame.Instance.GraphicsDevice.Viewport.Height / 2;
+                    centerX = TGCGame.Instance.GraphicsDevice.Viewport.Width / 2;
 
-        float sensitivity = 0.0015f; //Ajusto la velocidad (sensibilidad)
+                    // Calculo del desplazamiento del mouse desde el centro de la pantalla
+                    float deltaX = currentMouseState.X - centerX;
+                    float deltaY = currentMouseState.Y - centerY;
 
-        // Determino la rotacion segun el desplazamiento del mouse y la velocidad
-        _turretRotation -= deltaX * sensitivity;
-        _cannonRotation -= deltaY * sensitivity;
+                    float sensitivity = 0.0015f; //Ajusto la velocidad (sensibilidad)
 
-        // Le aplico una correccion al cañon en funcion de los limites que puse arriba
-        _cannonRotation = MathHelper.Clamp(_cannonRotation, _minCannonPitch, _maxCannonPitch);
+                    // Determino la rotacion segun el desplazamiento del mouse y la velocidad
+                    _turretRotation -= deltaX * sensitivity;
+                    _cannonRotation -= deltaY * sensitivity;
 
-        // Centro el mouse de nuevo
-        Mouse.SetPosition(centerX, centerY);
+                    // Le aplico una correccion al cañon en funcion de los limites que puse arriba
+                    _cannonRotation = MathHelper.Clamp(_cannonRotation, _minCannonPitch, _maxCannonPitch);
+
+                    // Centro el mouse de nuevo
+                    Mouse.SetPosition(centerX, centerY);
+        } 
+        else
+        {
+            TGCGame.Instance.IsMouseVisible = true;
+        }
+        
     }
 }
