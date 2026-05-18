@@ -47,6 +47,17 @@ public class Tank
     private readonly float _maxCannonPitch = MathHelper.ToRadians(20f);
     public float TurretRotationWorld => RotationY + _turretRotation; //Necesario para la camara (Torreta + Cañon)
 
+    public float CannonRotation => _cannonRotation;
+
+    public Vector3 CannonForward
+    {
+        get
+        {
+            Matrix rotation = Matrix.CreateRotationX(_cannonRotation) * Matrix.CreateRotationY(TurretRotationWorld);
+            return Vector3.Transform(Vector3.Forward, rotation);
+        }
+    }
+
     private System.Numerics.Quaternion _physicsOrientation = System.Numerics.Quaternion.Identity;
 
     public BodyHandle TankHandler;
