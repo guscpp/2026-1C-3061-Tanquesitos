@@ -40,6 +40,13 @@ public class Tank
     public float CurrentFuel { get; private set; } = GameConfig.Tank.MaxFuel;
     public float Scale { get; set; } = GameConfig.Tank.TankScale;
 
+    //Movimiento de la torreta
+    private float _turretRotation = 0f; // Rotacion torreta (derecha/izquierda)
+    private float _cannonRotation = 0f; // Rotacion cañon (arriba/abajo)
+    private readonly float _minCannonPitch = MathHelper.ToRadians(-10f); //Limites para que el cañon no traspase el modelo al subir y bajar
+    private readonly float _maxCannonPitch = MathHelper.ToRadians(20f);
+    public float TurretRotationWorld => RotationY + _turretRotation; //Necesario para la camara (Torreta + Cañon)
+
     private System.Numerics.Quaternion _physicsOrientation = System.Numerics.Quaternion.Identity;
 
     public BodyHandle TankHandler;
@@ -150,17 +157,37 @@ public class Tank
     {
         if (Model == null) return;
 
-        //Para cada malla en la coleccion de mallas del modelo
+        // Matriz de mundo de la base
+        Matrix chassisWorld = WorldMatrix;
+
+        // Matriz de mundo de la torreta (cabeza) que hereda su posicion de la base
+        Matrix turretWorld = Matrix.CreateRotationZ(_turretRotation) * chassisWorld;
+
+        // Matriz de mundo del cañon que hereda su posicion de la torreta
+        Matrix cannonWorld = Matrix.CreateRotationX(_cannonRotation) * turretWorld;
+
         foreach (var mesh in Model.Meshes)
         {
-            //Para cada efecto en la coleccion de efectos de la malla
+            Matrix finalWorldMatrix = chassisWorld;
+
+            // Reviso cual es el nombre de la malla para determinar que matriz de mundo debe seguir
+            if (mesh.Name.Contains("Cabeza")
+                || mesh.Name.Contains("Antena")
+                || mesh.Name.Contains("Pistola_i") || mesh.Name.Contains("Pistola_d"))
+            {
+                finalWorldMatrix = turretWorld;
+            }
+            else if (mesh.Name.Contains("Cañon anillo") || mesh.Name.Contains("Cañon.001"))
+            {
+                finalWorldMatrix = cannonWorld;
+            }
+
             foreach (var effect in mesh.Effects)
             {
-                //Coloco los parametros de world, view y projection
-                effect.Parameters["World"].SetValue(WorldMatrix);
+                effect.Parameters["World"].SetValue(finalWorldMatrix);
                 effect.Parameters["View"].SetValue(view);
                 effect.Parameters["Projection"].SetValue(projection);
-                effect.Parameters["ModelTexture"].SetValue(_texture); //Un color porque aun no sé ponerle las texturas
+                effect.Parameters["ModelTexture"].SetValue(_texture);
             }
             mesh.Draw();
         }
@@ -238,5 +265,29 @@ public class Tank
         float sinYaw = 2f * (_physicsOrientation.W * _physicsOrientation.Z + _physicsOrientation.X * _physicsOrientation.Y);
         float cosYaw = 1f - 2f * (_physicsOrientation.Y * _physicsOrientation.Y + _physicsOrientation.Z * _physicsOrientation.Z);
         RotationY = MathF.Atan2(sinYaw, cosYaw);
+
+        // 6. Torreta, movimiento con mouse
+        var currentMouseState = Mouse.GetState();
+
+        // Busco el centro de la pantalla actual usando el Viewport estatico de la tarjeta grafica
+        int centerX = simulation.Bodies.GetBodyReference(TankHandler).Awake ? TGCGame.Instance.GraphicsDevice.Viewport.Width / 2 : 0;
+        int centerY = TGCGame.Instance.GraphicsDevice.Viewport.Height / 2;
+        centerX = TGCGame.Instance.GraphicsDevice.Viewport.Width / 2;
+
+        // Calculo del desplazamiento del mouse desde el centro de la pantalla
+        float deltaX = currentMouseState.X - centerX;
+        float deltaY = currentMouseState.Y - centerY;
+
+        float sensitivity = 0.0015f; //Ajusto la velocidad (sensibilidad)
+
+        // Determino la rotacion segun el desplazamiento del mouse y la velocidad
+        _turretRotation -= deltaX * sensitivity;
+        _cannonRotation -= deltaY * sensitivity;
+
+        // Le aplico una correccion al cañon en funcion de los limites que puse arriba
+        _cannonRotation = MathHelper.Clamp(_cannonRotation, _minCannonPitch, _maxCannonPitch);
+
+        // Centro el mouse de nuevo
+        Mouse.SetPosition(centerX, centerY);
     }
 }

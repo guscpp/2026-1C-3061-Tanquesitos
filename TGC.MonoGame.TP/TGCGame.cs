@@ -78,7 +78,7 @@ public class TGCGame : Game
 
         Content.RootDirectory = "Content";
 
-        IsMouseVisible = true;
+        IsMouseVisible = true; //Oculto el mouse porque da dolor de cabeza
     }
 
     protected override void Initialize()
@@ -93,6 +93,8 @@ public class TGCGame : Game
             Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
 
         InitializePhysics();
+
+        IsMouseVisible = false;
 
         base.Initialize();
     }
@@ -206,7 +208,7 @@ public class TGCGame : Game
 
         _assets.Update(gameTime, _simulation);
 
-        _camera.Update(gameTime, _tank.Position, _tank.RotationY);
+        _camera.Update(gameTime, _tank.Position, _tank.TurretRotationWorld); //A la camara ahora le paso la posicion de la torreta en vez de la base
         _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
 
         _hud.TankFuel = _tank.CurrentFuel;
