@@ -166,22 +166,7 @@ public class Tank
                 effect.Parameters["World"].SetValue(WorldMatrix);
                 effect.Parameters["View"].SetValue(view);
                 effect.Parameters["Projection"].SetValue(projection);
-<<<<<<< Updated upstream
                 effect.Parameters["ModelTexture"].SetValue(_texture); //Un color porque aun no sé ponerle las texturas
-=======
-
-                // 🔍 INTERCEPTAMOS LAS ORUGAS Y LAS RUEDAS
-                if (nombrePieza.Contains("cadena") || nombrePieza.Contains("rueda"))
-                {
-                    // Si es la oruga (cadena_i/d) o las ruedas, las pintamos de Gris Oscuro (R:0.2, G:0.2, B:0.2)
-                    effect.Parameters["DiffuseColor"].SetValue(new Vector3(0.2f, 0.2f, 0.2f));
-                }
-                else
-                {
-                    // Si es cualquier otra parte (Chasis, Cañón, Torreta), se queda con el Rojo original
-                    effect.Parameters["DiffuseColor"].SetValue(Color.Red.ToVector3());
-                }
->>>>>>> Stashed changes
             }
             
             // Dibuja la pieza actual con el color que le asignamos arriba
