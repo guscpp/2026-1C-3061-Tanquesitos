@@ -3,6 +3,10 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Data;
+using BepuPhysics;
+using BepuPhysics.Collidables;
+using BepuUtilities.Memory;
+using System.Numerics;
 
 namespace TGC.MonoGame.TP.Models;
 
@@ -52,112 +56,72 @@ public class Terrain
     {
         _width = heightmapTexture.Width;
         _height = heightmapTexture.Height;
-
         //matriz con las alturas
         _heights = new float[_width, _height];
-
         Color[] heightmapData = new Color[_width * _height];
         heightmapTexture.GetData(heightmapData);
 
-        //crear vertices con posicion y color
-        var vertices = new VertexPositionColor[_width * _height];
+        //Crear vertices e indices
+        VertexPositionColor[] vertices = new VertexPositionColor[_width * _height];
+        uint[] indices = new uint[(_width - 1) * (_height - 1) * 6];
+
+        float halfWidth = (_width * TerrainScale) / 2f;
+        float halfHeight = (_height * TerrainScale) / 2f;
         int index = 0;
 
         for (int z = 0; z < _height; z++)
         {
             for (int x = 0; x < _width; x++)
             {
-                float posX = (x - _width / 2f) * TerrainScale;
-                float posZ = (z - _height / 2f) * TerrainScale;
+                float height = heightmapData[z * _width + x].R / 255f * HeightScale;
+                _heights[x, z] = height; // Guardamos altura para colisiones/queries
 
-                //altura basada en el canal rojo del heightmap
-                float heightValue = heightmapData[index].R / 255f * HeightScale;
+                Microsoft.Xna.Framework.Vector3 position = new Microsoft.Xna.Framework.Vector3(x * TerrainScale - halfWidth, height, z * TerrainScale - halfHeight);
+                Color color = GetColorForHeight(height);
+                vertices[z * _width + x] = new VertexPositionColor(position, color);
 
-                //guardo el valor en la matriz
-                _heights[x, z] = heightValue;
+                if (x < _width - 1 && z < _height - 1)
+                {
+                    int topLeft = z * _width + x;
+                    int topRight = topLeft + 1;
+                    int bottomLeft = (z + 1) * _width + x;
+                    int bottomRight = bottomLeft + 1;
 
-                Vector3 position = new Vector3(posX, heightValue, posZ);
-                Color vertexColor = GetColorForHeight(heightValue);
+                    indices[index++] = (uint)topLeft;
+                    indices[index++] = (uint)topRight;
+                    indices[index++] = (uint)bottomLeft;
 
-                vertices[index] = new VertexPositionColor(position, vertexColor);
-                index++;
-            }
-        }
-
-        //crear indices para triangulos (1 quad = triangulo 1 + triangulo 2)
-        int indexCount = (_width - 1) * (_height - 1) * 6;
-        var indices = new uint[indexCount];
-        index = 0;
-
-        for (int z = 0; z < _height - 1; z++)
-        {
-            for (int x = 0; x < _width - 1; x++)
-            {
-                int topLeft = z * _width + x;
-                int topRight = topLeft + 1;
-                int bottomLeft = (z + 1) * _width + x;
-                int bottomRight = bottomLeft + 1;
-
-                // triangulo 1
-                indices[index++] = (uint)topLeft;
-                indices[index++] = (uint)topRight;
-                indices[index++] = (uint)bottomLeft;
-
-                // triangulo 2
-                indices[index++] = (uint)topRight;
-                indices[index++] = (uint)bottomRight;
-                indices[index++] = (uint)bottomLeft;
+                    indices[index++] = (uint)topRight;
+                    indices[index++] = (uint)bottomRight;
+                    indices[index++] = (uint)bottomLeft;
+                }
             }
         }
 
         _primitiveCount = index / 3;
-
-        //pasar datos a la gpu
-        _terrainVertexBuffer = new VertexBuffer(
-            _graphicsDevice,
-            VertexPositionColor.VertexDeclaration,
-            vertices.Length,
-            BufferUsage.WriteOnly);
+        _terrainVertexBuffer = new VertexBuffer(_graphicsDevice, VertexPositionColor.VertexDeclaration, vertices.Length, BufferUsage.WriteOnly);
         _terrainVertexBuffer.SetData(vertices);
-
-        //usar 32 bits para soportar mas de 65k vertices, despues que me paso me acorde que lo dijeron los profes
-        _terrainIndexBuffer = new IndexBuffer(
-            _graphicsDevice,
-            IndexElementSize.ThirtyTwoBits,
-            indices.Length,
-            BufferUsage.WriteOnly);
+        _terrainIndexBuffer = new IndexBuffer(_graphicsDevice, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.WriteOnly);
         _terrainIndexBuffer.SetData(indices);
     }
 
-    /// <summary>
-    ///     Retorna la altura correspondiente respecto de coordenadas X, Z
-    /// </summary>
-    public float GetHeight(float X, float Z)
+    public float GetHeightAtPixel(int x, int z)
     {
-        // obtengo los colores del mapa
-        Color[] heightmapData = new Color[_heightmapTexture.Width * _heightmapTexture.Height];
-        _heightmapTexture.GetData(heightmapData);
-
-        // pasaje de las coordenadas de mundo a "coordenadas de heightmap" --> el pixel dentro del mapa
-        int xInMap = (int) (X / TerrainScale + _heightmapWidth / 2);
-        int zInMap = (int) (Z / TerrainScale + _heightmapHeight / 2);
-
-        var x = (int) MathHelper.Clamp(xInMap, 0, _heightmapWidth - 1);
-        var z = (int) MathHelper.Clamp(zInMap, 0, _heightmapHeight - 1);
-        
-        var Y = heightmapData[z * _heightmapTexture.Width + x].R / 255f * HeightScale;
-        return Y;
+        x = (int)MathHelper.Clamp(x, 0, _width - 1);
+        z = (int)MathHelper.Clamp(z, 0, _height - 1);
+        return _heights[x, z];
     }
+
 
     /// <summary>
     ///     Retorna la altura real segun la posicion que le mandemos, de esa forma el tanque no atraviesa el suelo
     /// </summary>
-    public float GetHeight(Vector3 position)
+    public float GetHeight(float posX, float posZ)
     {
         // Tomo los valores de x e y de la posicion
         //Primero convierto el valor de la coordenada a pixel luego lo hago coincidir con el origen de la matriz
-        float x = (position.X / TerrainScale) + (_width / 2f);
-        float z = (position.Z / TerrainScale) + (_height / 2f);
+        float x = (posX / TerrainScale) + (_width / 2f);
+        float z = (posZ / TerrainScale) + (_height / 2f);
 
         //Tomo los 4 puntos más cercanos al tanque
         int x0 = (int)Math.Floor(x); //vertice superior izquierdo
@@ -196,6 +160,52 @@ public class Terrain
         if (t < 0.6f) return new Color(244, 212, 150); // arena mas o menos clara
         if (t < 0.8f) return new Color(222, 184, 135); // arena apenas clara
                       return new Color(160, 82, 45);   // arena no clara :D
+    }
+
+    /// <summary>
+    ///     Crea una malla de colision para BepuPhysics usando submuestreo configurable.
+    ///     Usa el mismo heightmap visual, pero saltea celdas según 'step' para optimizar CPU.
+    /// </summary>
+    public StaticHandle CreatePhysicsTerrain(Simulation simulation)
+    {
+        const int physicsStep = GameConfig.Terrain.PhysicsSubsampleStep;
+
+        int quadsX = (_width - 1) / physicsStep;
+        int quadsZ = (_height - 1) / physicsStep;
+        int triangleCount = quadsX * quadsZ * 2;
+
+        var pool = simulation.BufferPool;
+        pool.Take<Triangle>(triangleCount, out Buffer<Triangle> triangles);
+        int idx = 0;
+
+        float halfWidth = (_width * TerrainScale) / 2f;
+        float halfHeight = (_height * TerrainScale) / 2f;
+
+        for (int z = 0; z <= _height - 1 - physicsStep; z += physicsStep)
+        {
+            for (int x = 0; x <= _width - 1 - physicsStep; x += physicsStep)
+            {
+                // Leemos alturas EXACTAS (sin interpolar) para la física
+                float h00 = _heights[x, z];
+                float h10 = _heights[x + physicsStep, z];
+                float h01 = _heights[x, z + physicsStep];
+                float h11 = _heights[x + physicsStep, z + physicsStep];
+
+                // Mismas coordenadas de mundo que el terreno visual
+                System.Numerics.Vector3 v00 = new System.Numerics.Vector3(x * TerrainScale - halfWidth, h00, z * TerrainScale - halfHeight);
+                System.Numerics.Vector3 v10 = new System.Numerics.Vector3((x + physicsStep) * TerrainScale - halfWidth, h10, z * TerrainScale - halfHeight);
+                System.Numerics.Vector3 v01 = new System.Numerics.Vector3(x * TerrainScale - halfWidth, h01, (z + physicsStep) * TerrainScale - halfHeight);
+                System.Numerics.Vector3 v11 = new System.Numerics.Vector3((x + physicsStep) * TerrainScale - halfWidth, h11, (z + physicsStep) * TerrainScale - halfHeight);
+
+                triangles[idx++] = new Triangle(v00, v10, v01);
+                triangles[idx++] = new Triangle(v10, v11, v01);
+            }
+        }
+
+        // Bepu toma ownership del buffer y genera el BVH internamente
+        var meshShape = new Mesh(triangles, System.Numerics.Vector3.One, pool);
+        TypedIndex shapeIndex = simulation.Shapes.Add(meshShape);
+        return simulation.Statics.Add(new StaticDescription(System.Numerics.Vector3.Zero, shapeIndex));
     }
 
     public void Draw(Matrix view, Matrix projection)

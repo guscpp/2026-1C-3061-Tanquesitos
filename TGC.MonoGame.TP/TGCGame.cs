@@ -1,13 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Transactions;
+﻿using BepuPhysics;
+using BepuPhysics.Collidables;
+using BepuPhysics.CollisionDetection;
+using BepuPhysics.Constraints;
+using BepuUtilities.Memory;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using System.Transactions;
+using TGC.MonoGame.Samples.Physics.Bepu;
 using TGC.MonoGame.TP.Cameras;
+using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models;
+using TGC.MonoGame.TP.Models.Decorations;
+using TGC.MonoGame.TP.Models.Enemy;
+using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP;
 
@@ -18,62 +28,81 @@ namespace TGC.MonoGame.TP;
 /// </summary>
 public class TGCGame : Game
 {
+    //Carpetas
     public const string ContentFolder3D = "Models/";
     public const string ContentFolderEffects = "Effects/";
     public const string ContentFolderMusic = "Music/";
     public const string ContentFolderSounds = "Sounds/";
     public const string ContentFolderSpriteFonts = "SpriteFonts/";
     public const string ContentFolderTextures = "Textures/";
-    
+    //-----------JUEGO
+    //graficos
     private readonly GraphicsDeviceManager _graphics;
-
-    private Effect _effect;
-    private Model _model;
+    //escena
     private Matrix _projection;
-    private float _rotation;
-    private SpriteBatch _spriteBatch;
     private Matrix _view;
     private Matrix _world;
-
+    //Sonido
     private SoundEffect _klaxonSound;
     private SoundEffect _hornSound;
+    //teclado
     private KeyboardState _lastKeyboardState;
-    private readonly Random _random = new();
-
-    private Tank _tank;
-    private TankFollowCamera _camera;
-    private Terrain _terrain;
+    //hud
     private Hud _hud;
-    private AssetsManager _assets;
+    // multiplayer :o
+    private bool twoPlayers = false;
+    // ----------ENEMIGOS
+    private int _enemiesCount = 15;
+    public List<Enemy> _enemies = new ();
+    private List<BodyHandle> _enemiesHandles = new ();
+    private List<Cannonball> _enemiesCanonballs = new();
 
-    private List<House> _modelosCasitas = new();
+    //-----------TANQUE
+    public Tank _tank;
+    private TankFollowCamera _camera;
+    //-----------TERRENO
+    private Terrain _terrain;
+    //-----------DECORACIONES
+    public AssetsManager _assets;
+    private readonly Random _random = new();
+    //-----------FISICAS
+    private Simulation _simulation;
+    private BufferPool _bufferPool;
+    private BodyHandle _tankHandle;
+    private StaticHandle _terrainStaticHandle;
+    public static TGCGame Instance { get; private set; } //Esto es para que lo use NarrowPhaseCallbacks
+    //gizmos
+    private Gizmo _gizmos = new();
+    private Effect _effect;
+    private List<Cannonball> _cannonballs = new();
 
-    /// <summary>
-    ///     Constructor del juego.
-    /// </summary>
+    public List<Cannonball> Cannonballs
+    {
+        get
+        {
+            return _cannonballs;
+        }
+    }
+    private MouseState _previousMouseState;
+    private Model _cannonballModel;
+    public static float _shootCooldown = GameConfig.Tank.Cooldown;
+    private float _currentShootCooldown = 0f;
+
     public TGCGame()
     {
-        // Maneja la configuracion y la administracion del dispositivo grafico.
         _graphics = new GraphicsDeviceManager(this);
+        Instance = this;
 
         _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
         _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
 
-        // Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
-        // Carpeta raiz donde va a estar toda la Media.
         Content.RootDirectory = "Content";
-        // Hace que el mouse sea visible.
-        IsMouseVisible = true;
+
+        IsMouseVisible = true; //Oculto el mouse porque da dolor de cabeza
     }
 
-    /// <summary>
-    ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo.
-    ///     Escribir aqui el codigo de inicializacion: el procesamiento que podemos pre calcular para nuestro juego.
-    /// </summary>
     protected override void Initialize()
     {
-        // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
-
         // Se activa el Backface Culling en sentido anti-horario (se renderizan las caras frontales de los triangulos)
         GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
@@ -83,64 +112,109 @@ public class TGCGame : Game
         _projection =
             Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
 
+        InitializePhysics();
+
         base.Initialize();
     }
 
-    /// <summary>
-    ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
-    ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
-    ///     que podemos pre calcular para nuestro juego.
-    /// </summary>
     protected override void LoadContent()
     {
-        // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
-        _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-        //Cargo el BasicShader para reemplazar el BasicEffect, debo pasarle este shader tanto al tanque como al terreno (Lo hago en su load pero no se si conviene más en un set)
-        var effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
-
-        //Cargad de modelo tanque
-        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
-        //Carga de texturas tanque
-        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x256");
-        //Creamos el tanque
-        _tank = new Tank();
-        //Le pasamos el modelo, la textura y el efecto
-        _tank.Load(tankModel, tankTexture, effect);
-
-        _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
-
-        //Cargo las texturas del terreno
+        //RECURSOS
+        //shaders
+        _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //modelos sin texturas
+        var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
+        //texturas
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
-        //Creo el terreno
-        _terrain = new Terrain(GraphicsDevice);
-        //Le paso la textura y el efecto
-        _terrain.LoadContent(terrainTexture, effect);
-
-        _hud = new Hud();
-        _hud.LoadContent(Content, GraphicsDevice);
-
-        // creo modelos
-        _assets = new AssetsManager(_terrain);
-        _assets.Initialize();
-        _assets.LoadContent(Content);
-
+        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+        //sonidos
         _klaxonSound = Content.Load<SoundEffect>(ContentFolderSounds + "klaxon");
         _hornSound = Content.Load<SoundEffect>(ContentFolderSounds + "horn");
+        //modelos
+        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
+        _cannonballModel = Content.Load<Model>(ContentFolder3D + "cannonball/cannonball");
+
+        //AUXILIARES
+        Vector3 spawnPos = new Vector3(0, 0, 0);
+
+        //TERRENO
+            //Creo un terreno (suelo)
+        _terrain = new Terrain(GraphicsDevice);
+            //Le paso la textura y el efecto
+        _terrain.LoadContent(terrainTexture, _effect);
+            //fisicas
+        _terrainStaticHandle = _terrain.CreatePhysicsTerrain(_simulation);
+
+        // 4 paredes invisibles que rodean el mapa e impiden que salgan los objetos
+        float halfSize = _terrain.WidthUnits; // ~259 unidades
+        float margin = 8f;
+        float playAreaLimit = halfSize - margin; // Los muros invisibles quedan un poco adentro del mapa
+        float wallHeight = 60f; // Un poco más alto que el terreno máximo (35m)
+        float wallThickness = 2f;
+
+        // Shape para muros Norte/Sur (largos en X, finos en Z)
+        var wallShapeNS = new Box(playAreaLimit * 2, wallHeight, wallThickness);
+        var idxNS = _simulation.Shapes.Add(wallShapeNS);
+
+        // Shape para muros Este/Oeste (finos en X, largos en Z)
+        var wallShapeEW = new Box(wallThickness, wallHeight, playAreaLimit * 2);
+        var idxEW = _simulation.Shapes.Add(wallShapeEW);
+
+        // Norte (-Z)
+        _simulation.Statics.Add(new StaticDescription(new System.Numerics.Vector3(0, wallHeight / 2f, -playAreaLimit), idxNS));
+        // Sur (+Z)
+        _simulation.Statics.Add(new StaticDescription(new System.Numerics.Vector3(0, wallHeight / 2f, playAreaLimit), idxNS));
+        // Oeste (-X)
+        _simulation.Statics.Add(new StaticDescription(new System.Numerics.Vector3(-playAreaLimit, wallHeight / 2f, 0), idxEW));
+        // Este (+X)
+        _simulation.Statics.Add(new StaticDescription(new System.Numerics.Vector3(playAreaLimit, wallHeight / 2f, 0), idxEW));
+
+        // creo modelos
+        //ASSETS DECORATIVOS
+            //Creamos el manager
+        _assets = new AssetsManager(_terrain);
+            //Iniciamos
+        _assets.Initialize();
+        _assets.SpawnFuelBarrels();
+            //Cargamos los assets
+        _assets.LoadContent(Content, _simulation);
+        // ENEMIGOS
+        for(int i=0; i<_enemiesCount; i++)
+        {   // Inicializo los tanques y sus handles
+            var enemy = new Enemy();
+            enemy.Position = enemy.GetPosition(_terrain, _random);
+            enemy.Load(tankModel, tankTexture, effect2, _simulation);
+            _enemies.Add(enemy);
+            _enemiesHandles.Add(enemy.TankHandler);
+        }
+        //TANQUE
+            //Creamos el tanque
+        _tank = new Tank();
+            //Determino una posicion para el tanque
+        float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);//Se spawnea unos metros por encima del terreno
+        _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
+            //Cargo el tanque
+        _tank.Load(tankModel, tankTexture, effect2, _simulation);
+            //fisicas
+        _tankHandle = _tank.TankHandler;
+
+        /* Vector3 direction = new Vector3(0f, 0f, -1f);
+        direction.Normalize();
+        _cannonball = new Cannonball(_cannonballModel, effect, new Vector3(3f, 35f, 0f), direction, _simulation); */
+
+        //HUD
+        _hud = new Hud();
+        _hud.LoadContent(Content, GraphicsDevice);
+        
+        //CAMARA
+        _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
+        //GIZMOS
+        _gizmos.LoadContent(GraphicsDevice, Content);
 
         base.LoadContent();
     }
 
-    /// <summary>
-    ///     Se llama en cada frame.
-    ///     Se debe escribir toda la logica de computo del modelo, asi como tambien verificar entradas del usuario y reacciones
-    ///     ante ellas.
-    /// </summary>
     protected override void Update(GameTime gameTime)
     {
-        // Aca deberiamos poner toda la logica de actualizacion del juego.
-
-        // Capturar Input teclado
         var kb = Keyboard.GetState();
         if (kb.IsKeyDown(Keys.Escape)) Exit();
         if (kb.IsKeyDown(Keys.Space) && _lastKeyboardState.IsKeyUp(Keys.Space))
@@ -152,26 +226,72 @@ public class TGCGame : Game
 
         _lastKeyboardState = kb;
 
-        // Basado en el tiempo que paso se va generando una rotacion.
-        //_rotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-        //_world = Matrix.CreateRotationY(_rotation);
+        _simulation.Timestep(1 / 60f);
 
-        _tank.Update(gameTime, kb);
+        _tank.Update(gameTime, kb, _simulation);
 
-        // Actualiza la posicionY del tanque según el terreno
-        float terrainHeight = _terrain.GetHeight(_tank.Position); //Altura correcta que debe usar
-        _tank.SetHeight(terrainHeight);
-        //Actualmente el tanque hace esto, primero dice donde quiere moverse (tanl.Update) y luego nosotros le corregimos la posicion segun el mapa
+        //verificar si pueden recogerse los barriles
+        foreach (var barrel in _assets._fuelBarrels)
+        {
+            if (!barrel.IsCollected) barrel.TryCollect(_tank, _simulation);
+        }
 
-        _camera.Update(gameTime, _tank.Position, _tank.RotationY);
+        _assets.UpdateFuelBarrels((float)gameTime.ElapsedGameTime.TotalSeconds);
+
+        _assets.Update(gameTime, _simulation);
+
+        foreach(var enemy in _enemies)
+        {
+            enemy.UpdateEnemy(gameTime, _simulation, _tank.Position.ToNumerics(), _terrain);
+        }
+        
+        //_cannonball.Update(_simulation);
+        // cada frame el tiempo restante de cooldown baja
+        _currentShootCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MouseState currentMouseState = Mouse.GetState();
+
+        if (currentMouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released && _currentShootCooldown <= 0f)
+        {
+            Vector3 direction = _tank.CannonForward;
+
+            direction.Normalize();
+
+            // Posición desde donde sale la bala
+            Vector3 spawnPosition = _tank.Position + direction * 3f + Vector3.Up * 2f;
+
+            Cannonball cannonball = CreateCannonball(spawnPosition, direction);
+
+            _cannonballs.Add(cannonball);
+            _currentShootCooldown = _shootCooldown;
+        }
+
+        _previousMouseState = currentMouseState;
+
+        for (int i = _cannonballs.Count - 1; i >= 0; i--)
+        {
+            _cannonballs[i].Update(gameTime, _simulation);
+
+            if (_cannonballs[i].IsDead)
+            {
+                _cannonballs.RemoveAt(i);
+            }  
+        }
+
+        _camera.Update(gameTime, _tank.Position, _tank.TurretRotationWorld); //A la camara ahora le paso la posicion de la torreta en vez de la base
+        _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
+
+        _hud.TankFuel = _tank.CurrentFuel;
+        _hud.TankPosition = _tank.Position;
+        _hud.Update(gameTime);
 
         base.Update(gameTime);
     }
 
-    /// <summary>
-    ///     Se llama cada vez que hay que refrescar la pantalla.
-    ///     Escribir aqui el codigo referido al renderizado.
-    /// </summary>
+    public Cannonball CreateCannonball(Vector3 spawnPosition, Vector3 direction)
+    {
+        return new Cannonball(_cannonballModel, _effect, spawnPosition, direction, _simulation);
+    }
+
     protected override void Draw(GameTime gameTime)
     {
         // Aca deberiamos poner toda la logia de renderizado del juego.
@@ -181,24 +301,42 @@ public class TGCGame : Game
         // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);
-        _assets.Draw(_camera.View, _camera.Projection);
+        //_cannonball.Draw(_camera.View, _camera.Projection);
+        foreach(var enemy in _enemies)
+        {
+            enemy.Draw(_camera.View, _camera.Projection);
+        }
+        foreach (var cannonball in _cannonballs)
+        {
+            cannonball.Draw(_camera.View, _camera.Projection);
+        }
+        _assets.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
         // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
         _hud.Draw();
 
-        //base.Draw();
+        _gizmos.Draw();
     }
 
-    /// <summary>
-    ///     Libero los recursos que se cargaron en el juego.
-    /// </summary>
+    public void InitializePhysics()
+    {
+        _bufferPool = new BufferPool();
+
+        _simulation = 
+            Simulation.Create(_bufferPool,
+            new NarrowPhaseCallbacks(),
+            new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -9.8f, 0)),
+            new SolveDescription(8, 1));
+    }
+
     protected override void UnloadContent()
     {
         // Libero los recursos.
         Content.Unload();
-
+        _simulation?.Dispose();
+        _simulation = null;
+        _bufferPool.Clear();
         _terrain?.Dispose();
         _hud?.Dispose();
-        _effect?.Dispose();
 
         base.UnloadContent();
     }
