@@ -50,7 +50,7 @@ namespace TGC.MonoGame.TP.Models.Enemy
             // la torreta sigue la posicion del target
             float sensitivity = 0.0015f; //Ajusto la velocidad (sensibilidad)
                                          //mov izquiera derecha (eje y)
-            var targetYaw = MathF.Atan2(-targetDirection.X, -targetDirection.Z);
+            var targetYaw = MathF.Atan2(targetDirection.X, targetDirection.Z);
             _turretRotation = targetYaw;
 
             var deltaY = targetDistanceToSelf.Y;
@@ -69,7 +69,7 @@ namespace TGC.MonoGame.TP.Models.Enemy
             var orientation = body.Pose.Orientation;
             // Dirección "forward" del tanque en coordenadas de mundo (sistema diestro: -Z es adelante)
             Vector3 forward = Vector3.Transform(
-                new Vector3(0, 0, 1), orientation);
+                new Vector3(0, 0, -1), orientation);
 
             // Rotacion hacia el objetivo
             // Calculo hacia donde girar: si > 0 gira hacia a la izquierda y viceversa
