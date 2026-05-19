@@ -38,7 +38,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             // Posicion inicial, se ajusta el centro (Bepu usa el centro, MonoGame la base)
             //Uso la posicion del modelo visual para definir donde ubico el modelo fisico al inicio, pero la altura no por lo del pivote (el centro del modelo)
-            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
+            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y-_radius/4, _position.Z);
             
             //Añado el cuerpo estatico a la simulacion
             _staticHandle = simulation.Statics.Add(new StaticDescription(initialPos, shapeIndex));
@@ -47,7 +47,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90));
 
             //Como mi modelo es estatico calculo la matriz de mundo una sola vez
-            modificarMatrixWorld(rotation);
+            modificarMatrixWorld(rotation, -_radius/2);
         }
 
         //ACTUALIZO (Modificacion de la funcion en DECORATION)
@@ -66,7 +66,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             //Tamaño (yo pensaba que se dibujaba igual que el resto XD)
             Vector3 diametro = new Vector3(_radius);
 
-            gizmos.DrawSphere(_position, diametro, Color.Violet);
+            gizmos.DrawSphere(new Vector3(_position.X, _position.Y-_radius/4, _position.Z), diametro, Color.Violet);
         }
 
         //No hace nada si el tanque lo choca por lo que no existe HandleCollision

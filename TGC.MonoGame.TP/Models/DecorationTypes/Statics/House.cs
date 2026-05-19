@@ -41,7 +41,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             // Posicion inicial, se ajusta el centro (Bepu usa el centro, MonoGame la base)
             //Uso la posicion del modelo visual para definir donde ubico el modelo fisico al inicio, pero la altura no por lo del pivote (el centro del modelo)
-            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
+            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y+(_height/2), _position.Z);
             
             //Añado el cuerpo estatico a la simulacion
             _staticHandle = simulation.Statics.Add(new StaticDescription(initialPos, shapeIndex));
@@ -66,7 +66,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal
 
             Matrix gizmoWorld = Matrix.CreateScale(_width, _height, _lenght) 
-                                * Matrix.CreateTranslation(_position);
+                                * Matrix.CreateTranslation(new Vector3(_position.X, _position.Y+(_height/2), _position.Z));
 
             gizmos.DrawAxes(gizmoWorld);
             gizmos.DrawCube(gizmoWorld, Color.Violet);

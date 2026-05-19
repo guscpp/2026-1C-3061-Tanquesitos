@@ -26,7 +26,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             // BoundingBox box = ... (aun no xd)
-            _height = _dimensions.Y;
+            _height = _dimensions.Y/2;
             _radius = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z)) / 2f;
             _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
 
@@ -45,7 +45,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             // Posicion inicial, se ajusta el centro (Bepu usa el centro, MonoGame la base)
             //Uso la posicion del modelo visual para definir donde ubico el modelo fisico al inicio, pero la altura no por lo del pivote (el centro del modelo)
-            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
+            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y+_height/2, _position.Z);
             
             //Añado el cuerpo dinamico a la simulacion
             bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(
@@ -68,7 +68,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Matrix rotation = Matrix.CreateFromQuaternion(new Quaternion(pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
             //Problema, mis modelos visuales estan rotados, asi que debo "levantarlos" (girarlos 90 grados)
             Matrix rotationCorrect = Matrix.CreateRotationX(MathHelper.ToRadians(-90)) * rotation;
-            Vector3 position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
+            Vector3 position = new Vector3(pose.Position.X, pose.Position.Y+_height/2, pose.Position.Z);
 
             // Calculo de la matriz de mundo
             modificarMatrixWorld(rotationCorrect, position);
@@ -86,7 +86,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Matrix rotation = Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(
                 pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
             
-            Vector3 position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
+            Vector3 position = new Vector3(pose.Position.X, pose.Position.Y+_height/2, pose.Position.Z);
 
             // Matriz --> volumen real de colision en el motor fisico
             // Uso el radio y altura para escalar el cilindro del Gizmo si es necesario
