@@ -199,12 +199,13 @@ public class AssetsManager
     public Decoration GetDecoration(Vector3 position)
     {
         Vector3 dynamicPos = position + Vector3.Up * GameConfig.Assets.DynamicSpawnOffset;
+        Vector3 rocaPos = position + Vector3.Up * 1.5f;
         var path = GetRandomAssetPath();
         return path switch
         {
             var p when p.Contains("arbol")      => new Tree(position, path),
             var p when p.Contains("cactus")     => new Cactus(position, path),
-            var p when p.Contains("roca")       => new Rock(position, path),
+            var p when p.Contains("roca")       => new Rock(rocaPos, path),
             var p when p.Contains("pozo")       => new Pozo(position, path),
             var p when p.Contains("barril")     => new Barrel(dynamicPos, path),
             var p when p.Contains("carreta")    => new Cart(dynamicPos, path),
