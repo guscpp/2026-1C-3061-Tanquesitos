@@ -14,9 +14,10 @@ namespace TGC.MonoGame.TP.Models.Enemy
 {
     public class Enemy : Tank //hereda el comportamiento de un tanque (movimiento, disparo, configuracion)
     {
-        public const float HealthPoints = 10f; // 1o puntos de salud, cada bala quita 2
-
-        public const float AttackRadius = 30f;
+        public float HealthPoints = GameConfig.Tank.EnemyHealthPoints; // 10 puntos de salud, cada bala quita 2
+        public const float AttackRadius = GameConfig.Tank.EnemyAttackRadius;
+        public const float ShootCooldown = GameConfig.Tank.EnemyCooldown;
+        private float _currentShootCooldown = 0f;
 
         public Vector3 GetPosition(Terrain terrain, Random random)
         {
@@ -29,14 +30,46 @@ namespace TGC.MonoGame.TP.Models.Enemy
             return new Vector3(x, terrain.GetHeight(x, z), z);
         }
 
-        private void ShootTarget(Vector3 targetPosition)
+        private void ShootTarget(Vector3 targetPosition, GameTime gametime, Simulation simulation)
         {
+            float dt = (float)gametime.ElapsedGameTime.TotalSeconds;
+            var cannonballs = TGCGame.Instance.Cannonballs;
+            Microsoft.Xna.Framework.Vector3 targetDistanceToSelf = targetPosition - Position;
 
+            // no se dispara a objetivos sobre los que estamos o que estan demasiado lejos
+            if(targetDistanceToSelf.X == 0 || targetDistanceToSelf.Y == 0 || targetDistanceToSelf.Length() > 30f)  
+                return;
+
+            targetDistanceToSelf.Normalize();
+            Microsoft.Xna.Framework.Vector3 direction = CannonForward;      // dirreccion actual del cañon
+            direction.Normalize();
+            // float alineamiento, mientras mas cerca de 1 el valor, mayor alineamiento con el objetivo
+            var alignmentToTarget = Vector3.Dot(direction.ToNumerics(), targetDistanceToSelf.ToNumerics()); 
+
+            // Solo se dispara si el cooldown lo permite y si se apunta correctamente al objetivo
+            // if (alignmentToTarget > 0.95f && _currentShootCooldown <= 0f)
+            if (_currentShootCooldown <= 0f)
+            {
+                // Posición desde donde sale la bala
+                Microsoft.Xna.Framework.Vector3 spawnPosition = Position + direction * 3f + new Microsoft.Xna.Framework.Vector3(0, 1, 0) * 2f;
+
+                Cannonball cannonball = TGCGame.Instance.CreateCannonball(spawnPosition, direction);
+
+                cannonballs.Add(cannonball);
+                _currentShootCooldown = ShootCooldown;
+            }
         }
 
         public void UpdateEnemy(GameTime gameTime, Simulation simulation, Vector3 targetPosition, Terrain terrain)
         {
+            if (IsDead) return;
+
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            _currentShootCooldown -= dt;
+            if (_currentShootCooldown < 0f)
+                _currentShootCooldown = 0f;
+
             var body = simulation.Bodies.GetBodyReference(TankHandler);
             // vector de enemigo a su target, importante para la direccion
             var targetDistanceToSelf = targetPosition - Position;
@@ -111,14 +144,17 @@ namespace TGC.MonoGame.TP.Models.Enemy
 
             body.Awake = true;
             // 5. Sincronizar estado visual
-            var pose = body.Pose; 
+            var pose = body.Pose;
             Position = new Vector3(pose.Position.X, terrain.GetHeight(pose.Position.X, pose.Position.Z), pose.Position.Z);
             _physicsOrientation = pose.Orientation;
+
+            ShootTarget(targetPosition, gameTime, simulation);
 
             // Rotación en Y para la cámara
             float sinYaw = 2f * (_physicsOrientation.W * _physicsOrientation.Z + _physicsOrientation.X * _physicsOrientation.Y);
             float cosYaw = 1f - 2f * (_physicsOrientation.Y * _physicsOrientation.Y + _physicsOrientation.Z * _physicsOrientation.Z);
             RotationY = MathF.Atan2(sinYaw, cosYaw);
         }
+
     }
 }

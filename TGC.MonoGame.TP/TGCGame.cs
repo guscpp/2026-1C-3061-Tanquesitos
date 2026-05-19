@@ -53,7 +53,7 @@ public class TGCGame : Game
     private bool twoPlayers = false;
     // ----------ENEMIGOS
     private int _enemiesCount = 15;
-    private List<Enemy> _enemies = new ();
+    public List<Enemy> _enemies = new ();
     private List<BodyHandle> _enemiesHandles = new ();
     private List<Cannonball> _enemiesCanonballs = new();
 
@@ -68,7 +68,6 @@ public class TGCGame : Game
     //-----------FISICAS
     private Simulation _simulation;
     private BufferPool _bufferPool;
-    private List<BodyHandle> _bodyHandlers;
     private BodyHandle _tankHandle;
     private StaticHandle _terrainStaticHandle;
     public static TGCGame Instance { get; private set; } //Esto es para que lo use NarrowPhaseCallbacks
@@ -86,7 +85,7 @@ public class TGCGame : Game
     }
     private MouseState _previousMouseState;
     private Model _cannonballModel;
-    public static float _shootCooldown = 0.5f;
+    public static float _shootCooldown = GameConfig.Tank.Cooldown;
     private float _currentShootCooldown = 0f;
 
     public TGCGame()
@@ -236,16 +235,18 @@ public class TGCGame : Game
         {
             if (!barrel.IsCollected) barrel.TryCollect(_tank, _simulation);
         }
-        foreach(var enemy in _enemies)
-        {
-            enemy.UpdateEnemy(gameTime, _simulation, _tank.Position.ToNumerics(), _terrain);
-        }
 
         _assets.UpdateFuelBarrels((float)gameTime.ElapsedGameTime.TotalSeconds);
 
         _assets.Update(gameTime, _simulation);
+
+        foreach(var enemy in _enemies)
+        {
+            enemy.UpdateEnemy(gameTime, _simulation, _tank.Position.ToNumerics(), _terrain);
+        }
         
         //_cannonball.Update(_simulation);
+        // cada frame el tiempo restante de cooldown baja
         _currentShootCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
         MouseState currentMouseState = Mouse.GetState();
 
@@ -258,7 +259,7 @@ public class TGCGame : Game
             // Posición desde donde sale la bala
             Vector3 spawnPosition = _tank.Position + direction * 3f + Vector3.Up * 2f;
 
-            Cannonball cannonball = new Cannonball(_cannonballModel, _effect, spawnPosition, direction, _simulation);
+            Cannonball cannonball = CreateCannonball(spawnPosition, direction);
 
             _cannonballs.Add(cannonball);
             _currentShootCooldown = _shootCooldown;
@@ -284,6 +285,11 @@ public class TGCGame : Game
         _hud.Update(gameTime);
 
         base.Update(gameTime);
+    }
+
+    public Cannonball CreateCannonball(Vector3 spawnPosition, Vector3 direction)
+    {
+        return new Cannonball(_cannonballModel, _effect, spawnPosition, direction, _simulation);
     }
 
     protected override void Draw(GameTime gameTime)
@@ -314,8 +320,6 @@ public class TGCGame : Game
     public void InitializePhysics()
     {
         _bufferPool = new BufferPool();
-        if(!twoPlayers)
-            _bodyHandlers = new List<BodyHandle>();
 
         _simulation = 
             Simulation.Create(_bufferPool,

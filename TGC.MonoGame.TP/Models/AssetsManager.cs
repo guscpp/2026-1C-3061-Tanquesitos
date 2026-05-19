@@ -239,17 +239,20 @@ public class AssetsManager
         var positions = new List<Vector3> {};
         var minDistanceToHouses = 30f;
         var minDistanceBetween = 10f;
+        var minDistanceToSpawn = 20f;
   
         for(int i = 0; i < NumberOfDecorations; i++)
         {
             Vector3 candidate;
             bool valid;
+            var spawnPoint = new Vector3(0, _terrain.GetHeight(0, 0), 0);
             do
             {
                 candidate = GetRandomPosition();
                 valid = true;
-                // chequeo contra casas
-                if(IsTooNearToAHouse(candidate, minDistanceToHouses))
+                // chequeo contra casas o spawnpoint
+                if(IsTooNearToAHouse(candidate, minDistanceToHouses) ||
+                    Vector3.Distance(candidate, spawnPoint) < minDistanceToSpawn)
                 {
                     valid = false;
                     continue;
@@ -301,6 +304,9 @@ public class AssetsManager
     {
         var positions = new List<Vector3> {};
         var minDistanceBetween = 45f; // GE 4500f
+        var minDistanceToSpawn =  20f;
+        var spawnPoint = new Vector3(0, _terrain.GetHeight(0, 0), 0);
+
         // inicializacion
         for (int i = 0; i < NumberOfHouseModels; i++)
             positions.Add(GetRandomPosition());
@@ -314,7 +320,8 @@ public class AssetsManager
                 valid = true;
                 for (int j = 0; j < i; j++)  // solo compara contra las anteriores ya validadas
                 {
-                    if (Vector3.Distance(positions[i], positions[j]) < minDistanceBetween)
+                    if (Vector3.Distance(positions[i], positions[j]) < minDistanceBetween ||
+                        Vector3.Distance(positions[i], spawnPoint) < minDistanceToSpawn)
                     {
                         positions[i] = GetRandomPosition();
                         valid = false;

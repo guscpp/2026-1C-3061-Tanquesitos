@@ -62,6 +62,11 @@ public class Tank
 
     public BodyHandle TankHandler;
 
+    //  --------JUGABILIDAD
+    public float HealthPoints = GameConfig.Tank.HealthPoints;
+    public float AttackDamage = GameConfig.Tank.AttackDamage;
+    public bool IsDead = false;
+
     /// <summary>
     ///     Matriz de mundo lista para pasar al Draw de un Model.
     /// </summary>
@@ -154,6 +159,27 @@ public class Tank
     }
 
     /// <summary>
+    /// Maneja la colision con el enemigo
+    /// </summary>
+    public void HandleCollision()
+    {
+        HandleHealth(GameConfig.Tank.AttackDamage);
+    }
+
+    private void HandleHealth(float enemyAttackDamage)
+    {
+        var health = HealthPoints - enemyAttackDamage;
+        if(health <= 0)
+        {
+            IsDead = true;
+            if (health < 0) HealthPoints = 0f;
+            return;
+        }
+        //efectuo el daño
+        HealthPoints = health;
+    }
+
+    /// <summary>
     ///     Hace la recarga con limite, el combustible que sobra se desperdicia
     /// </summary>
     public void AddFuel(float amount)
@@ -167,6 +193,7 @@ public class Tank
     public void Draw(Matrix view, Matrix projection)
     {
         if (Model == null) return;
+        if(IsDead) return;
 
         // Matriz de mundo de la base
         Matrix chassisWorld = WorldMatrix;
@@ -177,9 +204,9 @@ public class Tank
         float distanciaHaciaAtras = -1.5f; //Valor random que uso para empujar el centro del cañon hacia atras
 
         //movimiento realizado del cañon, tomo el centro del cañon, lo tiro para atras y lo roto en el eje X usando ese centro inventando, luego lo vuelvo a su lugar
-        Matrix localCannon = Matrix.CreateTranslation(0f, 0f, distanciaHaciaAtras) 
-                            * Matrix.CreateRotationX(_cannonRotation) 
-                            * Matrix.CreateTranslation(0f, 0f, -distanciaHaciaAtras); 
+        Matrix localCannon = Matrix.CreateTranslation(0f, 0f, distanciaHaciaAtras)
+                            * Matrix.CreateRotationX(_cannonRotation)
+                            * Matrix.CreateTranslation(0f, 0f, -distanciaHaciaAtras);
 
         //Luego tomo mi cañon y lo acomodo sobre la torreta
         Matrix cannonWorld = localCannon * turretWorld;
@@ -285,36 +312,37 @@ public class Tank
         RotationY = MathF.Atan2(sinYaw, cosYaw);
 
         // 6. Torreta, movimiento con mouse
-        if(TGCGame.Instance.IsActive){
+        if (TGCGame.Instance.IsActive)
+        {
             TGCGame.Instance.IsMouseVisible = false;
 
             var currentMouseState = Mouse.GetState();
 
-                    // Busco el centro de la pantalla actual usando el Viewport estatico de la tarjeta grafica
-                    int centerX = simulation.Bodies.GetBodyReference(TankHandler).Awake ? TGCGame.Instance.GraphicsDevice.Viewport.Width / 2 : 0;
-                    int centerY = TGCGame.Instance.GraphicsDevice.Viewport.Height / 2;
-                    centerX = TGCGame.Instance.GraphicsDevice.Viewport.Width / 2;
+            // Busco el centro de la pantalla actual usando el Viewport estatico de la tarjeta grafica
+            int centerX = simulation.Bodies.GetBodyReference(TankHandler).Awake ? TGCGame.Instance.GraphicsDevice.Viewport.Width / 2 : 0;
+            int centerY = TGCGame.Instance.GraphicsDevice.Viewport.Height / 2;
+            centerX = TGCGame.Instance.GraphicsDevice.Viewport.Width / 2;
 
-                    // Calculo del desplazamiento del mouse desde el centro de la pantalla
-                    float deltaX = currentMouseState.X - centerX;
-                    float deltaY = currentMouseState.Y - centerY;
+            // Calculo del desplazamiento del mouse desde el centro de la pantalla
+            float deltaX = currentMouseState.X - centerX;
+            float deltaY = currentMouseState.Y - centerY;
 
-                    float sensitivity = 0.0015f; //Ajusto la velocidad (sensibilidad)
+            float sensitivity = 0.0015f; //Ajusto la velocidad (sensibilidad)
 
-                    // Determino la rotacion segun el desplazamiento del mouse y la velocidad
-                    _turretRotation -= deltaX * sensitivity;
-                    _cannonRotation -= deltaY * sensitivity;
+            // Determino la rotacion segun el desplazamiento del mouse y la velocidad
+            _turretRotation -= deltaX * sensitivity;
+            _cannonRotation -= deltaY * sensitivity;
 
-                    // Le aplico una correccion al cañon en funcion de los limites que puse arriba
-                    _cannonRotation = MathHelper.Clamp(_cannonRotation, _minCannonPitch, _maxCannonPitch);
+            // Le aplico una correccion al cañon en funcion de los limites que puse arriba
+            _cannonRotation = MathHelper.Clamp(_cannonRotation, _minCannonPitch, _maxCannonPitch);
 
-                    // Centro el mouse de nuevo
-                    Mouse.SetPosition(centerX, centerY);
-        } 
+            // Centro el mouse de nuevo
+            Mouse.SetPosition(centerX, centerY);
+        }
         else
         {
             TGCGame.Instance.IsMouseVisible = true;
         }
-        
+
     }
 }

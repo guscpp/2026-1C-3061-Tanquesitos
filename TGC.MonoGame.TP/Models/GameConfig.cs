@@ -52,6 +52,14 @@ public static class GameConfig
         public const float EnemyMotorForce = 110000f;       // Newton
         public const float ForwardDrag = 5000f;              // Coeficiente de arrastre (para velocidad terminal = MotorForce / Drag)
         public const float LateralDrag = 250000f;            // evitar derrape
+
+        public const float HealthPoints = 20f;
+        public const float AttackDamage = 1f;               // por ahora, jugador y enemigo tienen el mismo ataque
+        public const float EnemyHealthPoints = 10f;
+        public const float EnemyAttackRadius = 50f;
+        public const float Cooldown = 0.5f;
+        public const float EnemyCooldown = 1f;
+        
     }
 
     // TERRENO

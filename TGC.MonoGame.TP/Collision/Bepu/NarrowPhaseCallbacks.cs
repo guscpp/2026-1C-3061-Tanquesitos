@@ -106,6 +106,13 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                 {
                     objetoChocado.HandleCollision();
                 }
+
+                // Reviso si se impacto a un enemigo
+                var enemyChocado = TGCGame.Instance._enemies.FirstOrDefault(e => e.TankHandler == obstacleHandle);
+                if(enemyChocado != null && !enemyChocado.IsDead)
+                {
+                    enemyChocado.HandleCollision();
+                }
             }
 
         }
