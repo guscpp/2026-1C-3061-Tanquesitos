@@ -92,6 +92,22 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                     objetoChocado.HandleCollision(); //Aca lo declaro muerto
                 }
             }
+
+            // Buscar si alguno de los handles pertenece a una bala
+            var cannonball = TGCGame.Instance.Cannonballs.FirstOrDefault(c => c.BodyHandle == handleA || c.BodyHandle == handleB);
+
+            if (cannonball != null)
+            {
+                BodyHandle obstacleHandle = (cannonball.BodyHandle == handleA) ? handleB : handleA;
+
+                var objetoChocado = TGCGame.Instance._assets._decorationModels.OfType<Dinamic>().FirstOrDefault(d => d.bodyHandle == obstacleHandle);
+
+                if (objetoChocado != null && !objetoChocado.IsDead)
+                {
+                    objetoChocado.HandleCollision();
+                }
+            }
+
         }
         return true;
     }

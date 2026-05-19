@@ -76,6 +76,14 @@ public class TGCGame : Game
     private Gizmo _gizmos = new();
     private Effect _effect;
     private List<Cannonball> _cannonballs = new();
+
+    public List<Cannonball> Cannonballs
+    {
+        get
+        {
+            return _cannonballs;
+        }
+    }
     private MouseState _previousMouseState;
     private Model _cannonballModel;
     public static float _shootCooldown = 0.5f;

@@ -43,8 +43,8 @@ public class Tank
     //Movimiento de la torreta
     public float _turretRotation = 0f; // Rotacion torreta (derecha/izquierda)
     public float _cannonRotation = 0f; // Rotacion cañon (arriba/abajo)
-    public readonly float _minCannonPitch = MathHelper.ToRadians(-10f); //Limites para que el cañon no traspase el modelo al subir y bajar
-    public readonly float _maxCannonPitch = MathHelper.ToRadians(20f);
+    public readonly float _minCannonPitch = MathHelper.ToRadians(-20f); //Limites para que el cañon no traspase el modelo al subir y bajar
+    public readonly float _maxCannonPitch = MathHelper.ToRadians(10f);
     public float TurretRotationWorld => RotationY + _turretRotation; //Necesario para la camara (Torreta + Cañon)
 
     public float CannonRotation => _cannonRotation;
@@ -174,8 +174,15 @@ public class Tank
         // Matriz de mundo de la torreta (cabeza) que hereda su posicion de la base
         Matrix turretWorld = Matrix.CreateRotationZ(_turretRotation) * chassisWorld;
 
-        // Matriz de mundo del cañon que hereda su posicion de la torreta
-        Matrix cannonWorld = Matrix.CreateRotationX(_cannonRotation) * turretWorld;
+        float distanciaHaciaAtras = -1.5f; //Valor random que uso para empujar el centro del cañon hacia atras
+
+        //movimiento realizado del cañon, tomo el centro del cañon, lo tiro para atras y lo roto en el eje X usando ese centro inventando, luego lo vuelvo a su lugar
+        Matrix localCannon = Matrix.CreateTranslation(0f, 0f, distanciaHaciaAtras) 
+                            * Matrix.CreateRotationX(_cannonRotation) 
+                            * Matrix.CreateTranslation(0f, 0f, -distanciaHaciaAtras); 
+
+        //Luego tomo mi cañon y lo acomodo sobre la torreta
+        Matrix cannonWorld = localCannon * turretWorld;
 
         foreach (var mesh in Model.Meshes)
         {
@@ -186,12 +193,12 @@ public class Tank
                 || mesh.Name.Contains("Antena")
                 || mesh.Name.Contains("Pistola_i") || mesh.Name.Contains("Pistola_d"))
             {
-                finalWorldMatrix = turretWorld;
+                finalWorldMatrix = turretWorld; //La cabeza, la antena y las pistolas decorativas se mueven junto a la torreta
             }
             else if (mesh.Name.Contains("Cañon anillo") || mesh.Name.Contains("Cañon.001"))
             {
-                finalWorldMatrix = cannonWorld;
-            }
+                finalWorldMatrix = cannonWorld; //el anillo y el cañon se mueven con un "plus"
+            } //el resto de elemento se mueven junto a la base
 
             foreach (var effect in mesh.Effects)
             {
