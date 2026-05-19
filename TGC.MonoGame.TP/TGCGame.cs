@@ -67,6 +67,12 @@ public class TGCGame : Game
     public static TGCGame Instance { get; private set; } //Esto es para que lo use NarrowPhaseCallbacks
     //gizmos
     private Gizmo _gizmos = new();
+    private Effect _effect;
+    private List<Cannonball> _cannonballs = new();
+    private MouseState _previousMouseState;
+    private Model _cannonballModel;
+    private float _shootCooldown = 0.5f;
+    private float _currentShootCooldown = 0f;
 
     public TGCGame()
     {
@@ -101,7 +107,7 @@ public class TGCGame : Game
     {
         //RECURSOS
         //shaders
-        var effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //modelos sin texturas
+        _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //modelos sin texturas
         var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
         //texturas
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
@@ -111,6 +117,7 @@ public class TGCGame : Game
         _hornSound = Content.Load<SoundEffect>(ContentFolderSounds + "horn");
         //modelos
         var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
+        _cannonballModel = Content.Load<Model>(ContentFolder3D + "cannonball/cannonball");
 
         //AUXILIARES
         Vector3 spawnPos = new Vector3(0, 0, 0);
@@ -119,7 +126,7 @@ public class TGCGame : Game
             //Creo un terreno (suelo)
         _terrain = new Terrain(GraphicsDevice);
             //Le paso la textura y el efecto
-        _terrain.LoadContent(terrainTexture, effect);
+        _terrain.LoadContent(terrainTexture, _effect);
             //fisicas
         _terrainStaticHandle = _terrain.CreatePhysicsTerrain(_simulation);
 
@@ -167,6 +174,10 @@ public class TGCGame : Game
             //fisicas
         _tankHandle = _tank.TankHandler;
 
+        /* Vector3 direction = new Vector3(0f, 0f, -1f);
+        direction.Normalize();
+        _cannonball = new Cannonball(_cannonballModel, effect, new Vector3(3f, 35f, 0f), direction, _simulation); */
+
         //HUD
         _hud = new Hud();
         _hud.LoadContent(Content, GraphicsDevice);
@@ -205,6 +216,37 @@ public class TGCGame : Game
         _assets.UpdateFuelBarrels((float)gameTime.ElapsedGameTime.TotalSeconds);
 
         _assets.Update(gameTime, _simulation);
+        
+        //_cannonball.Update(_simulation);
+        _currentShootCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        MouseState currentMouseState = Mouse.GetState();
+
+        if (currentMouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released && _currentShootCooldown <= 0f)
+        {
+            Vector3 direction = _tank.CannonForward;
+
+            direction.Normalize();
+
+            // Posición desde donde sale la bala
+            Vector3 spawnPosition = _tank.Position + direction * 3f + Vector3.Up * 2f;
+
+            Cannonball cannonball = new Cannonball(_cannonballModel, _effect, spawnPosition, direction, _simulation);
+
+            _cannonballs.Add(cannonball);
+            _currentShootCooldown = _shootCooldown;
+        }
+
+        _previousMouseState = currentMouseState;
+
+        for (int i = _cannonballs.Count - 1; i >= 0; i--)
+        {
+            _cannonballs[i].Update(gameTime, _simulation);
+
+            if (_cannonballs[i].IsDead)
+            {
+                _cannonballs.RemoveAt(i);
+            }  
+        }
 
         _camera.Update(gameTime, _tank.Position, _tank.TurretRotationWorld); //A la camara ahora le paso la posicion de la torreta en vez de la base
         _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
@@ -225,6 +267,11 @@ public class TGCGame : Game
         // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);
+        //_cannonball.Draw(_camera.View, _camera.Projection);
+        foreach (var cannonball in _cannonballs)
+        {
+            cannonball.Draw(_camera.View, _camera.Projection);
+        }
         _assets.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
         // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
         _hud.Draw();
