@@ -16,6 +16,7 @@ using TGC.MonoGame.TP.Cameras;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models;
 using TGC.MonoGame.TP.Models.Decorations;
+using TGC.MonoGame.TP.Models.Enemy;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP;
@@ -50,6 +51,12 @@ public class TGCGame : Game
     private Hud _hud;
     // multiplayer :o
     private bool twoPlayers = false;
+    // ----------ENEMIGOS
+    private int _enemiesCount = 15;
+    private List<Enemy> _enemies = new ();
+    private List<BodyHandle> _enemiesHandles = new ();
+    private List<Cannonball> _enemiesCanonballs = new();
+
     //-----------TANQUE
     public Tank _tank;
     private TankFollowCamera _camera;
@@ -71,7 +78,7 @@ public class TGCGame : Game
     private List<Cannonball> _cannonballs = new();
     private MouseState _previousMouseState;
     private Model _cannonballModel;
-    private float _shootCooldown = 0.5f;
+    public static float _shootCooldown = 0.5f;
     private float _currentShootCooldown = 0f;
 
     public TGCGame()
@@ -163,6 +170,15 @@ public class TGCGame : Game
         _assets.SpawnFuelBarrels();
             //Cargamos los assets
         _assets.LoadContent(Content, _simulation);
+        // ENEMIGOS
+        for(int i=0; i<_enemiesCount; i++)
+        {   // Inicializo los tanques y sus handles
+            var enemy = new Enemy();
+            enemy.Position = enemy.GetPosition(_terrain, _random);
+            enemy.Load(tankModel, tankTexture, effect2, _simulation);
+            _enemies.Add(enemy);
+            _enemiesHandles.Add(enemy.TankHandler);
+        }
         //TANQUE
             //Creamos el tanque
         _tank = new Tank();
@@ -211,6 +227,10 @@ public class TGCGame : Game
         foreach (var barrel in _assets._fuelBarrels)
         {
             if (!barrel.IsCollected) barrel.TryCollect(_tank, _simulation);
+        }
+        foreach(var enemy in _enemies)
+        {
+            enemy.UpdateEnemy(gameTime, _simulation, _tank.Position.ToNumerics(), _terrain);
         }
 
         _assets.UpdateFuelBarrels((float)gameTime.ElapsedGameTime.TotalSeconds);
@@ -268,6 +288,10 @@ public class TGCGame : Game
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);
         //_cannonball.Draw(_camera.View, _camera.Projection);
+        foreach(var enemy in _enemies)
+        {
+            enemy.Draw(_camera.View, _camera.Projection);
+        }
         foreach (var cannonball in _cannonballs)
         {
             cannonball.Draw(_camera.View, _camera.Projection);

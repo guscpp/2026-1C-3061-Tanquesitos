@@ -49,6 +49,7 @@ public static class GameConfig
         public const float PhysicsTurretHeight  = 1f;       // metros
         public const float PhysicsTurretOffsetY = PhysicsChassisHeight;     // justo encima del chasis
         public const float MotorForce = 150000f;            // Newton
+        public const float EnemyMotorForce = 110000f;       // Newton
         public const float ForwardDrag = 5000f;              // Coeficiente de arrastre (para velocidad terminal = MotorForce / Drag)
         public const float LateralDrag = 250000f;            // evitar derrape
     }

@@ -35,16 +35,16 @@ public class Tank
 
     //estado interno
     public Vector3 Position { get; set; } = Vector3.Zero;
-    public float RotationY { get; private set; }
+    public float RotationY { get; set; }
     public float Speed { get; private set; }
     public float CurrentFuel { get; private set; } = GameConfig.Tank.MaxFuel;
     public float Scale { get; set; } = GameConfig.Tank.TankScale;
 
     //Movimiento de la torreta
-    private float _turretRotation = 0f; // Rotacion torreta (derecha/izquierda)
-    private float _cannonRotation = 0f; // Rotacion cañon (arriba/abajo)
-    private readonly float _minCannonPitch = MathHelper.ToRadians(-10f); //Limites para que el cañon no traspase el modelo al subir y bajar
-    private readonly float _maxCannonPitch = MathHelper.ToRadians(20f);
+    public float _turretRotation = 0f; // Rotacion torreta (derecha/izquierda)
+    public float _cannonRotation = 0f; // Rotacion cañon (arriba/abajo)
+    public readonly float _minCannonPitch = MathHelper.ToRadians(-10f); //Limites para que el cañon no traspase el modelo al subir y bajar
+    public readonly float _maxCannonPitch = MathHelper.ToRadians(20f);
     public float TurretRotationWorld => RotationY + _turretRotation; //Necesario para la camara (Torreta + Cañon)
 
     public float CannonRotation => _cannonRotation;
@@ -58,7 +58,7 @@ public class Tank
         }
     }
 
-    private System.Numerics.Quaternion _physicsOrientation = System.Numerics.Quaternion.Identity;
+    public System.Numerics.Quaternion _physicsOrientation = System.Numerics.Quaternion.Identity;
 
     public BodyHandle TankHandler;
 
