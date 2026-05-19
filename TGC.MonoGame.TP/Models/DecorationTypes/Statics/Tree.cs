@@ -28,8 +28,8 @@ namespace TGC.MonoGame.TP.Models.Decorations
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             // BoundingBox box = ... (aun no xd)
-            _height = _dimensions.Z;
-            _radius = Math.Max(_dimensions.X, _dimensions.Y) / 2f;
+            _height = _dimensions.Z/2;
+            _radius = Math.Max(_dimensions.X, _dimensions.Y) / 4f;
             _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
 
             // Creo el cuerpo en Bepu (Es la configuracion de la fisica)
@@ -49,7 +49,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90));
 
             //Como mi modelo es estatico calculo la matriz de mundo una sola vez
-            modificarMatrixWorld(rotation, _height / 2f);
+            modificarMatrixWorld(rotation, _height);
         }
 
         //ACTUALIZO (Modificacion de la funcion en DECORATION)
@@ -66,7 +66,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal - para cuando cree _touchingDecoration
 
             Matrix gizmoWorld = Matrix.CreateScale(_radius, _height, _radius) 
-                                * Matrix.CreateTranslation(_position);
+                                * Matrix.CreateTranslation(new Vector3(_position.X, _position.Y + _height, _position.Z));
 
             gizmos.DrawAxes(gizmoWorld);
             gizmos.DrawCylinder(gizmoWorld, Color.Violet); //Por ahora voy a usar el verde para los dinamicos y el violeta para los estaticos
