@@ -83,7 +83,7 @@ namespace TGC.MonoGame.TP.Models.Enemy
             // la torreta sigue la posicion del target
             float sensitivity = 0.0015f; //Ajusto la velocidad (sensibilidad)
                                          //mov izquiera derecha (eje y)
-            var targetYaw = MathF.Atan2(targetDirection.X, targetDirection.Z);
+            var targetYaw = MathF.Atan2(-targetDirection.X, -targetDirection.Z);
             _turretRotation = targetYaw;
 
             var deltaY = targetDistanceToSelf.Y;
