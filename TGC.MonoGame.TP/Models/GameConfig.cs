@@ -62,6 +62,33 @@ public static class GameConfig
         
     }
 
+    // ENEMIGOS
+    public static class Enemies
+    {
+        public static class Scout
+        {
+            public const float MaxSpeed = 25f;
+            public const float HealthPoints = 5f;
+            public const float MotorForce = 80000f;
+            public const float AttackDamage = 0.5f;
+        }
+        public static class Standard
+        {
+            public const float MaxSpeed = 35f;
+            public const float HealthPoints = 10f;
+            public const float MotorForce = 110000f;
+            public const float AttackDamage = 1f;
+        }
+        public static class Heavy
+        {
+            public const float MaxSpeed = 45f;
+            public const float HealthPoints = 20f;
+            public const float MotorForce = 150000f;
+            public const float AttackDamage = 1.5f;
+        }
+        public const float Cooldown = 1.0f;
+    }
+
     // TERRENO
     public static class Terrain
     {

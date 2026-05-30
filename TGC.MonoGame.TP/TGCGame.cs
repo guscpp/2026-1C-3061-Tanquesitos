@@ -16,7 +16,7 @@ using TGC.MonoGame.TP.Cameras;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models;
 using TGC.MonoGame.TP.Models.Decorations;
-using TGC.MonoGame.TP.Models.Enemy;
+using TGC.MonoGame.TP.Models.Tanks;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP;
@@ -53,12 +53,12 @@ public class TGCGame : Game
     private bool twoPlayers = false;
     // ----------ENEMIGOS
     private int _enemiesCount = 15;
-    public List<Enemy> _enemies = new ();
+    public List<TankEnemy> _enemies = new ();
     private List<BodyHandle> _enemiesHandles = new ();
     private List<Cannonball> _enemiesCanonballs = new();
 
     //-----------TANQUE
-    public Tank _tank;
+    public TankPlayer _tank;
     private TankFollowCamera _camera;
     //-----------TERRENO
     private Terrain _terrain;
@@ -180,7 +180,13 @@ public class TGCGame : Game
         // ENEMIGOS
         for(int i=0; i<_enemiesCount; i++)
         {   // Inicializo los tanques y sus handles
-            var enemy = new Enemy();
+            TankEnemy enemy = _random.Next(3) switch
+            {
+                0 => new TankEnemyScout(),
+                1 => new TankEnemyMedium(),
+                _ => new TankEnemyHeavy()
+            };
+
             enemy.Position = enemy.GetPosition(_terrain, _random);
             enemy.Load(tankModel, tankTexture, effect2, _simulation);
             _enemies.Add(enemy);
@@ -188,7 +194,7 @@ public class TGCGame : Game
         }
         //TANQUE
             //Creamos el tanque
-        _tank = new Tank();
+        _tank = new TankPlayer();
             //Determino una posicion para el tanque
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);//Se spawnea unos metros por encima del terreno
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);

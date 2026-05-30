@@ -17,7 +17,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
         public bool IsCollected { get; private set; }
         public bool IsRecharging { get; private set; }
         public float RechargeProgress { get; private set; }
-        public Tank CollectedBy { get; private set; }
+        public TankPlayer CollectedBy { get; private set; }
 
         public FuelBarrel(Vector3 position) : base(position, "powerups/FuelBarrel")
         {
@@ -45,7 +45,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
         }
 
         // intento de recoleccion: valida distancia y estado antes de activar recarga
-        public void TryCollect(Tank tank, Simulation simulation)
+        public void TryCollect(TankPlayer tank, Simulation simulation)
         {
             if (IsCollected || IsRecharging) return;
 
