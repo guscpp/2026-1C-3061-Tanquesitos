@@ -288,6 +288,8 @@ public class TGCGame : Game
 
         _hud.TankFuel = _tank.CurrentFuel;
         _hud.TankPosition = _tank.Position;
+        _hud.CannonCurrentCooldown = _currentShootCooldown;
+        _hud.CannonMaxCooldown = GameConfig.Tank.Cooldown;
         _hud.Update(gameTime);
 
         base.Update(gameTime);
