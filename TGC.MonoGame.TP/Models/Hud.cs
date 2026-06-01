@@ -39,7 +39,7 @@ public class Hud
         _instructions = new[]
         {
             "movimiento: w / a / s / d",
-            "bocina: espacio",
+            "pausa: p",
             "zoom: rueda del mouse",
             "salir: escape"
         };

@@ -49,6 +49,8 @@ public class TGCGame : Game
     private KeyboardState _lastKeyboardState;
     //hud
     private Hud _hud;
+    //gamestate
+    private GameStateManager _gameStateManager;
     // multiplayer :o
     private bool twoPlayers = false;
     // ----------ENEMIGOS
@@ -119,6 +121,9 @@ public class TGCGame : Game
 
     protected override void LoadContent()
     {
+        //GameStateManager
+        _gameStateManager = new GameStateManager(GraphicsDevice, Content);
+
         //RECURSOS
         //shaders
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //modelos sin texturas
@@ -222,18 +227,20 @@ public class TGCGame : Game
     protected override void Update(GameTime gameTime)
     {
         var kb = Keyboard.GetState();
-        if (kb.IsKeyDown(Keys.Escape)) Exit();
-        if (kb.IsKeyDown(Keys.Space) && _lastKeyboardState.IsKeyUp(Keys.Space))
-        {
-            int chance = _random.Next(0, 100);
-            if (chance < 90) _klaxonSound.Play();
-            else _hornSound.Play();
-        }
 
+        _gameStateManager.Update(kb, _lastKeyboardState);
         _lastKeyboardState = kb;
 
-        _simulation.Timestep(1 / 60f);
+        //El update del juego ocurre unicamente en estado Playing, sino se sale temprano
+        if (_gameStateManager.CurrentState != GameState.Playing)
+        {
+            base.Update(gameTime);
+            return;
+        }
 
+        if (kb.IsKeyDown(Keys.Escape)) Exit();
+
+        _simulation.Timestep(1 / 60f);
         _tank.Update(gameTime, kb, _simulation);
 
         //verificar si pueden recogerse los barriles
@@ -243,7 +250,6 @@ public class TGCGame : Game
         }
 
         _assets.UpdateFuelBarrels((float)gameTime.ElapsedGameTime.TotalSeconds);
-
         _assets.Update(gameTime, _simulation);
 
         foreach(var enemy in _enemies)
@@ -292,6 +298,8 @@ public class TGCGame : Game
         _hud.CannonMaxCooldown = GameConfig.Tank.Cooldown;
         _hud.Update(gameTime);
 
+        if (_tank.IsDead) _gameStateManager.ForceState(GameState.GameOver);
+
         base.Update(gameTime);
     }
 
@@ -302,27 +310,32 @@ public class TGCGame : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        // Aca deberiamos poner toda la logia de renderizado del juego.
+        // Aca deberiamos poner toda la logica de renderizado del juego.
         var totalTime = (float)gameTime.TotalGameTime.TotalSeconds;
         GraphicsDevice.Clear(Color.Goldenrod);
-
-        // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
-        _terrain.Draw(_camera.View, _camera.Projection);
-        _tank.Draw(_camera.View, _camera.Projection);
-        //_cannonball.Draw(_camera.View, _camera.Projection);
-        foreach(var enemy in _enemies)
+        if (_gameStateManager.CurrentState == GameState.Playing || _gameStateManager.CurrentState == GameState.Paused)
         {
-            enemy.Draw(_camera.View, _camera.Projection);
-        }
-        foreach (var cannonball in _cannonballs)
-        {
-            cannonball.Draw(_camera.View, _camera.Projection);
-        }
-        _assets.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
-        // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
-        _hud.Draw();
+            // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
+            _terrain.Draw(_camera.View, _camera.Projection);
+            _tank.Draw(_camera.View, _camera.Projection);
+            //_cannonball.Draw(_camera.View, _camera.Projection);
+            foreach (var enemy in _enemies)
+            {
+                enemy.Draw(_camera.View, _camera.Projection);
+            }
+            foreach (var cannonball in _cannonballs)
+            {
+                cannonball.Draw(_camera.View, _camera.Projection);
+            }
+            _assets.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
+            // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
+            _hud.Draw();
 
-        _gizmos.Draw();
+            _gizmos.Draw();
+        }
+
+        //El manager dibuja encima (Menu, Pausa, GameOver)
+        _gameStateManager.Draw(_tank.IsDead ? "Tanque destruido" : "");
     }
 
     public void InitializePhysics()
