@@ -55,8 +55,6 @@ public static class GameConfig
 
         public const float HealthPoints = 20f;
         public const float AttackDamage = 1f;               // por ahora, jugador y enemigo tienen el mismo ataque
-        public const float EnemyHealthPoints = 10f;
-        public const float EnemyAttackRadius = 50f;
         public const float Cooldown = 0.5f;
         public const float EnemyCooldown = 1f;
         
@@ -86,6 +84,7 @@ public static class GameConfig
             public const float MotorForce = 150000f;
             public const float AttackDamage = 1.5f;
         }
+        public const float AttackRadius = 50f;
         public const float Cooldown = 1.0f;
     }
 

@@ -64,6 +64,13 @@ public class TGCGame : Game
     private TankFollowCamera _camera;
     //-----------TERRENO
     private Terrain _terrain;
+    public StaticHandle TerrainHandle
+    {
+        get
+        {
+            return _terrainStaticHandle;
+        }
+    }
     //-----------DECORACIONES
     public AssetsManager _assets;
     private readonly Random _random = new();

@@ -11,6 +11,7 @@ using BepuUtilities;
 
 using TGC.MonoGame.TP;
 using TGC.MonoGame.TP.Models.Decorations;
+using TGC.MonoGame.TP.Models;
 
 public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
 {
@@ -92,7 +93,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                     objetoChocado.HandleCollision(); //Aca lo declaro muerto
                 }
             }
-
+            
             // Buscar si alguno de los handles pertenece a una bala
             var cannonball = TGCGame.Instance.Cannonballs.FirstOrDefault(c => c.BodyHandle == handleA || c.BodyHandle == handleB);
 
@@ -105,6 +106,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                 if (objetoChocado != null && !objetoChocado.IsDead)
                 {
                     objetoChocado.HandleCollision();
+                    cannonball.killCannonball();
                 }
 
                 // Reviso si se impacto a un enemigo
@@ -112,10 +114,26 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                 if(enemyChocado != null && !enemyChocado.IsDead)
                 {
                     enemyChocado.HandleHealth(GameConfig.Tank.AttackDamage);
-                }
+                    cannonball.killCannonball();
+                }                
             }
 
         }
+        if(pair.A.Mobility == CollidableMobility.Static || pair.B.Mobility == CollidableMobility.Static)
+        {
+            // si la bala colisiono con el suelo, debe desaparecer
+            // chequeo que uno de los dos sea estatico (terreno) y el otro dinamico (bala)
+            var terreno = TGCGame.Instance.TerrainHandle;
+            Cannonball cannonball = null;
+            if (pair.A.Mobility == CollidableMobility.Static && pair.A.StaticHandle == terreno)
+                cannonball = TGCGame.Instance.Cannonballs.FirstOrDefault(c => c.BodyHandle == pair.B.BodyHandle);
+
+            if (pair.B.Mobility == CollidableMobility.Static && pair.B.StaticHandle == terreno)
+                cannonball = TGCGame.Instance.Cannonballs.FirstOrDefault(c => c.BodyHandle == pair.A.BodyHandle);
+
+            if (cannonball != null) cannonball.killCannonball();
+        }
+        
         return true;
     }
 

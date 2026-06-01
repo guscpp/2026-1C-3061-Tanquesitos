@@ -1,12 +1,15 @@
 ﻿using BepuPhysics;
 using Microsoft.Xna.Framework;
 using System;
+using System.Numerics;
 
 namespace TGC.MonoGame.TP.Models;
 
 public abstract class TankEnemy : TankBase
 {
     protected Microsoft.Xna.Framework.Vector3 _targetPosition;
+    private float attackRadius = GameConfig.Enemies.AttackRadius;
+    private float attackRadiusSq => attackRadius*attackRadius;
     protected float _currentShootCooldown = 0f;
     public float ShootCooldown { get; protected set; }
 
@@ -54,7 +57,9 @@ public abstract class TankEnemy : TankBase
         ApplyPhysics(simulation, dt, forwardInput, turnInput);
 
         // 3. DISPARAR CONSTANTEMENTE CUANDO EL COOLDOWN LO PERMITA
-        if (_currentShootCooldown <= 0f && dist > 15f) // Distancia mínima para no dispararse a sí mismo
+        var numericsToTarget = toTarget.ToNumerics();
+        if (_currentShootCooldown <= 0f && dist > 15f && 
+            (System.Numerics.Vector3.Dot(numericsToTarget, numericsToTarget) < attackRadiusSq)) // Distancia mínima para no dispararse a sí mismo
         {
             var dir = CannonForward;
             var spawnPos = Position + dir * 3f + Microsoft.Xna.Framework.Vector3.Up * 2f;
@@ -64,6 +69,7 @@ public abstract class TankEnemy : TankBase
             _currentShootCooldown = ShootCooldown;
         }
     }
+
 
     // Posición inicial aleatoria (sin cambios)
     public Microsoft.Xna.Framework.Vector3 GetPosition(Terrain terrain, Random random)
