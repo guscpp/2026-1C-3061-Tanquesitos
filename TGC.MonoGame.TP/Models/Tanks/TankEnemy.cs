@@ -31,7 +31,8 @@ public abstract class TankEnemy : TankBase
         float dist = toTarget.Length();
 
         // 1. APUNTAR TORRETA Y CAÑÓN DIRECTAMENTE AL JUGADOR
-        _turretRotation = MathF.Atan2(-toTarget.X, -toTarget.Z);
+        float worldAngleToPlayer = MathF.Atan2(-toTarget.X, -toTarget.Z);
+        _turretRotation = worldAngleToPlayer - RotationY;
         _cannonRotation = MathHelper.Clamp(-toTarget.Y * 0.015f, _minCannonPitch, _maxCannonPitch);
 
         // 2. MOVER EN LÍNEA RECTA HACIA EL JUGADOR
