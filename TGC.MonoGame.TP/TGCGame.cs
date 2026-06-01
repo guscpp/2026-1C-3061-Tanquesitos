@@ -101,6 +101,7 @@ public class TGCGame : Game
     {
         _graphics = new GraphicsDeviceManager(this);
         Instance = this;
+        Window.Title = "Tanquesitos";
 
         _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
         _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
@@ -108,6 +109,7 @@ public class TGCGame : Game
         Content.RootDirectory = "Content";
 
         IsMouseVisible = true; //Oculto el mouse porque da dolor de cabeza
+
     }
 
     protected override void Initialize()
