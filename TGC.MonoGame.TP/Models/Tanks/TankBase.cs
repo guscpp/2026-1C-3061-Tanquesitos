@@ -63,7 +63,9 @@ public abstract class TankBase
         var chassisBox = new Box(GameConfig.Tank.PhysicsChassisWidth, GameConfig.Tank.PhysicsChassisHeight, GameConfig.Tank.PhysicsChassisLength);
         var turretBox = new Box(GameConfig.Tank.PhysicsTurretWidth, GameConfig.Tank.PhysicsTurretHeight, GameConfig.Tank.PhysicsTurretLength);
 
-        compoundBuilder.Add(new Box(2.6f, 0.3f, 2.6f), new RigidPose(new System.Numerics.Vector3(0, -0.9f, 0), System.Numerics.Quaternion.Identity), 6000f);
+       // Reducimos de 2.6f a 2.2f de ancho y largo
+      //veooooooooooooooooooooooooooooooooooooo si queda bien
+        compoundBuilder.Add(new Box(2.2f, 0.3f, 2.2f), new RigidPose(new System.Numerics.Vector3(0, -0.9f, 0), System.Numerics.Quaternion.Identity), 6000f);
         compoundBuilder.Add(chassisBox, new RigidPose(new System.Numerics.Vector3(0, -0.4f, 0), System.Numerics.Quaternion.Identity), GameConfig.Tank.ChassisMass);
         compoundBuilder.Add(turretBox, new RigidPose(new System.Numerics.Vector3(0, GameConfig.Tank.PhysicsTurretOffsetY, 0), System.Numerics.Quaternion.Identity), GameConfig.Tank.TurretMass);
 
@@ -121,13 +123,29 @@ public abstract class TankBase
         var motorForce = forward * MotorForce * forwardInput;
         var dragForce = -forward * (ForwardDrag * fwdSpeed) - right * (LateralDrag * rightSpeed);
         body.ApplyLinearImpulse((motorForce + dragForce) * dt);
+
+        /*
         body.Velocity.Angular = new System.Numerics.Vector3(0, turnInput * TurnSpeed, 0);
 
         ref var angVel = ref body.Velocity.Angular;
         angVel.X = MathHelper.Clamp(angVel.X, -0.5f, 0.5f);
         angVel.Z = MathHelper.Clamp(angVel.Z, -0.3f, 0.3f);
         angVel.X *= 0.88f; angVel.Y *= 0.98f; angVel.Z *= 0.88f;
+        body.Awake = true;  */
+
+        body.ApplyLinearImpulse((motorForce + dragForce) * dt);
+ 
+// veoooooooooooooooooooooooooo si funciona
+        // En lugar de crear un vector de cero, modificamos ÚNICAMENTE el eje Y (el giro del usuario)
+        ref var angVel = ref body.Velocity.Angular;
+        angVel.Y = turnInput * TurnSpeed;
+
+        // Ahora el Clamp y el amortiguador (damping) de X y Z SÍ van a funcionar con las fuerzas del choque
+        angVel.X = MathHelper.Clamp(angVel.X, -0.5f, 0.5f);
+        angVel.Z = MathHelper.Clamp(angVel.Z, -0.3f, 0.3f);
+        angVel.X *= 0.88f; angVel.Y *= 0.98f; angVel.Z *= 0.88f;
         body.Awake = true;
+
 
         var pose = body.Pose;
         Position = new Microsoft.Xna.Framework.Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
