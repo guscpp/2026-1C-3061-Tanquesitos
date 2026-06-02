@@ -113,7 +113,8 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                 var enemyChocado = TGCGame.Instance._enemies.FirstOrDefault(e => e.TankHandler == obstacleHandle);
                 if(enemyChocado != null && !enemyChocado.IsDead)
                 {
-                    enemyChocado.HandleHealth(GameConfig.Tank.AttackDamage);
+                    //enemyChocado.HandleHealth(GameConfig.Tank.AttackDamage);
+                    enemyChocado.HandleHealth(0);
                     cannonball.killCannonball();
                 }                
             }

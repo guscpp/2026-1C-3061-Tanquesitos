@@ -9,21 +9,27 @@ public abstract class TankEnemy : TankBase
 {
     protected Microsoft.Xna.Framework.Vector3 _targetPosition;
     private float attackRadius = GameConfig.Enemies.AttackRadius;
-    private float attackRadiusSq => attackRadius*attackRadius;
+    private float attackRadiusSq => attackRadius * attackRadius;
     protected float _currentShootCooldown = 0f;
     public float ShootCooldown { get; protected set; }
 
-    protected TankEnemy(float hp, float speed, float force, float damage, float cooldown)
+    protected TankEnemy(float hp, float speed, float force, float turnSpeed, float damage, float cooldown)
     {
-        HealthPoints = hp; MaxSpeed = speed; MotorForce = force;
-        ForwardDrag = GameConfig.Tank.ForwardDrag; LateralDrag = GameConfig.Tank.LateralDrag;
-        TurnSpeed = GameConfig.Tank.TurnSpeed; AttackDamage = damage; ShootCooldown = cooldown;
+        HealthPoints = hp;
+        MaxSpeed = speed;
+        MotorForce = force;
+        TurnSpeed = turnSpeed;
+        ForwardDrag = GameConfig.Tank.ForwardDrag;
+        LateralDrag = GameConfig.Tank.LateralDrag;
+        AttackDamage = damage;
+        ShootCooldown = cooldown;
     }
 
     // Mantengo la firma original para no tocar TGCGame.cs
     public void UpdateEnemy(GameTime gameTime, Simulation simulation, Microsoft.Xna.Framework.Vector3 targetPos, Terrain terrain)
     {
         if (IsDead) return;
+
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         _targetPosition = targetPos;
         _currentShootCooldown -= dt;
@@ -58,7 +64,7 @@ public abstract class TankEnemy : TankBase
 
         // 3. DISPARAR CONSTANTEMENTE CUANDO EL COOLDOWN LO PERMITA
         var numericsToTarget = toTarget.ToNumerics();
-        if (_currentShootCooldown <= 0f && dist > 15f && 
+        if (_currentShootCooldown <= 0f && dist > 15f &&
             (System.Numerics.Vector3.Dot(numericsToTarget, numericsToTarget) < attackRadiusSq)) // Distancia mínima para no dispararse a sí mismo
         {
             var dir = CannonForward;
@@ -70,8 +76,7 @@ public abstract class TankEnemy : TankBase
         }
     }
 
-
-    // Posición inicial aleatoria (sin cambios)
+    // Posicion inicial aleatoria (sin cambios)
     public Microsoft.Xna.Framework.Vector3 GetPosition(Terrain terrain, Random random)
     {
         var min = -terrain.WidthUnits;

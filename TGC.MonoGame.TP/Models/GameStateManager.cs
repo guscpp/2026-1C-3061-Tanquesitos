@@ -15,8 +15,15 @@ public class GameStateManager
     private readonly Texture2D _whitePixel;
     private Texture2D _menuBackground;
 
-    private readonly string[] _menuOptions = { "Iniciar", "Placeholder 1", "Placeholder 2", "Salir" };
+    // Opciones de menu actualizadas para elegir el tipo de tanque
+    private readonly string[] _menuOptions = {
+        "Iniciar (Tanque Scout)",
+        "Iniciar (Tanque Medio)",
+        "Iniciar (Tanque Pesado)",
+        "Salir"
+    };
     private int _selectedIndex = 0; //Preselecciona Iniciar en el menu
+
     private MouseState _lastMouseState;
 
     public GameStateManager(GraphicsDevice graphicsDevice, ContentManager content)
@@ -24,7 +31,6 @@ public class GameStateManager
         _spriteBatch = new SpriteBatch(graphicsDevice);
         // Coincide con la ruta compilada en Content.mgcb
         _font = content.Load<SpriteFont>("SpriteFonts/ArialFont");
-
         _menuBackground = content.Load<Texture2D>("Textures/ConceptArt6");
 
         //Textura 1x1 para overlays
@@ -47,12 +53,10 @@ public class GameStateManager
                 if (kb.IsKeyDown(Keys.P) && lastKb.IsKeyUp(Keys.P))
                     CurrentState = GameState.Paused;
                 break;
-
             case GameState.Paused:
                 if (kb.IsKeyDown(Keys.P) && lastKb.IsKeyUp(Keys.P))
                     CurrentState = GameState.Playing;
                 break;
-
             case GameState.GameOver:
                 if (kb.IsKeyDown(Keys.Enter) && lastKb.IsKeyUp(Keys.Enter))
                 {
@@ -78,14 +82,12 @@ public class GameStateManager
         // Mouse: hover y click
         MouseState currentMouse = Mouse.GetState();
         int hoveredIndex = GetOptionAtPosition(currentMouse.X, currentMouse.Y);
-
         if (hoveredIndex != -1)
         {
             _selectedIndex = hoveredIndex; // Feedback de hover
             if (currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released)
                 ApplySelection(); // Click selecciona esa opcion
         }
-
         _lastMouseState = currentMouse;
     }
 
@@ -97,6 +99,7 @@ public class GameStateManager
     {
         // 1. Obtener las dimensiones actuales de la ventana/pantalla
         var vp = _spriteBatch.GraphicsDevice.Viewport;
+
         // 2. Calcular el punto central exacto de la pantalla
         Vector2 center = new Vector2(vp.Width / 2f, vp.Height / 2f);
 
@@ -116,7 +119,7 @@ public class GameStateManager
 
             // Calcular la posición superior izquierda donde se dibujaría esta opción:
             // - Eje X: centrado horizontalmente (mitad de pantalla menos la mitad del ancho del texto)
-            // - Eje Y: posición inicial + (índice * altura de línea + espacio extra entre opciones)
+            // - Eje Y: posicion inicial + (indice * altura de linea + espacio extra entre opciones)
             var pos = new Vector2(center.X - size.X / 2f, startY + i * (_font.LineSpacing + spacing));
 
             // Crear un rectángulo invisible que actúa como "zona de clic" (hitbox) del texto
@@ -135,14 +138,17 @@ public class GameStateManager
     {
         switch (_selectedIndex)
         {
-            case 0: // Iniciar
+            case 0: // Iniciar Scout
+                TGCGame.SelectedPlayerTank = GameConfig.TankClass.Scout;
                 CurrentState = GameState.Playing;
                 break;
-            case 1: // Placeholder 1
-                // TODO: Implementar logica futura
+            case 1: // Iniciar Medio
+                TGCGame.SelectedPlayerTank = GameConfig.TankClass.Medium;
+                CurrentState = GameState.Playing;
                 break;
-            case 2: // Placeholder 2
-                // TODO: Implementar logica futura
+            case 2: // Iniciar Pesado
+                TGCGame.SelectedPlayerTank = GameConfig.TankClass.Heavy;
+                CurrentState = GameState.Playing;
                 break;
             case 3: // Salir
                 Environment.Exit(0);
@@ -188,8 +194,8 @@ public class GameStateManager
             string option = _menuOptions[i];
             var size = _font.MeasureString(option);
             var pos = new Vector2(center.X - size.X / 2f, startY + i * (_font.LineSpacing + spacing));
-
             bool isSelected = (i == _selectedIndex);
+
             Color textColor = isSelected ? Color.Gold : Color.White;
             Color shadowColor = Color.Black;
 
@@ -198,7 +204,6 @@ public class GameStateManager
                 // Feedback visual: texto dorado + sombra + flechas indicadoras
                 _spriteBatch.DrawString(_font, option, pos + new Vector2(2, 2), shadowColor);
                 _spriteBatch.DrawString(_font, option, pos, textColor);
-
                 var arrowSize = _font.MeasureString("> ");
                 _spriteBatch.DrawString(_font, "> ", new Vector2(pos.X - arrowSize.X, pos.Y), textColor);
                 _spriteBatch.DrawString(_font, " <", pos + new Vector2(size.X, 0), textColor);

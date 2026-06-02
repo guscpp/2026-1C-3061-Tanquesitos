@@ -8,6 +8,9 @@ namespace TGC.MonoGame.TP;
 /// </summary>
 public static class GameConfig
 {
+    // Enum para identificar las clases de tanques en todo el juego
+    public enum TankClass { Scout, Medium, Heavy }
+
     // ESCALA GLOBAL
     public const float WorldUnitsPerMeter = 1f;
     public const float MetersPerWorldUnit = 1f / WorldUnitsPerMeter;
@@ -20,7 +23,53 @@ public static class GameConfig
     public static Vector3 ToWorldUnits(Vector3 metersPos) => new Vector3(
         ToWorldUnits(metersPos.X), ToWorldUnits(metersPos.Y), ToWorldUnits(metersPos.Z));
 
-    // TANQUEsITO (valores en unidades SI (o algo asi))
+    // =========================================================================
+    // CONFIGURACION UNIFICADA DE CLASES DE TANQUES
+    // =========================================================================
+    public static class TankClasses
+    {
+        public static class Scout
+        {
+            public const float MaxSpeed = 100f;      // m/s
+            public const float MotorForce = 160000f; //
+            public const float TurnSpeed = 1.5f;     //
+            public const float AttackDamage = 0.8f;  //
+
+            // HPs segun sea Scout player o Scout NPC
+            public const float PlayerHealth = 15f;
+            public const float EnemyHealth = 2f;
+        }
+
+        public static class Medium
+        {
+            // Identidad compartida
+            public const float MaxSpeed = 90f;       // m/s
+            public const float MotorForce = 150000f; //
+            public const float TurnSpeed = 1.2f;     //
+            public const float AttackDamage = 1f;
+
+            // HPs segun sea Medium player o Medium NPC
+            public const float PlayerHealth = 20f;
+            public const float EnemyHealth = 3f;
+        }
+
+        public static class Heavy
+        {
+            // Identidad compartida
+            public const float MaxSpeed = 70f;        // m/s
+            public const float MotorForce = 130000f;  //
+            public const float TurnSpeed = 0.9f;      //
+            public const float AttackDamage = 1.5f;
+
+            // HPs segun sea Heavy player o Heavy NPC
+            public const float PlayerHealth = 30f;
+            public const float EnemyHealth = 4f;
+        }
+    }
+
+    // =========================================================================
+    // CONFIGURACION GENERAL (Comun a todos los tanques, sin importar la clase)
+    // =========================================================================
     public static class Tank
     {
         public const float TankScale = 1f;      // metros
@@ -29,63 +78,33 @@ public static class GameConfig
         public const float Height = 2.25f;      // metros
         public const float ChassisMass = 2000f; // kg (tanque real ~60t, ya lo vamos a ir ajustando)
         public const float TurretMass = 500f;   // kg
-
-        public const float MaxSpeed = 90f;      // m/s (referencia: 100 m/s = 360 km/h)
         public const float VerticalSpeed = 25f; // m/s (~90 km/h) para God Mode
         public const float Acceleration = 40f;  // m/s²
-        public const float TurnSpeed = 1.2f;    // rad/s
         public const float Friction = 0.95f;    // coeficiente por frame
         public const float SpawnZMargin = 7f;   // metros, el tanque spawnea esta altura por encima del terreno
-
         public const float MaxFuel = 100f;              // litros
         public const float FuelConsumptionRate = 1f;    // litros
+        public const float Cooldown = 0.5f;
 
         //Bepu
-        public const float PhysicsChassisWidth  = 2f;       // metros
-        public const float PhysicsChassisLength = 2f;       // metros
-        public const float PhysicsChassisHeight = 1.2f;     // metros
-        public const float PhysicsTurretWidth   = 1.4f;     // metros
-        public const float PhysicsTurretLength  = 2f;       // metros
-        public const float PhysicsTurretHeight  = 1f;       // metros
+        public const float PhysicsChassisWidth = 2f;    // metros
+        public const float PhysicsChassisLength = 2f;   // metros
+        public const float PhysicsChassisHeight = 1.2f; // metros
+        public const float PhysicsTurretWidth = 1.4f;   // metros
+        public const float PhysicsTurretLength = 2f;    // metros
+        public const float PhysicsTurretHeight = 1f;    // metros
         public const float PhysicsTurretOffsetY = PhysicsChassisHeight;     // justo encima del chasis
-        public const float MotorForce = 150000f;            // Newton
-        public const float EnemyMotorForce = 110000f;       // Newton
-        public const float ForwardDrag = 5000f;              // Coeficiente de arrastre (para velocidad terminal = MotorForce / Drag)
-        public const float LateralDrag = 250000f;            // evitar derrape
-
-        public const float HealthPoints = 20f;
-        public const float AttackDamage = 1f;               // por ahora, jugador y enemigo tienen el mismo ataque
-        public const float Cooldown = 0.5f;
-        public const float EnemyCooldown = 1f;
-        
+        public const float ForwardDrag = 5000f;         // Coeficiente de arrastre (para velocidad terminal = MotorForce / Drag)
+        public const float LateralDrag = 250000f;       // evitar derrape
     }
 
-    // ENEMIGOS
+    // =========================================================================
+    // CONFIGURACION DE ENEMIGOS (Solo lo que NO depende de la clase del tanque)
+    // =========================================================================
     public static class Enemies
     {
-        public static class Scout
-        {
-            public const float MaxSpeed = 25f;
-            public const float HealthPoints = 5f;
-            public const float MotorForce = 80000f;
-            public const float AttackDamage = 0.5f;
-        }
-        public static class Standard
-        {
-            public const float MaxSpeed = 35f;
-            public const float HealthPoints = 10f;
-            public const float MotorForce = 110000f;
-            public const float AttackDamage = 1f;
-        }
-        public static class Heavy
-        {
-            public const float MaxSpeed = 45f;
-            public const float HealthPoints = 20f;
-            public const float MotorForce = 150000f;
-            public const float AttackDamage = 1.5f;
-        }
         public const float AttackRadius = 50f;
-        public const float Cooldown = 1.0f;
+        public const float Cooldown = 1.0f; // Cooldown base para IA
     }
 
     // TERRENO
@@ -119,14 +138,14 @@ public static class GameConfig
         public const float HouseScale = 2f;
         public const float HouseChamberScale = 0.1f;
         public const float DecorationScale = 1.5f;
-        public const float DecorationChamberScale = DecorationScale/100f;
+        public const float DecorationChamberScale = DecorationScale / 100f;
         public const float DynamicSpawnOffset = 0.5f;
     }
 
     // POWERUPS - BARRIL DE COMBUSTIBLE
     public static class FuelBarrel
     {
-        public const int SpawnCount = 30;               // unidades
+        public const int SpawnCount = 30;               // cantidad de barriles en el mapa
         public const float FuelAmount = 25f;            // litros
         public const float RechargeDuration = 1f;       // segundos
         public const float CollectionDistance = 2.5f;   // metros

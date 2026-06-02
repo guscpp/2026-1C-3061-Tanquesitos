@@ -8,15 +8,40 @@ public class TankPlayer : TankBase
 {
     public float CurrentFuel { get; private set; } = GameConfig.Tank.MaxFuel;
 
-    public TankPlayer()
+    public TankPlayer(GameConfig.TankClass tankClass)
     {
-        MaxSpeed = GameConfig.Tank.MaxSpeed;
-        MotorForce = GameConfig.Tank.MotorForce;
-        TurnSpeed = GameConfig.Tank.TurnSpeed;
+        switch (tankClass)
+        {
+            case GameConfig.TankClass.Scout:
+                HealthPoints = GameConfig.TankClasses.Scout.PlayerHealth;
+                MaxSpeed = GameConfig.TankClasses.Scout.MaxSpeed;
+                MotorForce = GameConfig.TankClasses.Scout.MotorForce;
+                TurnSpeed = GameConfig.TankClasses.Scout.TurnSpeed;
+                AttackDamage = GameConfig.TankClasses.Scout.AttackDamage;
+                break;
+
+            case GameConfig.TankClass.Heavy:
+                HealthPoints = GameConfig.TankClasses.Heavy.PlayerHealth;
+                MaxSpeed = GameConfig.TankClasses.Heavy.MaxSpeed;
+                MotorForce = GameConfig.TankClasses.Heavy.MotorForce;
+                TurnSpeed = GameConfig.TankClasses.Heavy.TurnSpeed;
+                AttackDamage = GameConfig.TankClasses.Heavy.AttackDamage;
+                break;
+
+            case GameConfig.TankClass.Medium:
+            default:
+                HealthPoints = GameConfig.TankClasses.Medium.PlayerHealth;
+                MaxSpeed = GameConfig.TankClasses.Medium.MaxSpeed;
+                MotorForce = GameConfig.TankClasses.Medium.MotorForce;
+                TurnSpeed = GameConfig.TankClasses.Medium.TurnSpeed;
+                AttackDamage = GameConfig.TankClasses.Medium.AttackDamage;
+                break;
+        }
+
+        // Propiedades comunes a todos los tanques del jugador
         ForwardDrag = GameConfig.Tank.ForwardDrag;
         LateralDrag = GameConfig.Tank.LateralDrag;
-        HealthPoints = GameConfig.Tank.HealthPoints;
-        AttackDamage = GameConfig.Tank.AttackDamage;
+        CurrentFuel = GameConfig.Tank.MaxFuel;
     }
 
     public void AddFuel(float amount) => CurrentFuel = MathHelper.Clamp(CurrentFuel + amount, 0f, GameConfig.Tank.MaxFuel);
@@ -25,7 +50,6 @@ public class TankPlayer : TankBase
     {
         if (IsDead) return;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
         float forwardInput = 0f;
         if (keyboard.IsKeyDown(Keys.W)) forwardInput += 1f;
         if (keyboard.IsKeyDown(Keys.S)) forwardInput -= 1f;
