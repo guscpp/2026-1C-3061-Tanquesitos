@@ -267,7 +267,7 @@ public class TGCGame : Game
             direction.Normalize();
 
             // Posición desde donde sale la bala
-            Vector3 spawnPosition = _tank.Position + direction * 3f + Vector3.Up * 2f;
+            Vector3 spawnPosition = _tank.CannonMuzzlePosition;
             Cannonball cannonball = CreateCannonball(spawnPosition, direction);
             _cannonballs.Add(cannonball);
             _currentShootCooldown = _shootCooldown;
@@ -313,7 +313,6 @@ public class TGCGame : Game
             // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
             _terrain.Draw(_camera.View, _camera.Projection);
             _tank.Draw(_camera.View, _camera.Projection);
-            //_cannonball.Draw(_camera.View, _camera.Projection);
             foreach (var enemy in _enemies)
             {
                 enemy.Draw(_camera.View, _camera.Projection);

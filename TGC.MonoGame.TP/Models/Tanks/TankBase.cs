@@ -49,6 +49,12 @@ public abstract class TankBase
         Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(_physicsOrientation.X, _physicsOrientation.Y, _physicsOrientation.Z, _physicsOrientation.W)) *
         Matrix.CreateTranslation(Position);
 
+    public Matrix TurretWorld => Matrix.CreateRotationZ(_turretRotation) * WorldMatrix;
+
+    public Matrix CannonWorld => Matrix.CreateTranslation(0f, 0f, -1.5f) * Matrix.CreateRotationX(_cannonRotation) * Matrix.CreateTranslation(0f, 0f, 1.5f) * TurretWorld;
+
+    public Vector3 CannonMuzzlePosition => Vector3.Transform(new Vector3(0f, 1.5f, 2f), CannonWorld);
+
     public void Load(Model model, Texture2D texture, Effect effect, Simulation simulation)
     {
         Model = model; _effect = effect; _texture = texture;
@@ -86,15 +92,12 @@ public abstract class TankBase
     public virtual void Draw(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
     {
         if (Model == null || IsDead) return;
-        var chassisWorld = WorldMatrix;
-        var turretWorld = Matrix.CreateRotationZ(_turretRotation) * chassisWorld;
-        var cannonWorld = Matrix.CreateTranslation(0f, 0f, -1.5f) * Matrix.CreateRotationX(_cannonRotation) * Matrix.CreateTranslation(0f, 0f, 1.5f) * turretWorld;
 
         foreach (var mesh in Model.Meshes)
         {
-            var finalWorld = chassisWorld;
-            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola")) finalWorld = turretWorld;
-            else if (mesh.Name.Contains("Cañon")) finalWorld = cannonWorld;
+            var finalWorld = WorldMatrix;
+            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola")) finalWorld = TurretWorld;
+            else if (mesh.Name.Contains("Cañon")) finalWorld = CannonWorld;
 
             foreach (var eff in mesh.Effects)
             {
