@@ -62,8 +62,11 @@ public class TGCGame : Game
     private TankFollowCamera _camera;
     //-----------TERRENO
     private Terrain _terrain;
+    private Wall _wall;
     //-----------DECORACIONES
-    public AssetsManager _assets;
+    public StaticsManager _assets;
+    public DinamicsManager _dinamics;
+    public BarrelsManager _barrels;
     private readonly Random _random = new();
     //-----------FISICAS
     private Simulation _simulation;
@@ -144,39 +147,23 @@ public class TGCGame : Game
             //fisicas
         _terrainStaticHandle = _terrain.CreatePhysicsTerrain(_simulation);
 
-        // 4 paredes invisibles que rodean el mapa e impiden que salgan los objetos
-        float halfSize = _terrain.WidthUnits; // ~259 unidades
-        float margin = 8f;
-        float playAreaLimit = halfSize - margin; // Los muros invisibles quedan un poco adentro del mapa
-        float wallHeight = 60f; // Un poco más alto que el terreno máximo (35m)
-        float wallThickness = 2f;
+        _wall = new Wall(_simulation);
+        _wall.LoadContent(_terrain);
 
-        // Shape para muros Norte/Sur (largos en X, finos en Z)
-        var wallShapeNS = new Box(playAreaLimit * 2, wallHeight, wallThickness);
-        var idxNS = _simulation.Shapes.Add(wallShapeNS);
-
-        // Shape para muros Este/Oeste (finos en X, largos en Z)
-        var wallShapeEW = new Box(wallThickness, wallHeight, playAreaLimit * 2);
-        var idxEW = _simulation.Shapes.Add(wallShapeEW);
-
-        // Norte (-Z)
-        _simulation.Statics.Add(new StaticDescription(new System.Numerics.Vector3(0, wallHeight / 2f, -playAreaLimit), idxNS));
-        // Sur (+Z)
-        _simulation.Statics.Add(new StaticDescription(new System.Numerics.Vector3(0, wallHeight / 2f, playAreaLimit), idxNS));
-        // Oeste (-X)
-        _simulation.Statics.Add(new StaticDescription(new System.Numerics.Vector3(-playAreaLimit, wallHeight / 2f, 0), idxEW));
-        // Este (+X)
-        _simulation.Statics.Add(new StaticDescription(new System.Numerics.Vector3(playAreaLimit, wallHeight / 2f, 0), idxEW));
-
-        // creo modelos
         //ASSETS DECORATIVOS
             //Creamos el manager
-        _assets = new AssetsManager(_terrain);
+        _assets = new StaticsManager(_terrain);
             //Iniciamos
         _assets.Initialize();
-        _assets.SpawnFuelBarrels();
             //Cargamos los assets
         _assets.LoadContent(Content, _simulation);
+        _dinamics = new DinamicsManager(_terrain, _assets.GetDecorations(), _assets.getHouses());
+        _dinamics.Initialize();
+        _dinamics.LoadContent(Content, _simulation);
+        //BARRELS
+        _barrels = new BarrelsManager(_terrain, _assets.GetDecorations(), _assets.getHouses());
+        _barrels.Initialize();
+        _barrels.LoadContent(Content, _simulation);
         // ENEMIGOS
         for(int i=0; i<_enemiesCount; i++)
         {   // Inicializo los tanques y sus handles
@@ -196,10 +183,6 @@ public class TGCGame : Game
         _tank.Load(tankModel, tankTexture, effect2, _simulation);
             //fisicas
         _tankHandle = _tank.TankHandler;
-
-        /* Vector3 direction = new Vector3(0f, 0f, -1f);
-        direction.Normalize();
-        _cannonball = new Cannonball(_cannonballModel, effect, new Vector3(3f, 35f, 0f), direction, _simulation); */
 
         //HUD
         _hud = new Hud();
@@ -231,21 +214,20 @@ public class TGCGame : Game
         _tank.Update(gameTime, kb, _simulation);
 
         //verificar si pueden recogerse los barriles
-        foreach (var barrel in _assets._fuelBarrels)
+        foreach (var barrel in _barrels._fuelBarrels)
         {
             if (!barrel.IsCollected) barrel.TryCollect(_tank, _simulation);
         }
 
-        _assets.UpdateFuelBarrels((float)gameTime.ElapsedGameTime.TotalSeconds);
-
         _assets.Update(gameTime, _simulation);
+        _dinamics.Update(gameTime, _simulation);
+        _barrels.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
         foreach(var enemy in _enemies)
         {
             enemy.UpdateEnemy(gameTime, _simulation, _tank.Position.ToNumerics(), _terrain);
         }
         
-        //_cannonball.Update(_simulation);
         // cada frame el tiempo restante de cooldown baja
         _currentShootCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
         MouseState currentMouseState = Mouse.GetState();
@@ -301,7 +283,7 @@ public class TGCGame : Game
         // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);
-        //_cannonball.Draw(_camera.View, _camera.Projection);
+
         foreach(var enemy in _enemies)
         {
             enemy.Draw(_camera.View, _camera.Projection);
@@ -311,6 +293,8 @@ public class TGCGame : Game
             cannonball.Draw(_camera.View, _camera.Projection);
         }
         _assets.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
+        _dinamics.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
+        _barrels.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
         // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
         _hud.Draw();
 

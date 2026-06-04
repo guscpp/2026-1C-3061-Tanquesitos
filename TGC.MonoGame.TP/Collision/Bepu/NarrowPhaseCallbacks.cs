@@ -82,7 +82,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                 BodyHandle obstacleHandle = (handleA == tankHandle) ? handleB : handleA;
 
                 // Reviso la lista de decoraciones del AssetsManager
-                var objetoChocado = TGCGame.Instance._assets._decorationModels
+                var objetoChocado = TGCGame.Instance._dinamics._dynamicDecorations
                     .OfType<Dinamic>() //Tomo solo los dinamicos
                     .FirstOrDefault(d => d.bodyHandle == obstacleHandle); //El objeto de la lista debe ser el chocado
 
@@ -100,7 +100,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
             {
                 BodyHandle obstacleHandle = (cannonball.BodyHandle == handleA) ? handleB : handleA;
 
-                var objetoChocado = TGCGame.Instance._assets._decorationModels.OfType<Dinamic>().FirstOrDefault(d => d.bodyHandle == obstacleHandle);
+                var objetoChocado = TGCGame.Instance._dinamics._dynamicDecorations.OfType<Dinamic>().FirstOrDefault(d => d.bodyHandle == obstacleHandle);
 
                 if (objetoChocado != null && !objetoChocado.IsDead)
                 {
