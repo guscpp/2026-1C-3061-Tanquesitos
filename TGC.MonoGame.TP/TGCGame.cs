@@ -64,7 +64,8 @@ public class TGCGame : Game
     private Terrain _terrain;
     private Wall _wall;
     //-----------DECORACIONES
-    public StaticsManager _assets;
+    public HousesManager _houses;
+    public StaticsManager _statics;
     public DinamicsManager _dinamics;
     public BarrelsManager _barrels;
     private readonly Random _random = new();
@@ -151,19 +152,24 @@ public class TGCGame : Game
         _wall.LoadContent(_terrain);
 
         //ASSETS DECORATIVOS
-            //Creamos el manager
-        _assets = new StaticsManager(_terrain);
-            //Iniciamos
-        _assets.Initialize();
-            //Cargamos los assets
-        _assets.LoadContent(Content, _simulation);
-        _dinamics = new DinamicsManager(_terrain, _assets.GetDecorations(), _assets.getHouses());
+        //casas
+        _houses = new HousesManager(_terrain);
+        _houses.Initialize();
+        _houses.LoadContent(Content, _simulation);
+        //estaticos
+        _statics = new StaticsManager(_terrain, _houses.getHouses());
+        _statics.Initialize();
+        _statics.LoadContent(Content, _simulation);
+        //dinamicos
+        _dinamics = new DinamicsManager(_terrain, _statics.GetDecorations(), _houses.getHouses());
         _dinamics.Initialize();
         _dinamics.LoadContent(Content, _simulation);
+
         //BARRELS
-        _barrels = new BarrelsManager(_terrain, _assets.GetDecorations(), _assets.getHouses());
+        _barrels = new BarrelsManager(_terrain, _statics.GetDecorations(), _houses.getHouses());
         _barrels.Initialize();
         _barrels.LoadContent(Content, _simulation);
+
         // ENEMIGOS
         for(int i=0; i<_enemiesCount; i++)
         {   // Inicializo los tanques y sus handles
@@ -219,7 +225,8 @@ public class TGCGame : Game
             if (!barrel.IsCollected) barrel.TryCollect(_tank, _simulation);
         }
 
-        _assets.Update(gameTime, _simulation);
+        _houses.Update(gameTime, _simulation);
+        _statics.Update(gameTime, _simulation);
         _dinamics.Update(gameTime, _simulation);
         _barrels.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
@@ -292,7 +299,8 @@ public class TGCGame : Game
         {
             cannonball.Draw(_camera.View, _camera.Projection);
         }
-        _assets.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
+        _houses.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
+        _statics.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
         _dinamics.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
         _barrels.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
         // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
