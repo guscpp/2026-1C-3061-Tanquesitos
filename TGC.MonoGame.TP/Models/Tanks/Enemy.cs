@@ -10,7 +10,7 @@ using BepuPhysics;
 using MathHelper = BepuUtilities.MathHelper;
 using Vector3 = System.Numerics.Vector3;
 
-namespace TGC.MonoGame.TP.Models.Enemy
+namespace TGC.MonoGame.TP.Models
 {
     public class Enemy : Tank //hereda el comportamiento de un tanque (movimiento, disparo, configuracion)
     {

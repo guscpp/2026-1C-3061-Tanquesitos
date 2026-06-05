@@ -16,7 +16,6 @@ using TGC.MonoGame.TP.Cameras;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models;
 using TGC.MonoGame.TP.Models.Decorations;
-using TGC.MonoGame.TP.Models.Enemy;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Models;

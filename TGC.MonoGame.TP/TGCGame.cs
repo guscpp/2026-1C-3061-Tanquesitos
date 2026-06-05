@@ -16,7 +16,6 @@ using TGC.MonoGame.TP.Cameras;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models;
 using TGC.MonoGame.TP.Models.Decorations;
-using TGC.MonoGame.TP.Models.Enemy;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP;
@@ -51,11 +50,6 @@ public class TGCGame : Game
     private Hud _hud;
     // multiplayer :o
     private bool twoPlayers = false;
-    // ----------ENEMIGOS
-    private int _enemiesCount = 15;
-    public List<Enemy> _enemies = new ();
-    private List<BodyHandle> _enemiesHandles = new ();
-    private List<Cannonball> _enemiesCanonballs = new();
 
     //-----------TANQUE
     public Tank _tank;
@@ -68,6 +62,7 @@ public class TGCGame : Game
     public StaticsManager _statics;
     public DinamicsManager _dinamics;
     public BarrelsManager _barrels;
+    public EnemiesManager _enemies;
     private readonly Random _random = new();
     //-----------FISICAS
     private Simulation _simulation;
@@ -75,6 +70,7 @@ public class TGCGame : Game
     private BodyHandle _tankHandle;
     private StaticHandle _terrainStaticHandle;
     public static TGCGame Instance { get; private set; } //Esto es para que lo use NarrowPhaseCallbacks
+
     //gizmos
     private Gizmo _gizmos = new();
     private Effect _effect;
@@ -87,6 +83,7 @@ public class TGCGame : Game
             return _cannonballs;
         }
     }
+
     private MouseState _previousMouseState;
     private Model _cannonballModel;
     public static float _shootCooldown = GameConfig.Tank.Cooldown;
@@ -170,15 +167,9 @@ public class TGCGame : Game
         _barrels.Initialize();
         _barrels.LoadContent(Content, _simulation);
 
-        // ENEMIGOS
-        for(int i=0; i<_enemiesCount; i++)
-        {   // Inicializo los tanques y sus handles
-            var enemy = new Enemy();
-            enemy.Position = enemy.GetPosition(_terrain, _random);
-            enemy.Load(tankModel, tankTexture, effect2, _simulation);
-            _enemies.Add(enemy);
-            _enemiesHandles.Add(enemy.TankHandler);
-        }
+        _enemies = new EnemiesManager(_terrain);
+        _enemies.LoadContent(tankModel, tankTexture, effect2, _simulation);
+
         //TANQUE
             //Creamos el tanque
         _tank = new Tank();
@@ -230,7 +221,7 @@ public class TGCGame : Game
         _dinamics.Update(gameTime, _simulation);
         _barrels.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
-        foreach(var enemy in _enemies)
+        foreach(var enemy in _enemies._enemies)
         {
             enemy.UpdateEnemy(gameTime, _simulation, _tank.Position.ToNumerics(), _terrain);
         }
@@ -291,14 +282,13 @@ public class TGCGame : Game
         _terrain.Draw(_camera.View, _camera.Projection);
         _tank.Draw(_camera.View, _camera.Projection);
 
-        foreach(var enemy in _enemies)
-        {
-            enemy.Draw(_camera.View, _camera.Projection);
-        }
         foreach (var cannonball in _cannonballs)
         {
             cannonball.Draw(_camera.View, _camera.Projection);
         }
+
+        _enemies.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
+
         _houses.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
         _statics.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
         _dinamics.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);

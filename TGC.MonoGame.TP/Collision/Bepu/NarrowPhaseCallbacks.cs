@@ -108,7 +108,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                 }
 
                 // Reviso si se impacto a un enemigo
-                var enemyChocado = TGCGame.Instance._enemies.FirstOrDefault(e => e.TankHandler == obstacleHandle);
+                var enemyChocado = TGCGame.Instance._enemies._enemies.FirstOrDefault(e => e.TankHandler == obstacleHandle);
                 if(enemyChocado != null && !enemyChocado.IsDead)
                 {
                     enemyChocado.HandleCollision();
