@@ -97,7 +97,7 @@ public abstract class TankBase
         {
             var finalWorld = WorldMatrix;
             if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola")) finalWorld = TurretWorld;
-            else if (mesh.Name.Contains("Cañon")) finalWorld = CannonWorld;
+            else if (mesh.Name.Contains("Cañon") || mesh.Name.Contains("Anillo")) finalWorld = CannonWorld;
 
             foreach (var eff in mesh.Effects)
             {

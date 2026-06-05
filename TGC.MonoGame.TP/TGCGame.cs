@@ -131,6 +131,7 @@ public class TGCGame : Game
         //shaders
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //modelos sin texturas
         var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
+        //var lightingEffect = Content.Load<Effect>(ContentFolderEffects + "LightingShadow"); //para probar como puede quedar
 
         //texturas
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
@@ -139,7 +140,7 @@ public class TGCGame : Game
         //sonidos
 
         //modelos
-        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
+        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v4");
         _cannonballModel = Content.Load<Model>(ContentFolder3D + "cannonball/cannonball");
 
         //AUXILIARES
