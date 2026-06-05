@@ -23,32 +23,31 @@ namespace TGC.MonoGame.TP.Models.Decorations
         public Cactus(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
 
         //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
+       //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
         {
             base.LoadContent(content, simulation, effect);
-            // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
-            // BoundingBox box = ... (aun no xd)
-            _height = _dimensions.Z/2;
-            _radius = Math.Max(_dimensions.X, _dimensions.Y) / 2f;
-            _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
+            
+            // La altura la dejamos igual
+            _height = _dimensions.Z / 2f;
+            
+            // MODIFICACIÓN: Tomamos el promedio del ancho en X e Y, y lo achicamos a la mitad (factor 0.5f)
+            // Esto hace que el cilindro físico se concentre en el tronco y no en las ramas externas
+            _radius = ((_dimensions.X + _dimensions.Y) / 4f) * 0.5f; 
 
-            // Creo el cuerpo en Bepu (Es la configuracion de la fisica)
+            _visualScale = 1f; 
+
+            // Creo el cuerpo en Bepu usando el nuevo radio corregido
             var shape = new Cylinder(_radius, _height);
             var shapeIndex = simulation.Shapes.Add(shape);
 
-            //Como es estatico no necesito la inercia
-
-            // Posicion inicial, se ajusta el centro (Bepu usa el centro, MonoGame la base)
-            //Uso la posicion del modelo visual para definir donde ubico el modelo fisico al inicio, pero la altura no por lo del pivote (el centro del modelo)
+            // Posicion inicial, se ajusta el centro
             var centerPos = new System.Numerics.Vector3(_position.X, _position.Y + _height, _position.Z);
             
-            //Añado el cuerpo estatico a la simulacion
             _staticHandle = simulation.Statics.Add(new StaticDescription(centerPos, shapeIndex));
 
-            //Problema de que el modelo este acostado
+            // Matriz de mundo para el modelo visual
             Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90));
-
-            //Como mi modelo es estatico calculo la matriz de mundo una sola vez
             modificarMatrixWorld(rotation, _height);
         }
 

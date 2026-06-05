@@ -16,7 +16,7 @@ using Terrain = TGC.MonoGame.TP.Models.Terrain;
 using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
-namespace TGC.MonoGame.TP.Models;
+namespace TGC.MonoGame.TP.Managers;
 
 /// <summary>
 ///     Genera todas las clases de assets dentro del escenario aleatoriamente

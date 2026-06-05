@@ -11,6 +11,7 @@ using BepuUtilities;
 
 using TGC.MonoGame.TP;
 using TGC.MonoGame.TP.Models.Decorations;
+using TGC.MonoGame.TP.Models;
 
 public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
 {
@@ -82,7 +83,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                 BodyHandle obstacleHandle = (handleA == tankHandle) ? handleB : handleA;
 
                 // Reviso la lista de decoraciones del AssetsManager
-                var objetoChocado = TGCGame.Instance._dinamics._dynamicDecorations
+                var objetoChocado = TGCGame.Instance._dinamicsManager._dynamicDecorations
                     .OfType<Dinamic>() //Tomo solo los dinamicos
                     .FirstOrDefault(d => d.bodyHandle == obstacleHandle); //El objeto de la lista debe ser el chocado
 
@@ -92,7 +93,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                     objetoChocado.HandleCollision(); //Aca lo declaro muerto
                 }
             }
-
+            
             // Buscar si alguno de los handles pertenece a una bala
             var cannonball = TGCGame.Instance.Cannonballs.FirstOrDefault(c => c.BodyHandle == handleA || c.BodyHandle == handleB);
 
@@ -100,22 +101,40 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
             {
                 BodyHandle obstacleHandle = (cannonball.BodyHandle == handleA) ? handleB : handleA;
 
-                var objetoChocado = TGCGame.Instance._dinamics._dynamicDecorations.OfType<Dinamic>().FirstOrDefault(d => d.bodyHandle == obstacleHandle);
+                var objetoChocado = TGCGame.Instance._dinamicsManager._dynamicDecorations.OfType<Dinamic>().FirstOrDefault(d => d.bodyHandle == obstacleHandle);
 
                 if (objetoChocado != null && !objetoChocado.IsDead)
                 {
                     objetoChocado.HandleCollision();
+                    cannonball.killCannonball();
                 }
 
                 // Reviso si se impacto a un enemigo
-                var enemyChocado = TGCGame.Instance._enemies._enemies.FirstOrDefault(e => e.TankHandler == obstacleHandle);
+                /*var enemyChocado = TGCGame.Instance._enemiesManager._enemies.FirstOrDefault(e => e.TankHandler == obstacleHandle);
                 if(enemyChocado != null && !enemyChocado.IsDead)
                 {
-                    enemyChocado.HandleCollision();
-                }
+                    //enemyChocado.HandleHealth(GameConfig.Tank.AttackDamage);
+                    enemyChocado.HandleHealth(0);
+                    cannonball.killCannonball();
+                } */               
             }
 
         }
+        if(pair.A.Mobility == CollidableMobility.Static || pair.B.Mobility == CollidableMobility.Static)
+        {
+            // si la bala colisiono con el suelo, debe desaparecer
+            // chequeo que uno de los dos sea estatico (terreno) y el otro dinamico (bala)
+            var terreno = TGCGame.Instance.TerrainHandle;
+            Cannonball cannonball = null;
+            if (pair.A.Mobility == CollidableMobility.Static && pair.A.StaticHandle == terreno)
+                cannonball = TGCGame.Instance.Cannonballs.FirstOrDefault(c => c.BodyHandle == pair.B.BodyHandle);
+
+            if (pair.B.Mobility == CollidableMobility.Static && pair.B.StaticHandle == terreno)
+                cannonball = TGCGame.Instance.Cannonballs.FirstOrDefault(c => c.BodyHandle == pair.A.BodyHandle);
+
+            if (cannonball != null) cannonball.killCannonball();
+        }
+        
         return true;
     }
 

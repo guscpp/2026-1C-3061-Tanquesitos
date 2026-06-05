@@ -36,6 +36,10 @@ public class Cannonball
 
 
     public bool IsDead => _isDead;
+    public void killCannonball()
+    {
+        _isDead = true;
+    }
 
     public Cannonball(Model model, Effect effect, Vector3 position, Vector3 direction, Simulation simulation)
     {

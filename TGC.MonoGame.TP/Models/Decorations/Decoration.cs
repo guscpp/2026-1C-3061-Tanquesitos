@@ -18,6 +18,9 @@ namespace TGC.MonoGame.TP.Models.Decorations;
 /// </summary>
 public class Decoration
 {
+    public const string ContentFolder3D = "Models/";
+    //public const string ContentFolderEffects = "Effects/";
+    public const string ContentFolderTextures = "Textures/";
 
     protected Model _model;
     protected Texture2D _texture;
@@ -41,8 +44,8 @@ public class Decoration
     //CARGA DE CONTENIDO (Modificable)
     public virtual void LoadContent(ContentManager content, Simulation simulation, Effect effect)
     {
-        _model = content.Load<Model>(StaticsManager.ContentFolder3D + _path);
-        _texture = content.Load<Texture2D>(StaticsManager.ContentFolderTextures + "paleta_256x512"); //Aprovechando que todos usan la misma imagen
+        _model = content.Load<Model>(ContentFolder3D + _path);
+        _texture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512"); //Aprovechando que todos usan la misma imagen
         var instanciaEffect = effect.Clone(); //Como lo clono en vez de usar el mismo comparto el codigo pero no el parametro world ni view que varian de modelo a modelo
         //Para cada malla de mi coleccion de mallas del modelo
         foreach (var mesh in _model.Meshes) 

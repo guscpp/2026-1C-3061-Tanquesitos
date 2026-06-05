@@ -22,8 +22,41 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
         public Tree(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
 
-        //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
+                // CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
+        {
+            base.LoadContent(content, simulation, effect);
+            
+            _height = _dimensions.Z / 2;
+            
+            
+            // En vez de dividir por 4f (que toma las hojas), usamos un valor fijo para el tronco.
+            // Probar con 0.3f o 0.4f. Si el tanque pasa muy por adentro, lo subo a 0.5f.
+            _radius = 0.70f; 
+            
+            _visualScale = 1f; 
+
+            // Creo el cuerpo en Bepu (Es la configuracion de la fisica)
+            var shape = new Cylinder(_radius, _height);
+            var shapeIndex = simulation.Shapes.Add(shape);
+
+            // Posicion inicial, se ajusta el centro
+            var centerPos = new System.Numerics.Vector3(_position.X, _position.Y + _height / 2f, _position.Z);
+            
+            // Añado el cuerpo estatico a la simulacion
+            _staticHandle = simulation.Statics.Add(new StaticDescription(centerPos, shapeIndex));
+
+            // Problema de que el modelo este acostado
+            Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90));
+
+            // Como mi modelo es estatico calculo la matriz de mundo una sola vez
+            modificarMatrixWorld(rotation, _height);
+        }
+
+
+
+        //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
+      /*  public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
         {
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
@@ -50,7 +83,8 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             //Como mi modelo es estatico calculo la matriz de mundo una sola vez
             modificarMatrixWorld(rotation, _height);
-        }
+        } */ 
+
 
         //ACTUALIZO (Modificacion de la funcion en DECORATION)
         //No hace nada (agradecida)
