@@ -168,6 +168,9 @@ public class TGCGame : Game
         _dinamicsManager.Initialize();
         _dinamicsManager.LoadContent(Content, _simulation);
 
+        _enemiesManager = new EnemiesManager(_terrain, _simulation);
+        _enemiesManager.LoadContent(Content);
+
         //BARRELS
         _barrelsManager = new BarrelsManager(_terrain, _staticsManager.GetDecorations(), _housesManager.getHouses());
         _barrelsManager.Initialize();
@@ -223,6 +226,8 @@ public class TGCGame : Game
         {
             if (!barrel.IsCollected) barrel.TryCollect(_tank, _simulation);
         }
+
+        _enemiesManager.Update(gameTime, _tank.Position);
 
         _housesManager.Update(gameTime, _simulation);
         _staticsManager.Update(gameTime, _simulation);
@@ -294,6 +299,7 @@ public class TGCGame : Game
             _staticsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _dinamicsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _barrelsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
+            _enemiesManager.Draw(_camera.View, _camera.Projection);
             // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
             _hud.Draw();
             _gizmos.Draw();

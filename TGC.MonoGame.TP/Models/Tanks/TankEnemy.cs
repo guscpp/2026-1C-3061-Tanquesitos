@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Numerics;
 
-namespace TGC.MonoGame.TP.Models;
+namespace TGC.MonoGame.TP.Models.Tanks;
 
 public abstract class TankEnemy : TankBase
 {

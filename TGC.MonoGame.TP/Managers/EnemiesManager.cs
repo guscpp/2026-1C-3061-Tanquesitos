@@ -11,7 +11,7 @@ using System.Linq;
 using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using static TGC.MonoGame.TP.GameConfig;
-using TGC.MonoGame.TP.Models;
+using TGC.MonoGame.TP.Models.Tanks;
 using Terrain = TGC.MonoGame.TP.Models.Terrain;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
@@ -21,7 +21,7 @@ namespace TGC.MonoGame.TP.Managers;
 ///     Genera todas las clases de assets dentro del escenario aleatoriamente
 /// </summary>
 public class EnemiesManager
-{/*
+{
     public const string ContentFolder3D = "Models/";
     public const string ContentFolderEffects = "Effects/";
     public const string ContentFolderMusic = "Music/";
@@ -30,18 +30,20 @@ public class EnemiesManager
     public const string ContentFolderTextures = "Textures/";
 
     private int _enemiesCount = 15;
-    public List<TankEnemy> _enemies = new ();
-    private List<BodyHandle> _enemiesHandles = new ();
-    private List<Cannonball> _enemiesCanonballs = new();
+    public List<TankEnemy> _enemies = new();
+    private List<BodyHandle> _enemiesHandles = new();
     
-    // sobre el terreno
+    //sobre el terreno
     private Terrain _terrain;
     //Random
     private readonly Random _random = new();
+    //fisicas
+    private Simulation _simulation;
 
-    public EnemiesManager(Terrain terrain)
+    public EnemiesManager(Terrain terrain, Simulation simulation)
     {
         _terrain = terrain;
+        _simulation = simulation;
     }
 
     public void Initialize()
@@ -49,25 +51,40 @@ public class EnemiesManager
 
     }
 
-    public void LoadContent(Model tankModel, Texture2D tankTexture, Effect effect2, Simulation simulation)
+    public void LoadContent(ContentManager content)
     {
-        for(int i=0; i<_enemiesCount; i++)
-        {   // Inicializo los tanques y sus handles
-            var TankEnemy = new TankPlayer();
-            TankEnemy.Position = TankEnemy.GetPosition(_terrain, _random);
-            TankEnemy.Load(tankModel, tankTexture, effect2, simulation);
-            _enemies.Add(TankEnemy);
-            _enemiesHandles.Add(TankEnemy.TankHandler);
+        var tankModel = content.Load<Model>(ContentFolder3D + "tanques/tank v4");
+        var tankTexture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+        var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+
+        for (int i = 0; i < _enemiesCount; i++)
+        {
+            // Inicializo los tanques y sus handles
+            TankEnemy enemy = _random.Next(3) switch
+            {
+                0 => new TankEnemyScout(),
+                1 => new TankEnemyMedium(),
+                _ => new TankEnemyHeavy()
+            };
+            enemy.Position = enemy.GetPosition(_terrain, _random);
+            enemy.Load(tankModel, tankTexture, effect, _simulation);
+            _enemies.Add(enemy);
+            _enemiesHandles.Add(enemy.TankHandler);
         }
     }
 
-    public void Update(GameTime elapsedTime, Simulation simulation) { }
-
-    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation)
-    {
-        foreach(var TankEnemy in _enemies)
+    public void Update(GameTime gameTime, Vector3 position) {
+        foreach (var tankEnemy in _enemies)
         {
-            TankEnemy.Draw(view, projection);
+            tankEnemy.UpdateEnemy(gameTime, _simulation, position.ToNumerics(), _terrain);
         }
-    }*/
+     }
+
+    public void Draw(Matrix view, Matrix projection)
+    {
+        foreach(var tankEnemy in _enemies)
+        {
+            tankEnemy.Draw(view, projection);
+        }
+    }
 }

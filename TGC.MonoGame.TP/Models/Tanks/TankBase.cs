@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace TGC.MonoGame.TP.Models;
+namespace TGC.MonoGame.TP.Models.Tanks;
 
 public abstract class TankBase
 {

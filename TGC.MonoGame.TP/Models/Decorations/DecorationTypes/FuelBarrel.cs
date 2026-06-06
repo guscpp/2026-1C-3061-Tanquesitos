@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using TGC.MonoGame.TP.Gizmos;
+using TGC.MonoGame.TP.Models.Tanks;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Models.Decorations

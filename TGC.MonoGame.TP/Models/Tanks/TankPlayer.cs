@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Input;
 using BepuPhysics;
 
-namespace TGC.MonoGame.TP.Models;
+namespace TGC.MonoGame.TP.Models.Tanks;
 
 public class TankPlayer : TankBase
 {
