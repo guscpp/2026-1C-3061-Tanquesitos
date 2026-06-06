@@ -261,14 +261,17 @@ public class TGCGame : Game
         _currentShootCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
         MouseState currentMouseState = Mouse.GetState();
 
+        Vector3 barrelDirection = _tank.CannonForward;
+        barrelDirection.Normalize();
+
+        var trajectory = AimAssist.CalculateTrajectory(_tank.CannonMuzzlePosition, barrelDirection * 25f, new System.Numerics.Vector3(0, -9.8f, 0), 50, 0.05f);
+        _gizmos.DrawPolyLine(trajectory.ToArray(), Color.Red);
+        
         if (currentMouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released && _currentShootCooldown <= 0f)
         {
-            Vector3 direction = _tank.CannonForward;
-            direction.Normalize();
-
             // Posición desde donde sale la bala
             Vector3 spawnPosition = _tank.CannonMuzzlePosition;
-            Cannonball cannonball = CreateCannonball(spawnPosition, direction);
+            Cannonball cannonball = CreateCannonball(spawnPosition, barrelDirection);
             _cannonballs.Add(cannonball);
             _currentShootCooldown = _shootCooldown;
         }
