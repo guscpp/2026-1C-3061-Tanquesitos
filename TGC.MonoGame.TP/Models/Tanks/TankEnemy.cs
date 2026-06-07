@@ -72,6 +72,8 @@ public abstract class TankEnemy : TankBase
 
             // Agrega la bala a la lista global del juego
             TGCGame.Instance.Cannonballs.Add(TGCGame.Instance.CreateCannonball(spawnPos, dir));
+            TGCGame.Instance.SoundManager.PlaySound3D("cannon_fire", spawnPos,
+                TGCGame.Instance.Camera.ListenerPosition, TGCGame.Instance.Camera.ListenerForward);
             _currentShootCooldown = ShootCooldown;
         }
     }

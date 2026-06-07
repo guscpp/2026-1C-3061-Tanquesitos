@@ -553,6 +553,18 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/tgc-logo/tgc-logo.fbx
 
+#begin Music/ph_music.ogg
+/importer:OggImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Music/ph_music.ogg
+
+#begin Sounds/cannon_fire.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/cannon_fire.wav
+
 #begin Sounds/horn.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor

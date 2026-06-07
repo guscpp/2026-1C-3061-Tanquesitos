@@ -19,6 +19,10 @@ public class TankFollowCamera
     public float MaxDistance { get; set; } = GameConfig.Camera.MaxDistance;         //4500f
     public float ZoomSensitivity { get; set; } = GameConfig.Camera.ZoomSensitivity; //250f
 
+    //para calcular el 3d del audio 3d
+    public Vector3 ListenerPosition => _currentPosition;
+    public Vector3 ListenerForward => Vector3.Normalize(_lookAt - _currentPosition);
+
     private Vector3 _currentPosition;
     private Vector3 _targetPosition;
     private Vector3 _lookAt;

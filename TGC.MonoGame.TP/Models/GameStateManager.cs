@@ -2,7 +2,9 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 using System;
+using TGC.MonoGame.TP.Managers;
 
 namespace TGC.MonoGame.TP.Models;
 
@@ -17,6 +19,10 @@ public class GameStateManager
     private readonly SpriteFont _fontConsolas;
     private readonly Texture2D _whitePixel;
     private Texture2D _menuBackground;
+
+    //SoundManager
+    private readonly SoundManager _soundManager;
+    private bool _menuMusicStarted = false;
 
     // 3D Menu Variables
     private Model _currentMenuTankModel;
@@ -47,10 +53,11 @@ public class GameStateManager
     private float _idleTime = 0f;
     private const float IdleAnimationSpeed = 2.5f; // Controls how fast the pulse is
 
-    public GameStateManager(GraphicsDevice graphicsDevice, ContentManager content)
+    public GameStateManager(GraphicsDevice graphicsDevice, ContentManager content, SoundManager soundManager)
     {
         _graphicsDevice = graphicsDevice;
         _content = content;
+        _soundManager = soundManager;
         _spriteBatch = new SpriteBatch(graphicsDevice);
         // Coincide con la ruta compilada en Content.mgcb
         _fontArial = content.Load<SpriteFont>("SpriteFonts/ArialFont");
@@ -96,6 +103,8 @@ public class GameStateManager
 
     public void Update(KeyboardState kb, KeyboardState lastKb)
     {
+        HandleMusic();
+
         _menuTankRotation += _menuTankRotationSpeed;
 
         // Advance idle animation timer
@@ -130,6 +139,7 @@ public class GameStateManager
                     CurrentState = GameState.Menu;
                     _selectedIndex = 0;
                     _lastSelectedIndex = -1;
+                    _menuMusicStarted = false;
                     UpdateMenuTankModel(0);
                 }
                 break;
@@ -433,4 +443,30 @@ public class GameStateManager
     }
 
     public void ForceState(GameState state) => CurrentState = state;
+
+    // Maneja la reproduccion de musica segun el estado del juego
+    private void HandleMusic()
+    {
+        if (CurrentState == GameState.Menu)
+        {
+            // Reproducir musica del menu solo si no esta sonando
+            if (!_menuMusicStarted && MediaPlayer.State != MediaState.Playing)
+            {
+                _soundManager.PlayMusic("Music/ph_music", true);
+                _menuMusicStarted = true;
+            }
+        }
+        else
+        {
+            // Detener musica del menu al salir de ese estado
+            if (_menuMusicStarted && MediaPlayer.State == MediaState.Playing)
+            {
+                _soundManager.StopMusic();
+                _menuMusicStarted = false;
+            }
+        }
+    }
+
+    //exponerlo para reproducir efectos 3d
+    public SoundManager SoundManager => _soundManager;
 }

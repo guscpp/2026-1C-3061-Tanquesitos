@@ -55,9 +55,13 @@ public class TGCGame : Game
     private Hud _hud;
     //gamestate
     private GameStateManager _gameStateManager;
+    //musica y sfx
+    private SoundManager _soundManager;
+    public SoundManager SoundManager => _gameStateManager.SoundManager;
     //-----------TANQUE
     public TankPlayer _tank;
     private TankFollowCamera _camera;
+    public TankFollowCamera Camera => _camera;
     //-----------TERRENO
     private Terrain _terrain;
     private Wall _wall;
@@ -126,8 +130,12 @@ public class TGCGame : Game
 
     protected override void LoadContent()
     {
+        //Sonido
+        _soundManager = new SoundManager();
+        _soundManager.LoadContent(Content);
+
         //GameStateManager
-        _gameStateManager = new GameStateManager(GraphicsDevice, Content);
+        _gameStateManager = new GameStateManager(GraphicsDevice, Content, _soundManager);
 
         //RECURSOS
         //shaders
@@ -248,6 +256,9 @@ public class TGCGame : Game
             Cannonball cannonball = CreateCannonball(spawnPosition, direction);
             _cannonballs.Add(cannonball);
             _currentShootCooldown = _shootCooldown;
+
+            //reproducir sonido 3d
+            _gameStateManager.SoundManager.PlaySound3D("cannon_fire", spawnPosition, _camera.ListenerPosition, _camera.ListenerForward);
         }
         _previousMouseState = currentMouseState;
 
