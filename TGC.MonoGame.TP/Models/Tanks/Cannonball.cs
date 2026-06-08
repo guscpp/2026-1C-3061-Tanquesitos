@@ -5,7 +5,7 @@ using BepuPhysics.Collidables;
 
 using BepuVector3 = System.Numerics.Vector3;
 
-namespace TGC.MonoGame.TP.Models;
+namespace TGC.MonoGame.TP.Models.Tanks;
 
 public class Cannonball
 {

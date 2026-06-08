@@ -15,6 +15,7 @@ using TGC.MonoGame.Samples.Physics.Bepu;
 using TGC.MonoGame.TP.Cameras;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models;
+using TGC.MonoGame.TP.Models.Terrains;
 using TGC.MonoGame.TP.Models.Decorations;
 using TGC.MonoGame.TP.Managers;
 using TGC.MonoGame.TP.Models.Tanks;
@@ -55,9 +56,6 @@ public class TGCGame : Game
     private Hud _hud;
     //gamestate
     private GameStateManager _gameStateManager;
-    //musica y sfx
-    private SoundManager _soundManager;
-    public SoundManager SoundManager => _gameStateManager.SoundManager;
     //-----------TANQUE
     public TankPlayer _tank;
     private TankFollowCamera _camera;
@@ -65,19 +63,15 @@ public class TGCGame : Game
     //-----------TERRENO
     private Terrain _terrain;
     private Wall _wall;
-    public StaticHandle TerrainHandle
-    {
-        get
-        {
-            return _terrainStaticHandle;
-        }
-    }
+    public StaticHandle TerrainHandle => _terrainStaticHandle;
     //-----------Manager
     public HousesManager _housesManager;
     public StaticsManager _staticsManager;
     public DinamicsManager _dinamicsManager;
     public BarrelsManager _barrelsManager;
     public EnemiesManager _enemiesManager;
+    private SoundManager _soundManager;
+    public SoundManager SoundManager => _gameStateManager.SoundManager;
     //-----------FISICAS
     private Simulation _simulation;
     private BufferPool _bufferPool;
@@ -87,15 +81,9 @@ public class TGCGame : Game
     //gizmos
     private Gizmo _gizmos = new();
     private List<Cannonball> _cannonballs = new();
-    public List<Cannonball> Cannonballs
-    {
-        get
-        {
-            return _cannonballs;
-        }
-    }
+    public List<Cannonball> Cannonballs => _cannonballs;
     private Model _cannonballModel;
-    public static float _shootCooldown = GameConfig.Tank.Cooldown;
+    private float _shootCooldown = GameConfig.Tank.Cooldown;
     private float _currentShootCooldown = 0f;
 
     // Variable para guardar la eleccion del jugador desde el menu
@@ -175,7 +163,8 @@ public class TGCGame : Game
         _dinamicsManager = new DinamicsManager(_terrain, _staticsManager.GetDecorations(), _housesManager.getHouses());
         _dinamicsManager.Initialize();
         _dinamicsManager.LoadContent(Content, _simulation);
-
+        
+        //ENEMIGOS
         _enemiesManager = new EnemiesManager(_terrain, _simulation);
         _enemiesManager.LoadContent(Content);
 
@@ -183,8 +172,6 @@ public class TGCGame : Game
         _barrelsManager = new BarrelsManager(_terrain, _staticsManager.GetDecorations(), _housesManager.getHouses());
         _barrelsManager.Initialize();
         _barrelsManager.LoadContent(Content, _simulation);
-
-        // ENEMIGOS
 
         //TANQUE
         // Crear el tanque usando la eleccion del jugador
@@ -246,7 +233,9 @@ public class TGCGame : Game
         _currentShootCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
         MouseState currentMouseState = Mouse.GetState();
 
-        if (currentMouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released && _currentShootCooldown <= 0f)
+        if (currentMouseState.LeftButton == ButtonState.Pressed 
+        && _previousMouseState.LeftButton == ButtonState.Released 
+        && _currentShootCooldown <= 0f)
         {
             Vector3 direction = _tank.CannonForward;
             direction.Normalize();
@@ -339,6 +328,7 @@ public class TGCGame : Game
         _bufferPool.Clear();
         _terrain?.Dispose();
         _hud?.Dispose();
+        _gameStateManager?.Dispose();
         base.UnloadContent();
     }
 }

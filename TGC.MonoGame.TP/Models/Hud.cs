@@ -2,6 +2,9 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace TGC.MonoGame.TP.Models;
 
@@ -16,21 +19,38 @@ public class Hud
     private readonly string[] _instructions;
     private readonly Color _textColor = Color.White;
 
-    // Porcentajes para calcular margenes y espaciado de forma dinamica
+    // Parámetros de diseño responsive
     private readonly float _paddingPercentX = 0.02f;
     private readonly float _paddingPercentY = 0.02f;
     private readonly float _spacingPercent = 0.008f;
 
-    // === VARIABLES PARA FPS ===
+    // Elementos gráficos para la barra de progreso vectorial
+    private Texture2D _whitePixel;
+    private const int ProgressBarWidth = 150;
+    private const int ProgressBarHeight = 12;
+
+    // Variables de cálculo para los FPS
     private float _fps;
     private float _fpsAccumulator;
     private int _fpsFrameCount;
 
-    // === VARIABLES PARA DEBUG ===
+    // --- VARIABLES DE CACHÉ REACTIVA (Evitan miles de allocations de strings por segundo) ---
+    private string _cachedFpsText = "FPS: 0";
+    private int _lastDisplayedFps = -1;
+
+    private string _cachedFuelText = "FUEL: 100 / 100";
+    private int _lastDisplayedFuel = -1;
+
+    private string _cachedPosText = "X: 0.0  Y: 0.0  Z: 0.0";
+    private int _lastDisplayedPosX = -9999;
+    private int _lastDisplayedPosZ = -9999;
+
+    private string _cachedCooldownText = "DISPARO: LISTO";
+    private float _lastRemainingSeconds = -1f;
+
+    // Propiedades expuestas que actualiza el juego en cada frame
     public Vector3 TankPosition { get; set; }
     public float TankFuel { get; set; }
-
-    // === VARIABLES PARA COOLDOWN DEL CANON ===
     public float CannonCurrentCooldown { get; set; }
     public float CannonMaxCooldown { get; set; } = 0.5f;
 
@@ -43,12 +63,16 @@ public class Hud
             "zoom: rueda del mouse",
             "salir: escape"
         };
+
     }
 
     public void LoadContent(ContentManager content, GraphicsDevice graphicsDevice)
     {
         _spriteBatch = new SpriteBatch(graphicsDevice);
         _font = content.Load<SpriteFont>("SpriteFonts/ArialFont");
+
+        _whitePixel = new Texture2D(graphicsDevice, 1, 1);
+        _whitePixel.SetData(new[] { Color.White });
     }
 
     /// <summary>
@@ -58,6 +82,7 @@ public class Hud
     {
         _fpsAccumulator += (float)gameTime.ElapsedGameTime.TotalSeconds;
         _fpsFrameCount++;
+
         // Recalcular el promedio cada segundo
         if (_fpsAccumulator >= 1f)
         {
@@ -91,61 +116,78 @@ public class Hud
             drawPosition.Y += _font.LineSpacing + spacing;
         }
 
+        //Cache Reactivo de String
         // === INDICADOR DE FPS (esquina superior derecha) ===
-        string fpsText = $"FPS: {_fps:F0}";
-        var fpsSize = _font.MeasureString(fpsText);
-        var fpsPosition = new Vector2(
-            screenWidth - fpsSize.X - padX,
-            padY
-        );
+        int currentFpsInt = (int)_fps;
+        if (currentFpsInt != _lastDisplayedFps)
+        {
+            _cachedFpsText = $"FPS: {currentFpsInt}";
+            _lastDisplayedFps = currentFpsInt;
+        }
+
         // Color segun rendimiento (verde/amarillo/rojo)
-        Color fpsColor = _fps >= 60 ? Color.Lime :
-                         _fps >= 30 ? Color.Yellow :
-                         Color.Red;
-        // Sombra para mejor legibilidad
-        _spriteBatch.DrawString(_font, fpsText, fpsPosition + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_font, fpsText, fpsPosition, fpsColor);
+        var fpsPosition = new Vector2(screenWidth - 100f - padX, padY);
+        Color fpsColor = currentFpsInt >= 60 
+                        ? Color.Lime : currentFpsInt >= 30 
+                        ? Color.Yellow : Color.Red;
+
+        //sombra para mejor legibilidad
+        _spriteBatch.DrawString(_font, _cachedFpsText, fpsPosition + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_font, _cachedFpsText, fpsPosition, fpsColor);
 
         // === COORDENADAS DEL TANQUE (debajo del FPS) ===
-        string posText = $"X: {TankPosition.X:F1}  Y: {TankPosition.Y:F1}  Z: {TankPosition.Z:F1}";
-        var posSize = _font.MeasureString(posText);
-        var posPosition = new Vector2(fpsPosition.X - 150f, fpsPosition.Y + fpsSize.Y + spacing);
-        _spriteBatch.DrawString(_font, posText, posPosition + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_font, posText, posPosition, _textColor);
+        int roundedX = (int)TankPosition.X;
+        int roundedZ = (int)TankPosition.Z;
+        if (roundedX != _lastDisplayedPosX || roundedZ != _lastDisplayedPosZ)
+        {
+            _cachedPosText = $"X: {TankPosition.X:F1}  Y: {TankPosition.Y:F1}  Z: {TankPosition.Z:F1}";
+            _lastDisplayedPosX = roundedX;
+            _lastDisplayedPosZ = roundedZ;
+        }
+
+        var posPosition = new Vector2(fpsPosition.X - 150f, fpsPosition.Y + _font.LineSpacing + spacing);
+        _spriteBatch.DrawString(_font, _cachedPosText, posPosition + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_font, _cachedPosText, posPosition, _textColor);
 
         // === COMBUSTIBLE DEL TANQUE (debajo de coordenadas) ===
-        string fuelText = $"FUEL: {(int)TankFuel} / 100";
-        var fuelSize = _font.MeasureString(fuelText);
-        var fuelPosition = new Vector2(posPosition.X, posPosition.Y + posSize.Y + spacing);
+        int fuelInt = (int)TankFuel;
+        if (fuelInt != _lastDisplayedFuel)
+        {
+            _cachedFuelText = $"FUEL: {fuelInt} / 100";
+            _lastDisplayedFuel = fuelInt;
+        }
+
+        var fuelPosition = new Vector2(posPosition.X, posPosition.Y + _font.LineSpacing + spacing);
         Color fuelColor = TankFuel > 30f ? Color.Lime : TankFuel > 10f ? Color.Yellow : Color.Red;
-        _spriteBatch.DrawString(_font, fuelText, fuelPosition + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_font, fuelText, fuelPosition, fuelColor);
 
-        // === COOLDOWN DEL CANON ===
+        _spriteBatch.DrawString(_font, _cachedFuelText, fuelPosition + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_font, _cachedFuelText, fuelPosition, fuelColor);
+
         float remaining = MathHelper.Max(0f, CannonCurrentCooldown);
-        string cooldownText = remaining > 0f ? $"DISPARO: {remaining:F1}s" : "DISPARO: LISTO";
-        var cooldownSize = _font.MeasureString(cooldownText);
+        if (MathF.Abs(remaining - _lastRemainingSeconds) > 0.05f || (remaining == 0f && _lastRemainingSeconds > 0f))
+        {
+            _cachedCooldownText = remaining > 0f ? $"DISPARO: {remaining:F1}s" : "DISPARO: LISTO";
+            _lastRemainingSeconds = remaining;
+        }
 
-        // Posicion calculada desde la esquina inferior derecha para mantener margen
-        var cooldownPosition = new Vector2(
-            fuelPosition.X,
-            fuelPosition.Y + fuelSize.Y + spacing
-        );
-        // Color segun estado (verde si esta listo, naranja si se esta enfriando)
+        var cooldownPosition = new Vector2(fuelPosition.X, fuelPosition.Y + _font.LineSpacing + spacing);
         Color cooldownColor = remaining <= 0f ? Color.Lime : Color.Orange;
-        // Sombra para mejor legibilidad
-        _spriteBatch.DrawString(_font, cooldownText, cooldownPosition + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_font, cooldownText, cooldownPosition, cooldownColor);
 
-        // Barra de progreso textual ASCII debajo del indicador
-        // Podria usar un font monospace pero no queda mal asi
+        _spriteBatch.DrawString(_font, _cachedCooldownText, cooldownPosition + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_font, _cachedCooldownText, cooldownPosition, cooldownColor);
+
+        // --- BARRA DE PROGRESO VECTORIAL GRÁFICA (Ahorra un 100% de Garbage Collector en este render) ---
         float barPercent = CannonMaxCooldown > 0f ? (1f - (remaining / CannonMaxCooldown)) : 1f;
-        int barLength = 15;
-        int filledChars = (int)(barPercent * barLength);
-        string barVisual = "[" + new string('|', filledChars).PadRight(barLength, ' ') + "]";
-        Vector2 barPos = new Vector2(cooldownPosition.X, cooldownPosition.Y + cooldownSize.Y + spacing);
-        _spriteBatch.DrawString(_font, barVisual, barPos + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_font, barVisual, barPos, cooldownColor);
+        int activeWidth = (int)(barPercent * ProgressBarWidth);
+
+        var barY = cooldownPosition.Y + _font.LineSpacing + spacing;
+        var barBgRect = new Rectangle((int)cooldownPosition.X, (int)barY, ProgressBarWidth, ProgressBarHeight);
+        var barFillRect = new Rectangle((int)cooldownPosition.X, (int)barY, activeWidth, ProgressBarHeight);
+
+        // Dibujar borde/fondo oscuro semitransparente
+        _spriteBatch.Draw(_whitePixel, barBgRect, Color.Black * 0.4f);
+        // Dibujar relleno dinámico escalado según el cooldown
+        _spriteBatch.Draw(_whitePixel, barFillRect, cooldownColor);
 
         _spriteBatch.End();
     }
@@ -153,5 +195,6 @@ public class Hud
     public void Dispose()
     {
         _spriteBatch?.Dispose();
+        _whitePixel?.Dispose();
     }
 }

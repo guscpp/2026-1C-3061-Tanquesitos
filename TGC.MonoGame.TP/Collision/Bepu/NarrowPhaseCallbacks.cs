@@ -11,6 +11,7 @@ using BepuUtilities;
 
 using TGC.MonoGame.TP;
 using TGC.MonoGame.TP.Models.Decorations;
+using TGC.MonoGame.TP.Models.Tanks;
 using TGC.MonoGame.TP.Models;
 
 public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks

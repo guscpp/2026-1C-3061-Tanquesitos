@@ -12,7 +12,7 @@ using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
 using static TGC.MonoGame.TP.GameConfig;
-using Terrain = TGC.MonoGame.TP.Models.Terrain;
+using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
 using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
@@ -60,13 +60,13 @@ public class StaticsManager
     // sobre modelos de decoraciones
     private int NumberOfDecorations => NumberOfAssets - 15;
     public List<Decoration> _decorationModels = new();
-    public List<House> _houses = new();
+    public List<Vector3> _houses = new();
     // sobre el terreno
     private Terrain _terrain;
     //Random
     private readonly Random _random = new();  
 
-    public StaticsManager(Terrain terrain, List<House> houses)
+    public StaticsManager(Terrain terrain, List<Vector3> houses)
     {
         _terrain = terrain;
         _houses = houses;
@@ -193,15 +193,15 @@ public class StaticsManager
     {
         for(int i=0; i<_houses.Count(); i++)
         {
-            if(Vector3.Distance(position, _houses[i].Position) < minDistance)
+            if(Vector3.Distance(position, _houses[i]) < minDistance)
                 return true;
         }
         return false;
     }
 
-    public List<Decoration> GetDecorations()
+    public List<Vector3> GetDecorations()
     {
-        return new List<Decoration>(_decorationModels);
+        return _decorationModels.Select(decoration => decoration.Position).ToList();
     }
 }
 

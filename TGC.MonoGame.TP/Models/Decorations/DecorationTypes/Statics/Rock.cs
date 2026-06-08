@@ -45,7 +45,6 @@ namespace TGC.MonoGame.TP.Models.Decorations
         public void HandleCollision() { }
         
         // MODIFICAMOS EL GIZMO: Ahora dibujamos un cilindro para que coincida con la física
-    
         // DIBUJO LAS COLISIONES (Versión Esfera Ajustada)
         public override void DrawCollisionChamber(Gizmo gizmos, Simulation simulation)
         { 

@@ -265,5 +265,31 @@ namespace TGC.MonoGame.TP.Collisions
             return sphere;
         }
 
+        public static BoundingBox CreateBoundingBox(Model model)
+        {
+            var min = new Vector3(float.MaxValue);
+            var max = new Vector3(float.MinValue);
+
+            foreach (var mesh in model.Meshes)
+            {
+                foreach (var part in mesh.MeshParts)
+                {
+                    // Creamos un arreglo con las posiciones de los puntos de la malla
+                    // Esto es mucho más limpio que leer bytes crudos
+                    var vertices = new Vector3[part.NumVertices];
+                    part.VertexBuffer.GetData(part.VertexOffset * part.VertexBuffer.VertexDeclaration.VertexStride, 
+                                            vertices, 0, part.NumVertices, 
+                                            part.VertexBuffer.VertexDeclaration.VertexStride);
+
+                    // 2. Le pedimos a MonoGame que calcule la caja exacta para estos puntos
+                    var meshBox = BoundingBox.CreateFromPoints(vertices);
+                    
+                    min = Vector3.Min(min, meshBox.Min);
+                    max = Vector3.Max(max, meshBox.Max);
+                }
+            }
+            return new BoundingBox(min, max);
+        }
+
     }
 }

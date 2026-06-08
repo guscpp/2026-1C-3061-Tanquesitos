@@ -12,18 +12,15 @@ using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Decorations
-{//Estaticos (3 tipos) - Cilindros
+{
 
     public class Cactus : Static
     {
         private float _radius;
         private float _height;
-        //No tiene bandera porque no muere
 
         public Cactus(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
 
-        //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
-       //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
         {
             base.LoadContent(content, simulation, effect);
@@ -50,26 +47,16 @@ namespace TGC.MonoGame.TP.Models.Decorations
             Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90));
             modificarMatrixWorld(rotation, _height);
         }
-
-        //ACTUALIZO (Modificacion de la funcion en DECORATION)
-        //No hace nada (agradecida)
-        /*
-            Los objetos dinamicos pueden salir volando en mil pedazos, desaparecer, moverse. Los objetos estaticos no hacen
-            nada de eso, por eso no actualizo nada, no necesito hacerlo porque siempre se queda ahi... existiendo
-        */
         
         //DIBUJO LAS COLISIONES (Modificacion de la funcion en DECORATION)
         public override void DrawCollisionChamber(Gizmo gizmos, Simulation simulation)
-        {   
-            //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal - para cuando cree _touchingDecoration
-
+        {
             Matrix gizmoWorld = Matrix.CreateScale(_radius, _height, _radius)
                                 * Matrix.CreateTranslation(new Vector3(_position.X, _position.Y + _height, _position.Z));
 
             gizmos.DrawAxes(gizmoWorld);
-            gizmos.DrawCylinder(gizmoWorld, Color.Violet); //Por ahora voy a usar el verde para los dinamicos y el violeta para los estaticos
+            gizmos.DrawCylinder(gizmoWorld, Color.Violet);
         }
 
-        //No hace nada si el tanque lo choca por lo que no existe HandleCollision
     }
 }

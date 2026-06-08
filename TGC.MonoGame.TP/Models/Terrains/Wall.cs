@@ -18,7 +18,7 @@ using TGC.MonoGame.TP.Models;
 using TGC.MonoGame.TP.Models.Decorations;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
-namespace TGC.MonoGame.TP.Models;
+namespace TGC.MonoGame.TP.Models.Terrains;
 
 public class Wall 
 { 

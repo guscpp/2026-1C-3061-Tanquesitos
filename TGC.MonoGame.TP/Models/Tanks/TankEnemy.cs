@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.Numerics;
+using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
 
 namespace TGC.MonoGame.TP.Models.Tanks;
 

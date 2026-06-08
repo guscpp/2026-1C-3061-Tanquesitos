@@ -12,7 +12,7 @@ using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
 using static TGC.MonoGame.TP.GameConfig;
-using Terrain = TGC.MonoGame.TP.Models.Terrain;
+using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
 using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
@@ -31,15 +31,15 @@ public class BarrelsManager
     public const string ContentFolderTextures = "Textures/";
 
     public List<FuelBarrel> _fuelBarrels = new();
-    public List<Decoration> _decorationModels = new();
-    public List<House> _houses = new();
+    public List<Vector3> _decorationModels = new();
+    public List<Vector3> _houses = new();
 
     // sobre el terreno
     private Terrain _terrain;
     //Random
     private readonly Random _random = new();
 
-    public BarrelsManager(Terrain terrain, List<Decoration> decorationModels, List<House> houses)
+    public BarrelsManager(Terrain terrain, List<Vector3> decorationModels, List<Vector3> houses)
     {
         _terrain = terrain;
         _decorationModels = decorationModels;
@@ -67,7 +67,7 @@ public class BarrelsManager
                 // Validar distancia contra decoraciones existentes
                 foreach (var dec in _decorationModels)
                 {
-                    if (Vector3.Distance(pos, dec.Position) < minDistToDecorations) { valid = false; break; }
+                    if (Vector3.Distance(pos, dec) < minDistToDecorations) { valid = false; break; }
                 }
                 if (!valid) continue;
 
@@ -128,7 +128,7 @@ public class BarrelsManager
     {
         for(int i=0; i<_houses.Count(); i++)
         {
-            if(Vector3.Distance(position, _houses[i].Position) < minDistance)
+            if(Vector3.Distance(position, _houses[i]) < minDistance)
                 return true;
         }
         return false;

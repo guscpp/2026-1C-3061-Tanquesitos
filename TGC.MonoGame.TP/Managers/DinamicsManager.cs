@@ -12,7 +12,7 @@ using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
 using static TGC.MonoGame.TP.GameConfig;
-using Terrain = TGC.MonoGame.TP.Models.Terrain;
+using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
 using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
@@ -52,14 +52,14 @@ public class DinamicsManager
     //Entrega 1: exige 400 minimo
     private const int NumberOfAssets = 200; 
     public List<Decoration> _dynamicDecorations = new();
-    private List<Decoration> _staticDecorations;
-    public List<House> _houses = new();
+    private List<Vector3> _staticDecorations;
+    public List<Vector3> _houses = new();
     // sobre el terreno
     private Terrain _terrain;
     //Random
     private readonly Random _random = new();
 
-    public DinamicsManager(Terrain terrain, List<Decoration> staticDecorations, List<House> houses)
+    public DinamicsManager(Terrain terrain, List<Vector3> staticDecorations, List<Vector3> houses)
     {
         _terrain = terrain;
         _staticDecorations = staticDecorations;
@@ -198,7 +198,7 @@ public class DinamicsManager
                 // chequeo contra decoraciones estaticas ya colocadas
                 foreach (var staticAsset in _staticDecorations)
                 {
-                    if (Vector3.Distance(candidate, staticAsset.Position) < minDistanceBetween)
+                    if (Vector3.Distance(candidate, staticAsset) < minDistanceBetween)
                     {
                         valid = false;
                         break;
@@ -229,7 +229,7 @@ public class DinamicsManager
     {
         for(int i=0; i<_houses.Count(); i++)
         {
-            if(Vector3.Distance(position, _houses[i].Position) < minDistance)
+            if(Vector3.Distance(position, _houses[i]) < minDistance)
                 return true;
         }
         return false;

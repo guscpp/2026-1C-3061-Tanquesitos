@@ -15,10 +15,8 @@ namespace TGC.MonoGame.TP.Models.Decorations
 {//Dinamico - Esfera
     public class Plant : Dinamic
     {
-        //private BodyHandle bodyHandle;
         private float _radius;
         private readonly Random _random = new();
-        //public bool IsDead { get; private set; } //La banderita que determina si fue o no colisionado
 
         public Plant(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
 
@@ -27,9 +25,8 @@ namespace TGC.MonoGame.TP.Models.Decorations
         {
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
-            // BoundingBox box = ... (aun no xd)
             _radius = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z)) / 2f;
-            _visualScale = 1f; // Valor de ejemplo, esto lo cambio con lo que haga de BoundingBox
+            _visualScale = 1f;
 
             // Creo el cuerpo en Bepu (Es la configuracion de la fisica)
             var shape = new Sphere(_radius);
@@ -84,14 +81,12 @@ namespace TGC.MonoGame.TP.Models.Decorations
         public override void DrawCollisionChamber(Gizmo gizmos, Simulation simulation)
         {   
             if (IsDead) return; //Si el modelo desaparece no hay que dibujarlo
-            //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal
 
             // Tomo solo la rotacion y posicion que vienen de la Pose de Bepu (el modelo se supone que ya concuerda con el modelo fisico).            
             var pose = simulation.Bodies[bodyHandle].Pose;
             
             Vector3 position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
 
-            //Tamaño (yo pensaba que se dibujaba igual que el resto XD)
             Vector3 sphereSize = new Vector3(_radius);
 
             gizmos.DrawSphere(position, sphereSize, Color.Green);

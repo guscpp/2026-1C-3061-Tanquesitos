@@ -8,7 +8,7 @@ using BepuPhysics.Collidables;
 using BepuUtilities.Memory;
 using System.Numerics;
 
-namespace TGC.MonoGame.TP.Models;
+namespace TGC.MonoGame.TP.Models.Terrains;
 
 /// <summary>
 ///     Terreno generado a partir de un heightmap con alturas variables

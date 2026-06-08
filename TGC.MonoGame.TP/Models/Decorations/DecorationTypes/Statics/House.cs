@@ -18,7 +18,6 @@ namespace TGC.MonoGame.TP.Models.Decorations
         private float _width;
         private float _height;
         private float _lenght;
-        //No tiene bandera porque no muere
 
         public House(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
 
@@ -27,7 +26,6 @@ namespace TGC.MonoGame.TP.Models.Decorations
         {
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
-            // BoundingBox box = ... (aun no xd)
             _width = _dimensions.X;
             _height = _dimensions.Z; //en los fbx la altura esta 'acostada' por usar Y-up
             _lenght = _dimensions.Y;
@@ -52,19 +50,10 @@ namespace TGC.MonoGame.TP.Models.Decorations
             //Como mi modelo es estatico calculo la matriz de mundo una sola vez
             modificarMatrixWorld(rotation, _height / 2f);
         }
-
-        //ACTUALIZO (Modificacion de la funcion en DECORATION)
-        //No hace nada (agradecida)
-        /*
-            Los objetos dinamicos pueden salir volando en mil pedazos, desaparecer, moverse. Los objetos estaticos no hacen
-            nada de eso, por eso no actualizo nada, no necesito hacerlo porque siempre se queda ahi... existiendo
-        */
         
         //DIBUJO LAS COLISIONES (Modificacion de la funcion en DECORATION)
         public override void DrawCollisionChamber(Gizmo gizmos, Simulation simulation)
-        {   
-            //Color colorActual = _touchingDecoration ? Color.Violet : Color.Green; //Violeta si colisiono, verde si es normal
-
+        {
             Matrix gizmoWorld = Matrix.CreateScale(_width, _height, _lenght) 
                                 * Matrix.CreateTranslation(new Vector3(_position.X, _position.Y+(_height/2), _position.Z));
 
@@ -72,6 +61,5 @@ namespace TGC.MonoGame.TP.Models.Decorations
             gizmos.DrawCube(gizmoWorld, Color.Violet);
         }
 
-        //No hace nada si el tanque lo choca por lo que no existe HandleCollision
     }
 } 

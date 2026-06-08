@@ -12,7 +12,7 @@ using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
 using static TGC.MonoGame.TP.GameConfig;
-using Terrain = TGC.MonoGame.TP.Models.Terrain;
+using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
 using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
@@ -139,9 +139,9 @@ public class HousesManager
         return positions;
     }
 
-    public List<House> getHouses()
+    public List<Vector3> getHouses()
     {
-        return new List<House>(_houses);
+        return _houses.Select(house => house.Position).ToList();
     }
 }
 

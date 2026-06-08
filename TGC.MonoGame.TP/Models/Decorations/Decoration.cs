@@ -19,7 +19,6 @@ namespace TGC.MonoGame.TP.Models.Decorations;
 public class Decoration
 {
     public const string ContentFolder3D = "Models/";
-    //public const string ContentFolderEffects = "Effects/";
     public const string ContentFolderTextures = "Textures/";
 
     protected Model _model;
@@ -58,7 +57,7 @@ public class Decoration
             } 
         }
 
-        _boundingBox = CreateBoundingBox(_model);
+        _boundingBox = BoundingVolumesUtils.CreateBoundingBox(_model);
         _dimensions = _boundingBox.Max - _boundingBox.Min; //tomo el punto maximo y el punto minimo de mi caja y luego calculo la diferencia para saber la distancia, se usa el Min porque el modelo puede estar un poquito mal posicionado y no lo voy andar corrigiendo 80 veces en blender, ya lo intente
         _modelCenter = (_boundingBox.Max + _boundingBox.Min) / 2f; //ajustamos el pivote que originalmente esta en los pies del modelo visual para que concuerde con el del modelo fisico que es en el centro
     }
@@ -90,37 +89,5 @@ public class Decoration
             mesh.Draw();
         }
     }
-
-    //Funcion que crea una caja segun los parametros de mi modelo, me ayuda a determinar el tamaño de mis modelos fisicos y automatizar en caso de que cambie un modelo
-    public static BoundingBox CreateBoundingBox(Model model)
-    {
-        var min = new Vector3(float.MaxValue);
-        var max = new Vector3(float.MinValue);
-
-        foreach (var mesh in model.Meshes)
-        {
-            // La opcion de la esfera es la más optimo porque ya viene con el modelo, el tema, me crea cubos, no tenemos cubos perfectos, tenemos cubos rectangulo, no sirve
-            /*var meshBox = BoundingBox.CreateFromSphere(mesh.BoundingSphere);
-            min = Vector3.Min(min, meshBox.Min);
-            max = Vector3.Max(max, meshBox.Max);*/
-            foreach (var part in mesh.MeshParts)
-            {
-                // Creamos un arreglo con las posiciones de los puntos de la malla
-                // Esto es mucho más limpio que leer bytes crudos
-                var vertices = new Vector3[part.NumVertices];
-                part.VertexBuffer.GetData(part.VertexOffset * part.VertexBuffer.VertexDeclaration.VertexStride, 
-                                        vertices, 0, part.NumVertices, 
-                                        part.VertexBuffer.VertexDeclaration.VertexStride);
-
-                // 2. Le pedimos a MonoGame que calcule la caja exacta para estos puntos
-                var meshBox = BoundingBox.CreateFromPoints(vertices);
-                
-                min = Vector3.Min(min, meshBox.Min);
-                max = Vector3.Max(max, meshBox.Max);
-            }
-        }
-        return new BoundingBox(min, max);
-    }
-
     
 }

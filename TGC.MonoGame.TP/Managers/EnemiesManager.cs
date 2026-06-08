@@ -12,7 +12,7 @@ using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using static TGC.MonoGame.TP.GameConfig;
 using TGC.MonoGame.TP.Models.Tanks;
-using Terrain = TGC.MonoGame.TP.Models.Terrain;
+using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Managers;

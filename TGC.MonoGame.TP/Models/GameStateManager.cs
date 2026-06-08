@@ -49,6 +49,13 @@ public class GameStateManager
 
     private MouseState _lastMouseState;
 
+
+    //Constante compartida de separacion vertical para las opciones del menu
+    private const float OptionSpacing = 20f;
+
+    private string _cachedSpecsText = string.Empty;
+    private int _specsCachedIndex = -1;
+
     // Idle animation variables
     private float _idleTime = 0f;
     private const float IdleAnimationSpeed = 2.5f; // Controls how fast the pulse is
@@ -184,26 +191,16 @@ public class GameStateManager
 
         // 3. Calcular la coordenada Y inicial para que el bloque completo de opciones quede centrado verticalmente.
         //    Se toma la mitad del alto total estimado del texto y se resta del centro.
-        float startY = center.Y - (_fontArial.LineSpacing * _menuOptions.Length / 2f);
-
-        // 4. Espacio vertical entre cada línea de texto. 
-        //    IMPORTANTE: Este valor debe ser idéntico al usado en DrawMenu para que el "hitbox" coincida con lo que se ve.
-        float spacing = 20f;
-
-        // Desplazamiento a la derecha para no tapar el tanque 3D
-        float offsetX = center.X * 0.3f;
+        float pulse = (MathF.Sin(_idleTime * IdleAnimationSpeed) + 1f) / 2f;
+        float scalePulse = 1.0f + pulse * 0.03f;
 
         // 5. Recorrer cada opción del menú para verificar si el mouse está dentro de su area visual
         for (int i = 0; i < _menuOptions.Length; i++)
         {
-            // Medir cuánto ocupa en píxeles el texto de esta opción (ancho y alto)
-            var size = _fontArial.MeasureString(_menuOptions[i]);
+            bool isSelected = (i == _selectedIndex);
+            float currentScale = isSelected ? scalePulse : 1f;
 
-            // Calcular la posición superior izquierda donde se dibujaría esta opción:
-            var pos = new Vector2(offsetX - size.X / 2f, startY + i * (_fontArial.LineSpacing + spacing));
-
-            // Crear un rectángulo invisible que actúa como "zona de clic" (hitbox) del texto
-            var rect = new Rectangle((int)pos.X, (int)pos.Y, (int)size.X, (int)size.Y);
+            Rectangle rect = CalculateOptionRectangle(i, center, currentScale);
 
             // Verificar si las coordenadas del mouse están dentro de este rectángulo
             if (rect.Contains(mouseX, mouseY))
@@ -320,110 +317,107 @@ public class GameStateManager
 
     private void DrawTankSpecs(Viewport vp)
     {
-        string className;
-        float playerHealth, maxSpeed, motorForce, turnSpeed, attackDamage;
-
-        if (_selectedIndex == 0)
+        if (_selectedIndex != _specsCachedIndex)
         {
-            className = "SCOUT";
-            playerHealth = GameConfig.TankClasses.Scout.PlayerHealth;
-            maxSpeed = GameConfig.TankClasses.Scout.MaxSpeed;
-            motorForce = GameConfig.TankClasses.Scout.MotorForce;
-            turnSpeed = GameConfig.TankClasses.Scout.TurnSpeed;
-            attackDamage = GameConfig.TankClasses.Scout.AttackDamage;
-        }
-        else if (_selectedIndex == 1)
-        {
-            className = "MEDIUM";
-            playerHealth = GameConfig.TankClasses.Medium.PlayerHealth;
-            maxSpeed = GameConfig.TankClasses.Medium.MaxSpeed;
-            motorForce = GameConfig.TankClasses.Medium.MotorForce;
-            turnSpeed = GameConfig.TankClasses.Medium.TurnSpeed;
-            attackDamage = GameConfig.TankClasses.Medium.AttackDamage;
-        }
-        else
-        {
-            className = "HEAVY";
-            playerHealth = GameConfig.TankClasses.Heavy.PlayerHealth;
-            maxSpeed = GameConfig.TankClasses.Heavy.MaxSpeed;
-            motorForce = GameConfig.TankClasses.Heavy.MotorForce;
-            turnSpeed = GameConfig.TankClasses.Heavy.TurnSpeed;
-            attackDamage = GameConfig.TankClasses.Heavy.AttackDamage;
+            string className;
+            float playerHealth, maxSpeed, motorForce, turnSpeed, attackDamage;
+
+            if (_selectedIndex == 0)
+            {
+                className = "SCOUT";
+                playerHealth = GameConfig.TankClasses.Scout.PlayerHealth;
+                maxSpeed = GameConfig.TankClasses.Scout.MaxSpeed;
+                motorForce = GameConfig.TankClasses.Scout.MotorForce;
+                turnSpeed = GameConfig.TankClasses.Scout.TurnSpeed;
+                attackDamage = GameConfig.TankClasses.Scout.AttackDamage;
+            }
+            else if (_selectedIndex == 1)
+            {
+                className = "MEDIUM";
+                playerHealth = GameConfig.TankClasses.Medium.PlayerHealth;
+                maxSpeed = GameConfig.TankClasses.Medium.MaxSpeed;
+                motorForce = GameConfig.TankClasses.Medium.MotorForce;
+                turnSpeed = GameConfig.TankClasses.Medium.TurnSpeed;
+                attackDamage = GameConfig.TankClasses.Medium.AttackDamage;
+            }
+            else
+            {
+                className = "HEAVY";
+                playerHealth = GameConfig.TankClasses.Heavy.PlayerHealth;
+                maxSpeed = GameConfig.TankClasses.Heavy.MaxSpeed;
+                motorForce = GameConfig.TankClasses.Heavy.MotorForce;
+                turnSpeed = GameConfig.TankClasses.Heavy.TurnSpeed;
+                attackDamage = GameConfig.TankClasses.Heavy.AttackDamage;
+            }
+
+        // Se genera la cadena de texto una sola vez por cada cambio de tanque
+        _cachedSpecsText = $"CLASE: {className}\n\n" +
+                        $"HP Jugador:   {playerHealth}\n" +
+                        $"Velocidad:    {maxSpeed} m/s\n" +
+                        $"Fuerza Motor: {motorForce}\n" +
+                        $"Vel. Giro:    {turnSpeed}\n" +
+                        $"Danio Ataque: {attackDamage}";
+
+        // Actualizamos el indice de control para recordar que este tanque ya esta procesado
+        _specsCachedIndex = _selectedIndex;
         }
 
-        string specsText = $"CLASE: {className}\n\n" +
-                           $"HP Jugador:   {playerHealth}\n" +
-                           $"Velocidad:    {maxSpeed} m/s\n" +
-                           $"Fuerza Motor: {motorForce}\n" +
-                           $"Vel. Giro:    {turnSpeed}\n" +
-                           $"Danio Ataque: {attackDamage}";
-
+        // Posicionamiento de la caja de especificaciones en pantalla
         float padX = vp.Width * 0.05f;
         float padY = vp.Height * 0.15f;
         Vector2 specsPos = new Vector2(padX, padY);
 
-        _spriteBatch.DrawString(_fontConsolas, specsText, specsPos + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_fontConsolas, specsText, specsPos, Color.Gold);
+        // Dibujamos usando el string en caché (Costo de CPU y asignaciones de memoria = 0)
+        _spriteBatch.DrawString(_fontConsolas, _cachedSpecsText, specsPos + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_fontConsolas, _cachedSpecsText, specsPos, Color.Gold);
     }
 
     private void DrawMenu(Vector2 center)
     {
-        //Lo dejo en inglés :D
-        // Shifted to the right to avoid overlapping the 3D tank
-        float offsetX = center.X * 0.3f;
-        float startY = center.Y - (_fontArial.LineSpacing * _menuOptions.Length / 2f);
-        float spacing = 20f;
-
-        // Idle animation calculations
-        // Sine wave for smooth pulsing (0 to 1 range)
         float pulse = (MathF.Sin(_idleTime * IdleAnimationSpeed) + 1f) / 2f;
-
-        // Arrow offset: arrows move inward and outward by up to 4 pixels
         float arrowOffset = pulse * 4f;
 
-        // Color breathing: oscillate between dark gold and bright gold
         Color breathingColor = Color.Lerp(
-            new Color(180, 140, 0),  // Dark gold
-            new Color(255, 223, 0),  // Bright gold
+            new Color(180, 140, 0),
+            new Color(255, 223, 0),
             pulse
         );
 
-        // Scale pulse: very subtle, from 1.0 to 1.03
         float scalePulse = 1.0f + pulse * 0.03f;
 
         for (int i = 0; i < _menuOptions.Length; i++)
         {
             string option = _menuOptions[i];
-            var size = _fontArial.MeasureString(option);
-            var pos = new Vector2(offsetX - size.X / 2f, startY + i * (_fontArial.LineSpacing + spacing));
             bool isSelected = (i == _selectedIndex);
+            float currentScale = isSelected ? scalePulse : 1f;
+
+            // Usamos la unificacion del metodo que calcula la ubicacion y dimensiones exactas
+            Rectangle rect = CalculateOptionRectangle(i, center, currentScale);
+            Vector2 pos = new Vector2(rect.X, rect.Y);
 
             Color shadowColor = Color.Black;
 
             if (isSelected)
             {
-                // Apply subtle scale pulse to selected option
-                // We need to adjust position to keep it centered while scaling
-                Vector2 scaledSize = size * scalePulse;
-                Vector2 scaledPos = pos - (scaledSize - size) / 2f;
-
-                // Draw shadow first
-                _spriteBatch.DrawString(_fontArial, option, scaledPos + new Vector2(2, 2), shadowColor,
+                // Sombra con la escala animada aplicada
+                _spriteBatch.DrawString(_fontArial, option, pos + new Vector2(2, 2), shadowColor,
                     0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
 
-                // Draw the breathing colored text
-                _spriteBatch.DrawString(_fontArial, option, scaledPos, breathingColor,
+                // Texto principal con el color oscilante (breathing)
+                _spriteBatch.DrawString(_fontArial, option, pos, breathingColor,
                     0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
 
-                // Draw animated arrows that pulse inward and outward
+                // Flechas dinamicas del menú
                 var arrowSize = _fontArial.MeasureString("> ");
-                // Left arrow moves right (inward) during pulse
+                
+                // Flecha Izquierda
                 _spriteBatch.DrawString(_fontArial, "> ",
-                    new Vector2(scaledPos.X - arrowSize.X + arrowOffset, scaledPos.Y), breathingColor,
+                    new Vector2(pos.X - arrowSize.X + arrowOffset, pos.Y), breathingColor,
                     0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
-                // Right arrow moves left (inward) during pulse
+                
+                // Flecha Derecha
                 _spriteBatch.DrawString(_fontArial, " <",
-                    scaledPos + new Vector2(scaledSize.X - arrowOffset, 0), breathingColor,
+                    pos + new Vector2(rect.Width - arrowOffset, 0), breathingColor,
                     0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
             }
             else
@@ -432,6 +426,24 @@ public class GameStateManager
                 _spriteBatch.DrawString(_fontArial, option, pos, Color.White);
             }
         }
+    }
+
+    private Rectangle CalculateOptionRectangle(int index, Vector2 center, float scale = 1f)
+    {
+        float startY = center.Y - (_fontArial.LineSpacing * _menuOptions.Length / 2f);
+        float offsetX = center.X * 0.3f;
+        
+        string option = _menuOptions[index];
+        Vector2 originalSize = _fontArial.MeasureString(option);
+        Vector2 scaledSize = originalSize * scale;
+
+        // Posición base
+        Vector2 basePos = new Vector2(offsetX - originalSize.X / 2f, startY + index * (_fontArial.LineSpacing + OptionSpacing));
+        
+        // Centrado correctivo para cuando se aplica escala animada
+        Vector2 adjustedPos = basePos - (scaledSize - originalSize) / 2f;
+
+        return new Rectangle((int)adjustedPos.X, (int)adjustedPos.Y, (int)scaledSize.X, (int)scaledSize.Y);
     }
 
     private void DrawCenteredText(string text, Vector2 center)
@@ -469,4 +481,10 @@ public class GameStateManager
 
     //exponerlo para reproducir efectos 3d
     public SoundManager SoundManager => _soundManager;
+
+    public void Dispose()
+    {
+        _spriteBatch?.Dispose();
+        _whitePixel?.Dispose();
+    }
 }
