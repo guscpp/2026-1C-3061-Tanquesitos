@@ -553,17 +553,149 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/tgc-logo/tgc-logo.fbx
 
-#begin Music/ph_music.ogg
+#begin Music/100-song18.ogg
 /importer:OggImporter
 /processor:SongProcessor
 /processorParam:Quality=Best
-/build:Music/ph_music.ogg
+/build:Music/100-song18.ogg
 
-#begin Sounds/cannon_fire.wav
+#begin Music/101-Juhani Junkala [Retro Game Music Pack] Level 1.ogg
+/importer:OggImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Music/101-Juhani Junkala [Retro Game Music Pack] Level 1.ogg
+
+#begin Sounds/1-cannon_fire.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Sounds/cannon_fire.wav
+/build:Sounds/1-cannon_fire.wav
+
+#begin Sounds/10a-engine_heavy_loop.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/10a-engine_heavy_loop.wav
+
+#begin Sounds/10b-engine_heavy_slow_loop.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/10b-engine_heavy_slow_loop.wav
+
+#begin Sounds/10c-engine_heavy_average_loop.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/10c-engine_heavy_average_loop.wav
+
+#begin Sounds/10d-engine_heavy_fast_loop.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/10d-engine_heavy_fast_loop.wav
+
+#begin Sounds/11a-588220__mehraniiii__magical-warning.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/11a-588220__mehraniiii__magical-warning.wav
+
+#begin Sounds/11b-629312__greatsoundstube__warning-chime.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/11b-629312__greatsoundstube__warning-chime.wav
+
+#begin Sounds/12-freesound_community-tank-turret-rotate-14879.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/12-freesound_community-tank-turret-rotate-14879.wav
+
+#begin Sounds/13-universfield-truck-signal-153263.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/13-universfield-truck-signal-153263.wav
+
+#begin Sounds/14-dragon-studio-fire-sounds-405444.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/14-dragon-studio-fire-sounds-405444.wav
+
+#begin Sounds/15-u_xjrmmgxfru-hit-tree-03-266306.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/15-u_xjrmmgxfru-hit-tree-03-266306.wav
+
+#begin Sounds/16-u_xjrmmgxfru-hit-rock-03-266305.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/16-u_xjrmmgxfru-hit-rock-03-266305.wav
+
+#begin Sounds/17- rock_breaking.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/17- rock_breaking.wav
+
+#begin Sounds/2-freesound_community-medium-explosion-40472.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/2-freesound_community-medium-explosion-40472.wav
+
+#begin Sounds/3-dragon-studio-boulder-impact-487673.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/3-dragon-studio-boulder-impact-487673.wav
+
+#begin Sounds/4a-Power Up.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/4a-Power Up.wav
+
+#begin Sounds/4b-gravity_inverter.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/4b-gravity_inverter.wav
+
+#begin Sounds/5-tanweraman-desert-wind-2-350417.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/5-tanweraman-desert-wind-2-350417.wav
+
+#begin Sounds/6-gun_reload_lock_or_click_sound.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/6-gun_reload_lock_or_click_sound.wav
+
+#begin Sounds/7-freesound_community-floorcracking-84506.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/7-freesound_community-floorcracking-84506.wav
+
+#begin Sounds/8-freesound_community-gunner-sound-43794.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/8-freesound_community-gunner-sound-43794.wav
+
+#begin Sounds/9-freesound_community-leaves-14478.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/9-freesound_community-leaves-14478.wav
 
 #begin Sounds/horn.wav
 /importer:WavImporter
