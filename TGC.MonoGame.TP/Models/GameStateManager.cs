@@ -150,10 +150,17 @@ public class GameStateManager
     {
         // Teclado: flechas arriba/abajo
         if (kb.IsKeyDown(Keys.Down) && lastKb.IsKeyUp(Keys.Down))
+        {
+            TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
             _selectedIndex = (_selectedIndex + 1) % _menuOptions.Length;
+        }
+            
         else if (kb.IsKeyDown(Keys.Up) && lastKb.IsKeyUp(Keys.Up))
+        {
+            TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
             _selectedIndex = (_selectedIndex - 1 + _menuOptions.Length) % _menuOptions.Length;
-
+        }
+            
         // Teclado: enter
         if (kb.IsKeyDown(Keys.Enter) && lastKb.IsKeyUp(Keys.Enter))
             ApplySelection();
@@ -269,7 +276,7 @@ public class GameStateManager
         }
         else if (CurrentState == GameState.Paused || CurrentState == GameState.GameOver)
         {
-            _graphicsDevice.Clear(Color.Black);
+            //_graphicsDevice.Clear(Color.Black);
             _spriteBatch.Begin();
 
             if (CurrentState == GameState.Paused)
@@ -351,7 +358,7 @@ public class GameStateManager
             attackDamage = GameConfig.TankClasses.Heavy.AttackDamage;
         }
 
-        string specsText = $"CLASE: {className}\n\n" +
+        string specsText = $"              {className}\n\n" +
                            $"HP Jugador:   {playerHealth}\n" +
                            $"Velocidad:    {maxSpeed} m/s\n" +
                            $"Fuerza Motor: {motorForce}\n" +
@@ -452,7 +459,8 @@ public class GameStateManager
             // Reproducir musica del menu solo si no esta sonando
             if (!_menuMusicStarted && MediaPlayer.State != MediaState.Playing)
             {
-                _soundManager.PlayMusic("Music/ph_music", true);
+                _soundManager.StopMusic();
+                _soundManager.PlayMusic("Music/100-song18", true);
                 _menuMusicStarted = true;
             }
         }
@@ -462,6 +470,7 @@ public class GameStateManager
             if (_menuMusicStarted && MediaPlayer.State == MediaState.Playing)
             {
                 _soundManager.StopMusic();
+                _soundManager.PlayMusic("Music/101-Juhani Junkala [Retro Game Music Pack] Level 1", true);
                 _menuMusicStarted = false;
             }
         }

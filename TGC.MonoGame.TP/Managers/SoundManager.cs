@@ -27,7 +27,28 @@ namespace TGC.MonoGame.TP.Managers
 
             // Registrar los sonidos disponibles. 
             // La ruta es relativa a la carpeta Content y no lleva extension.
-            AddSoundEffect("cannon_fire", "Sounds/cannon_fire");
+            AddSoundEffect("cannon_fire", "Sounds/1-cannon_fire");
+            AddSoundEffect("colision_casa", "Sounds/2-freesound_community-medium-explosion-40472");
+            AddSoundEffect("impacto_mediana_escala", "Sounds/3-dragon-studio-boulder-impact-487673");
+            AddSoundEffect("agarrar_combustible_1", "Sounds/4a-Power Up");
+            AddSoundEffect("agarrar_combustible_2", "Sounds/4b-gravity_inverter");
+            AddSoundEffect("viento", "Sounds/5-tanweraman-desert-wind-2-350417");
+            AddSoundEffect("cooldown_not_ready", "Sounds/6-gun_reload_lock_or_click_sound");
+            AddSoundEffect("escalera", "Sounds/7-freesound_community-floorcracking-84506");
+            AddSoundEffect("enemy_cannon_fire", "Sounds/8-freesound_community-gunner-sound-43794");
+            AddSoundEffect("planta_rodadora", "Sounds/9-freesound_community-leaves-14478");
+            AddSoundEffect("carroceria_avanzando_1", "Sounds/10a-engine_heavy_loop");
+            AddSoundEffect("carroceria_avanzando_2", "Sounds/10b-engine_heavy_slow_loop");
+            AddSoundEffect("carroceria_avanzando_3", "Sounds/10c-engine_heavy_average_loop");
+            AddSoundEffect("carroceria_avanzando_4", "Sounds/10d-engine_heavy_fast_loop");
+            AddSoundEffect("bajo_combustible_1", "Sounds/11a-588220__mehraniiii__magical-warning");
+            AddSoundEffect("bajo_combustible_2", "Sounds/11b-629312__greatsoundstube__warning-chime");
+            AddSoundEffect("rotar_torreta", "Sounds/12-freesound_community-tank-turret-rotate-14879");
+            AddSoundEffect("klaxon", "Sounds/13-universfield-truck-signal-153263");
+            AddSoundEffect("fuego", "Sounds/14-dragon-studio-fire-sounds-405444");
+            AddSoundEffect("golpear_arbol", "Sounds/15-u_xjrmmgxfru-hit-tree-03-266306");
+            AddSoundEffect("golpear_roca", "Sounds/16-u_xjrmmgxfru-hit-rock-03-266305");
+            AddSoundEffect("player_muere", "Sounds/17- rock_breaking");
         }
 
         public void AddSoundEffect(string name, string assetPath)
@@ -54,6 +75,7 @@ namespace TGC.MonoGame.TP.Managers
             }
         }
 
+        //Reproducir sonido 3D
         public void PlaySound3D(string soundName, Vector3 emitterPosition, Vector3 listenerPosition, Vector3 listenerForward)
         {
             if (!_soundEffects.TryGetValue(soundName, out SoundEffect soundEffect))
@@ -81,5 +103,16 @@ namespace TGC.MonoGame.TP.Managers
             instance.Apply3D(_listener, emitter);
             instance.Play();
         }
+
+        //Reproducir sonido stereo
+        public void PlaySound(string soundName)
+        {
+            if (_soundEffects.ContainsKey(soundName))
+            {
+                _soundEffects[soundName].Play();
+            }
+        }
+
+
     }
 }
