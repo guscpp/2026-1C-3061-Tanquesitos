@@ -264,7 +264,9 @@ public class TGCGame : Game
         Vector3 barrelDirection = _tank.CannonForward;
         barrelDirection.Normalize();
 
-        var trajectory = AimAssist.CalculateTrajectory(_tank.CannonMuzzlePosition, barrelDirection * 25f, new System.Numerics.Vector3(0, -9.8f, 0), 50, 0.05f);
+        // TO DO: Modificar datos hardcodeados
+        var trajectory = AimAssist.CalculateTrajectory(_tank.CannonMuzzlePosition.ToNumerics(), barrelDirection.ToNumerics() * 25f, new System.Numerics.Vector3(0, -9.8f, 0), _simulation, _tank.TankHandler);
+
         _gizmos.DrawPolyLine(trajectory.ToArray(), Color.Red);
         
         if (currentMouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released && _currentShootCooldown <= 0f)

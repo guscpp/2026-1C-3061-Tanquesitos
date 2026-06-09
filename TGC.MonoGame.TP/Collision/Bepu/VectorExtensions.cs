@@ -1,30 +1,27 @@
-using System.Numerics;
+using System.Runtime.CompilerServices;
+
+using XnaVector3 = Microsoft.Xna.Framework.Vector3;
+using BepuVector3 = System.Numerics.Vector3;
+
+namespace TGC.MonoGame.TP.Collisions.Bepu;
 
 public static class VectorExtensions
 {
     /// <summary>
-    /// Microsoft.Xna.Framework.Vector3 to System.Numerics.Vector3
+    /// Converts a MonoGame Vector3 to a BEPU Vector3
     /// </summary>
-    /// <param name="v"></param>
-    /// <returns></returns>
-    public static Vector3 ToNumerics(
-        this Microsoft.Xna.Framework.Vector3 v)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static BepuVector3 ToNumerics(this XnaVector3 vector3D)
     {
-        return new Vector3(v.X, v.Y, v.Z);
+        return new BepuVector3(vector3D.X, vector3D.Y, vector3D.Z);
     }
 
-    // <summary>
-    /// System.Numerics.Vector3 to Microsoft.Xna.Framework.Vector3
+    /// <summary>
+    /// Converts a BEPU Vector3 to a MonoGame Vector3
     /// </summary>
-    /// <param name="v"></param>
-    /// <returns></returns>
-    public static Microsoft.Xna.Framework.Vector3 ToXNA(
-        this Vector3 v)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static XnaVector3 ToXna(this BepuVector3 vector3D)
     {
-        return new Microsoft.Xna.Framework.Vector3(
-            v.X,
-            v.Y,
-            v.Z
-        );
+        return new XnaVector3(vector3D.X, vector3D.Y, vector3D.Z);
     }
 }
