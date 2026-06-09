@@ -152,4 +152,41 @@ public static class GameConfig
         public const float Radius = 0.5f;               // metros
         public const float Height = 2f;                 // metros
     }
+
+    // CONFIGURACION DE AUDIO (Volumenes en escala del 1 al 100)
+    // El SoundManager divide este valor por 100f para obtener el rango 0.0f - 1.0f nativo de MonoGame
+    public static class Audio
+    {
+        public static class Music
+        {
+            public const float Menu = 50f;
+            public const float Level1 = 5f;
+        }
+
+        public static class Sfx
+        {
+            public const float CannonFire = 30f;
+            public const float ColisionCasa = 50f;
+            public const float ImpactoMedianaEscala = 50f;
+            public const float AgarrarCombustible1 = 90f;
+            public const float AgarrarCombustible2 = 50f;
+            public const float Viento = 50f;
+            public const float CooldownNotReady = 50f;
+            public const float Escalera = 50f;
+            public const float EnemyCannonFire = 50f;
+            public const float PlantaRodadora = 50f;
+            public const float CarroceriaAvanzando1 = 50f;
+            public const float CarroceriaAvanzando2 = 50f;
+            public const float CarroceriaAvanzando3 = 50f;
+            public const float CarroceriaAvanzando4 = 50f;
+            public const float BajoCombustible1 = 50f;
+            public const float BajoCombustible2 = 50f;
+            public const float RotarTorreta = 50f;
+            public const float Klaxon = 50f;
+            public const float Fuego = 50f;
+            public const float GolpearArbol = 50f;
+            public const float GolpearRoca = 50f;
+            public const float PlayerMuere = 50f;
+        }
+    }
 }

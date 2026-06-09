@@ -72,6 +72,7 @@ public class TGCGame : Game
     public EnemiesManager _enemiesManager;
     private SoundManager _soundManager;
     public SoundManager SoundManager => _gameStateManager.SoundManager;
+    public SimpleCollisionTracker CollisionTracker { get; private set; } = new SimpleCollisionTracker();
     //-----------FISICAS
     private Simulation _simulation;
     private BufferPool _bufferPool;
@@ -211,6 +212,8 @@ public class TGCGame : Game
         }
 
         if (kb.IsKeyDown(Keys.Escape)) Exit();
+
+        CollisionTracker.BeginFrame();
 
         _simulation.Timestep(1 / 60f);
 

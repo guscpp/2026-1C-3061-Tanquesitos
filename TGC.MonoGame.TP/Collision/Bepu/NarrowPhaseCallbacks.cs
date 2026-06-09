@@ -121,7 +121,58 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
             }
 
         }
-        if(pair.A.Mobility == CollidableMobility.Static || pair.B.Mobility == CollidableMobility.Static)
+
+        // COLISIONES: Tanque (Dinamico) vs Objetos Estaticos (casas, arboles, rocas)
+        if ((pair.A.Mobility == CollidableMobility.Dynamic && pair.B.Mobility == CollidableMobility.Static) ||
+            (pair.B.Mobility == CollidableMobility.Dynamic && pair.A.Mobility == CollidableMobility.Static))
+        {
+            BodyHandle dynamicHandle = pair.A.Mobility == CollidableMobility.Dynamic ? pair.A.BodyHandle : pair.B.BodyHandle;
+            StaticHandle staticHandle = pair.A.Mobility == CollidableMobility.Static ? pair.A.StaticHandle : pair.B.StaticHandle;
+
+            //Ignorar el terreno para que no contamine los flags del tracker
+            if (staticHandle == TGCGame.Instance.TerrainHandle)
+            {
+                // No hacemos nada con el tracker, pero dejamos que el codigo siga por si es una bala
+            }
+            //Solo evaluar si el dinamico es el tanque del jugador
+            else if (dynamicHandle == TGCGame.Instance._tank.TankHandler)
+            {
+                TGCGame.Instance.CollisionTracker.TryPlay(() =>
+                {
+                    bool isHouse = TGCGame.Instance._housesManager._houses.Any(h => h.StaticHandle == staticHandle);
+                    if (isHouse)
+                    {
+                        TGCGame.Instance.SoundManager.PlaySound("colision_casa");
+                        return true; // Retornar true para consumir el flag
+                    }
+
+                    bool isTree = TGCGame.Instance._staticsManager._decorationModels.OfType<Tree>().Any(t => t.StaticHandle == staticHandle);
+                    if (isTree)
+                    {
+                        TGCGame.Instance.SoundManager.PlaySound("golpear_arbol");
+                        return true;
+                    }
+
+                    bool isRock = TGCGame.Instance._staticsManager._decorationModels.OfType<Rock>().Any(r => r.StaticHandle == staticHandle);
+                    if (isRock)
+                    {
+                        TGCGame.Instance.SoundManager.PlaySound("golpear_roca");
+                        return true;
+                    }
+
+                    bool isCactus = TGCGame.Instance._staticsManager._decorationModels.OfType<Cactus>().Any(c => c.StaticHandle == staticHandle);
+                    if (isCactus)
+                    {
+                        TGCGame.Instance.SoundManager.PlaySound("golpear_arbol");
+                        return true;
+                    }
+
+                    return false; // No es un objeto que nos interese, NO consumir el flag
+                });
+            }
+        }
+
+        if (pair.A.Mobility == CollidableMobility.Static || pair.B.Mobility == CollidableMobility.Static)
         {
             // si la bala colisiono con el suelo, debe desaparecer
             // chequeo que uno de los dos sea estatico (terreno) y el otro dinamico (bala)

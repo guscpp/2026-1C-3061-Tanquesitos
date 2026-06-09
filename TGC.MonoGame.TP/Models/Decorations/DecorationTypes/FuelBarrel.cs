@@ -63,6 +63,8 @@ namespace TGC.MonoGame.TP.Models.Decorations
                 IsRecharging = true;
                 RechargeProgress = 0f;
                 CollectedBy = tank;
+
+                TGCGame.Instance.SoundManager.PlaySound("agarrar_combustible_1");
             }
         }
 

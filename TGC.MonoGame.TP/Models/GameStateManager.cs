@@ -46,6 +46,7 @@ public class GameStateManager
         "Salir"
     };
     private int _selectedIndex = 0; //Preselecciona Iniciar en el menu
+    private int _lastHoveredIndex = -1; //preseleccion del mouse
 
     private MouseState _lastMouseState;
 
@@ -177,6 +178,11 @@ public class GameStateManager
         int hoveredIndex = GetOptionAtPosition(currentMouse.X, currentMouse.Y);
         if (hoveredIndex != -1)
         {
+            if (hoveredIndex != _lastHoveredIndex)
+                TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
+
+            _lastHoveredIndex = hoveredIndex;
+
             _selectedIndex = hoveredIndex; // Feedback de hover
             if (currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released)
                 ApplySelection(); // Click selecciona esa opcion

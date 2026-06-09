@@ -18,6 +18,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
     {
 
         protected StaticHandle _staticHandle;
+        public StaticHandle StaticHandle => _staticHandle;
 
         public Static(Vector3 position, string path) : base(position, path) { }
 
