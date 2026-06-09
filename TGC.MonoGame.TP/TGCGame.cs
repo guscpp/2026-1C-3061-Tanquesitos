@@ -323,7 +323,7 @@ public class TGCGame : Game
 
         _enemiesManager.Reset(_simulation);
         _dinamicsManager.ResetDynamics(_simulation);
-        _barrelsManager.Reset();
+        _barrelsManager.Reset(_simulation);
 
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
     }
