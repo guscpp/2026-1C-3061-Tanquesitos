@@ -111,48 +111,69 @@ public abstract class TankBase
     }
 
     // Método protegido que aplica física Bepu. Lo llaman Player y Enemy.
+    // Corregido para que los tanques no levanten vuelo como un avion cuando la trompa apunta hacia arriba
     protected void ApplyPhysics(Simulation simulation, float dt, float forwardInput, float turnInput)
     {
         if (IsDead) return;
+
         var body = simulation.Bodies.GetBodyReference(TankHandler);
         var orientation = body.Pose.Orientation;
-        var forward = System.Numerics.Vector3.Transform(new System.Numerics.Vector3(0, 0, -1), orientation);
-        var right = System.Numerics.Vector3.Normalize(System.Numerics.Vector3.Cross(new System.Numerics.Vector3(0, 1, 0), forward));
+
+        // Obtener el vector forward 3D real del tanque segun su rotacion actual
+        var forward3D = System.Numerics.Vector3.Transform(new System.Numerics.Vector3(0, 0, -1), orientation);
+
+        // Aplanar el vector al plano horizontal (X, Z) para evitar que el motor lo levante
+        var forward = new System.Numerics.Vector3(forward3D.X, 0f, forward3D.Z);
+        if (forward.LengthSquared() > 0.001f)
+        {
+            forward = System.Numerics.Vector3.Normalize(forward);
+        }
+        else
+        {
+            forward = new System.Numerics.Vector3(0f, 0f, -1f); // Fallback por si mira exactamente al cielo/suelo
+        }
+
+        // Hacer lo mismo con el vector lateral (right) para que el arrastre lateral tampoco lo levante
+        var right3D = System.Numerics.Vector3.Cross(new System.Numerics.Vector3(0f, 1f, 0f), forward3D);
+        var right = new System.Numerics.Vector3(right3D.X, 0f, right3D.Z);
+        if (right.LengthSquared() > 0.001f)
+        {
+            right = System.Numerics.Vector3.Normalize(right);
+        }
+        else
+        {
+            right = new System.Numerics.Vector3(1f, 0f, 0f); // Fallback
+        }
 
         var vel = body.Velocity.Linear;
         float fwdSpeed = System.Numerics.Vector3.Dot(vel, forward);
         float rightSpeed = System.Numerics.Vector3.Dot(vel, right);
 
+        // Las fuerzas ahora se calculan exclusivamente sobre el plano horizontal
         var motorForce = forward * MotorForce * forwardInput;
         var dragForce = -forward * (ForwardDrag * fwdSpeed) - right * (LateralDrag * rightSpeed);
-        body.ApplyLinearImpulse((motorForce + dragForce) * dt);
-
-        /*
-        body.Velocity.Angular = new System.Numerics.Vector3(0, turnInput * TurnSpeed, 0);
-
-        ref var angVel = ref body.Velocity.Angular;
-        angVel.X = MathHelper.Clamp(angVel.X, -0.5f, 0.5f);
-        angVel.Z = MathHelper.Clamp(angVel.Z, -0.3f, 0.3f);
-        angVel.X *= 0.88f; angVel.Y *= 0.98f; angVel.Z *= 0.88f;
-        body.Awake = true;  */
 
         body.ApplyLinearImpulse((motorForce + dragForce) * dt);
- 
-// veoooooooooooooooooooooooooo si funciona
-        // En lugar de crear un vector de cero, modificamos ÚNICAMENTE el eje Y (el giro del usuario)
+
+        // Control de giro (solo modificar el eje Y, dejando que la fisica maneje X y Z por los choques)
         ref var angVel = ref body.Velocity.Angular;
         angVel.Y = turnInput * TurnSpeed;
 
-        // Ahora el Clamp y el amortiguador (damping) de X y Z SÍ van a funcionar con las fuerzas del choque
+        // Amortiguador para evitar que el tanque quede girando como loco en X y Z tras un choque
         angVel.X = MathHelper.Clamp(angVel.X, -0.5f, 0.5f);
         angVel.Z = MathHelper.Clamp(angVel.Z, -0.3f, 0.3f);
-        angVel.X *= 0.88f; angVel.Y *= 0.98f; angVel.Z *= 0.88f;
+        angVel.X *= 0.88f;
+        angVel.Y *= 0.98f;
+        angVel.Z *= 0.88f;
+
         body.Awake = true;
 
-
+        // Actualizar variables de estado para el render y la logica de juego
         var pose = body.Pose;
         Position = new Microsoft.Xna.Framework.Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
         _physicsOrientation = pose.Orientation;
+
+        // Extraer el angulo de yaw para la rotacion de la torreta y camara
         float sinYaw = 2f * (_physicsOrientation.W * _physicsOrientation.Y + _physicsOrientation.X * _physicsOrientation.Z);
         float cosYaw = 1f - 2f * (_physicsOrientation.X * _physicsOrientation.X + _physicsOrientation.Y * _physicsOrientation.Y);
         RotationY = MathF.Atan2(sinYaw, cosYaw);
