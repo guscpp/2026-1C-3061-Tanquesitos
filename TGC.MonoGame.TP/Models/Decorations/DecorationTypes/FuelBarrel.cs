@@ -25,7 +25,29 @@ namespace TGC.MonoGame.TP.Models.Decorations
             _visualScale = 1f;
         }
 
-        public void ResetBarrel() => IsCollected = false;
+        //Resetea los barriles entre partidas
+        public void ResetBarrel(Simulation simulation)
+        {
+            bool wasCollected = IsCollected;
+
+            //Restaurar las banderas de estado
+            IsCollected = false;
+            IsRecharging = false;
+            CollectedBy = null;
+            RechargeProgress = 0f;
+
+            //Restaurar la visibilidad
+            _visualScale = 1f;
+
+            //Recrear el cuerpo fisico si fue eliminado al tomarse
+            if (wasCollected)
+            {
+                var shape = new Cylinder(GameConfig.FuelBarrel.Radius, _height);
+                var shapeIndex = simulation.Shapes.Add(shape);
+                var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
+                _staticHandle = simulation.Statics.Add(new StaticDescription(initialPos, shapeIndex));
+            }
+        }
 
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
         {
