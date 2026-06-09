@@ -4,9 +4,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using System;
-using TGC.MonoGame.TP.Managers;
+using TGC.MonoGame.TP.Models;
 
-namespace TGC.MonoGame.TP.Models;
+namespace TGC.MonoGame.TP.Managers;
 
 public class GameStateManager
 {
@@ -288,10 +288,11 @@ public class GameStateManager
         else if (CurrentState == GameState.Paused || CurrentState == GameState.GameOver || CurrentState == GameState.Win)
         {
             //_graphicsDevice.Clear(Color.Black);
-            _spriteBatch.Begin();
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
 
             if (CurrentState == GameState.Paused)
             {
+                _spriteBatch.Draw(_whitePixel, new Rectangle(0, 0, vp.Width, vp.Height), Color.Black * 0.66f);
                 DrawCenteredText("PAUSA\nPresiona P para continuar", center);
             }
             else if (CurrentState == GameState.GameOver)

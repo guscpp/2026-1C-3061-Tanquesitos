@@ -341,7 +341,8 @@ public class TGCGame : Game
         }
 
         //El manager dibuja encima (Menu, Pausa, GameOver)
-        _gameStateManager.Draw(_tank.IsDead ? "Tanque destruido" : "");
+        string reason = _tank.IsDead ? (_tank.CurrentFuel <= 0f ? "Sin combustible" : "Tanque destruido") : "";
+        _gameStateManager.Draw(reason);
     }
 
     public void InitializePhysics()

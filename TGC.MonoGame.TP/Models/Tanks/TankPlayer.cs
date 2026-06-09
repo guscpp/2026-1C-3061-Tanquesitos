@@ -57,7 +57,11 @@ public class TankPlayer : TankBase
         if (keyboard.IsKeyDown(Keys.W)) forwardInput += 1f;
         if (keyboard.IsKeyDown(Keys.S)) forwardInput -= 1f;
 
-        if (CurrentFuel <= 0f) forwardInput = 0f;
+        if (CurrentFuel <= 0f)
+        {
+            forwardInput = 0f;
+            IsDead = true;
+        }
         else if (forwardInput != 0f) CurrentFuel -= GameConfig.Tank.FuelConsumptionRate * dt;
         CurrentFuel = MathHelper.Clamp(CurrentFuel, 0f, GameConfig.Tank.MaxFuel);
 
