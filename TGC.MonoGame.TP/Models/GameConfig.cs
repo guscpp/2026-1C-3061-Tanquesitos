@@ -103,7 +103,7 @@ public static class GameConfig
     // =========================================================================
     public static class Enemies
     {
-        public const int EnemiesCount = 5;
+        public const int EnemiesCount = 10;
         public const float AttackRadius = 50f;
         public const float Cooldown = 1.0f; // Cooldown base para IA
     }
