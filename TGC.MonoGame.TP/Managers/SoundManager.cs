@@ -12,6 +12,7 @@ namespace TGC.MonoGame.TP.Managers
     {
         private ContentManager _content;
         private readonly Dictionary<string, SoundEffect> _soundEffects;
+        private readonly Dictionary<string, int> _lastPlayTick = new Dictionary<string, int>();
         private Song _currentSong;
         private AudioListener _listener;
 
@@ -64,6 +65,7 @@ namespace TGC.MonoGame.TP.Managers
             StopMusic();
             _currentSong = _content.Load<Song>(assetPath);
             MediaPlayer.IsRepeating = isLooping;
+            MediaPlayer.Volume = GetVolumeForMusic(assetPath);
             MediaPlayer.Play(_currentSong);
         }
 
@@ -86,6 +88,9 @@ namespace TGC.MonoGame.TP.Managers
             // Crear una instancia del sonido para poder aplicar efectos 3D
             SoundEffectInstance instance = soundEffect.CreateInstance();
 
+            // Aplicar volumen
+            instance.Volume = GetVolumeForSfx(soundName);
+
             // Configurar el emisor (la fuente del sonido, ej: el tanque o la bala)
             AudioEmitter emitter = new AudioEmitter();
             // Convertimos a System.Numerics.Vector3 usando la extension del proyecto
@@ -107,12 +112,101 @@ namespace TGC.MonoGame.TP.Managers
         //Reproducir sonido stereo
         public void PlaySound(string soundName)
         {
-            if (_soundEffects.ContainsKey(soundName))
+            if (_soundEffects.TryGetValue(soundName, out SoundEffect soundEffect))
             {
-                _soundEffects[soundName].Play();
+                SoundEffectInstance instance = soundEffect.CreateInstance();
+                instance.Volume = GetVolumeForSfx(soundName);
+                instance.Play();
             }
         }
 
+        /// <summary>
+        /// Reproduce un sonido solo si ha pasado el cooldown especificado desde la ultima vez que se reprodujo.
+        /// Evita que suena como una amtetralladora
+        /// </summary>
+        /// <param name="soundName">Nombre del sonido registrado.</param>
+        /// <param name="cooldownMs">Milisegundos mínimos entre reproducciones (default: 400ms).</param>
+        public void PlaySoundWithCooldown(string soundName, int cooldownMs = 400)
+        {
+            if (!_soundEffects.ContainsKey(soundName)) return;
+
+            int currentTick = Environment.TickCount;
+            if (_lastPlayTick.TryGetValue(soundName, out int lastTick))
+            {
+                if (currentTick - lastTick < cooldownMs)
+                    return; // Aún en cooldown, se descarta
+            }
+
+            _lastPlayTick[soundName] = currentTick;
+            PlaySound(soundName);
+        }
+
+        /// <summary>
+        /// Version 3D con cooldown. Evita que sonidos 3D se repitan como ametralladora.
+        /// </summary>
+        public void PlaySound3DWithCooldown(string soundName, Vector3 emitterPosition,
+            Vector3 listenerPosition, Vector3 listenerForward, int cooldownMs = 400)
+        {
+            int currentTick = Environment.TickCount;
+            if (_lastPlayTick.TryGetValue(soundName, out int lastTick))
+            {
+                if (currentTick - lastTick < cooldownMs)
+                    return;
+            }
+
+            _lastPlayTick[soundName] = currentTick;
+            PlaySound3D(soundName, emitterPosition, listenerPosition, listenerForward);
+        }
+
+        /// <summary>
+        /// Obtiene el volumen normalizado (0.0f a 1.0f) para un SFX específico basado en GameConfig.
+        /// </summary>
+        private float GetVolumeForSfx(string soundName)
+        {
+            float configValue = soundName switch
+            {
+                "cannon_fire" => GameConfig.Audio.Sfx.CannonFire,
+                "colision_casa" => GameConfig.Audio.Sfx.ColisionCasa,
+                "impacto_mediana_escala" => GameConfig.Audio.Sfx.ImpactoMedianaEscala,
+                "agarrar_combustible_1" => GameConfig.Audio.Sfx.AgarrarCombustible1,
+                "agarrar_combustible_2" => GameConfig.Audio.Sfx.AgarrarCombustible2,
+                "viento" => GameConfig.Audio.Sfx.Viento,
+                "cooldown_not_ready" => GameConfig.Audio.Sfx.CooldownNotReady,
+                "escalera" => GameConfig.Audio.Sfx.Escalera,
+                "enemy_cannon_fire" => GameConfig.Audio.Sfx.EnemyCannonFire,
+                "planta_rodadora" => GameConfig.Audio.Sfx.PlantaRodadora,
+                "carroceria_avanzando_1" => GameConfig.Audio.Sfx.CarroceriaAvanzando1,
+                "carroceria_avanzando_2" => GameConfig.Audio.Sfx.CarroceriaAvanzando2,
+                "carroceria_avanzando_3" => GameConfig.Audio.Sfx.CarroceriaAvanzando3,
+                "carroceria_avanzando_4" => GameConfig.Audio.Sfx.CarroceriaAvanzando4,
+                "bajo_combustible_1" => GameConfig.Audio.Sfx.BajoCombustible1,
+                "bajo_combustible_2" => GameConfig.Audio.Sfx.BajoCombustible2,
+                "rotar_torreta" => GameConfig.Audio.Sfx.RotarTorreta,
+                "klaxon" => GameConfig.Audio.Sfx.Klaxon,
+                "fuego" => GameConfig.Audio.Sfx.Fuego,
+                "golpear_arbol" => GameConfig.Audio.Sfx.GolpearArbol,
+                "golpear_roca" => GameConfig.Audio.Sfx.GolpearRoca,
+                "player_muere" => GameConfig.Audio.Sfx.PlayerMuere,
+                _ => 50f
+            };
+
+            return MathHelper.Clamp(configValue / 100f, 0f, 1f);
+        }
+
+        /// <summary>
+        /// Obtiene el volumen normalizado (0.0f a 1.0f) para una pista musical específica basada en GameConfig.
+        /// </summary>
+        private float GetVolumeForMusic(string assetPath)
+        {
+            float configValue = assetPath switch
+            {
+                "Music/100-song18" => GameConfig.Audio.Music.Menu,
+                "Music/101-Juhani Junkala [Retro Game Music Pack] Level 1" => GameConfig.Audio.Music.Level1,
+                _ => 50f
+            };
+
+            return MathHelper.Clamp(configValue / 100f, 0f, 1f);
+        }
 
     }
 }
