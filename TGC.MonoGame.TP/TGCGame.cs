@@ -334,7 +334,7 @@ public class TGCGame : Game
             _staticsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _dinamicsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _barrelsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
-            _enemiesManager.Draw(_camera.View, _camera.Projection);
+            _enemiesManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
             _hud.Draw();
             _gizmos.Draw();

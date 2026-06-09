@@ -80,11 +80,12 @@ public class EnemiesManager
         }
      }
 
-    public void Draw(Matrix view, Matrix projection)
+    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation)
     {
         foreach(var tankEnemy in _enemies)
         {
             tankEnemy.Draw(view, projection);
+            tankEnemy.DrawCollisionChamber(gizmos, simulation, Color.Red);
         }
     }
 

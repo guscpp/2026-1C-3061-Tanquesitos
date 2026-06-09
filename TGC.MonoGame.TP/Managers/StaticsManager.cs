@@ -125,7 +125,8 @@ public class StaticsManager
             var p when p.Contains("arbol")      => new Tree(position, path),
             var p when p.Contains("cactus")     => new Cactus(position, path),
             var p when p.Contains("roca")       => new Rock(rocaPos, path),
-            var p when p.Contains("pozo")       => new Pozo(position, path)
+            var p when p.Contains("pozo")       => new Pozo(position, path),
+            _                                   => new Decoration(position, path)
         };
     }
 
@@ -153,6 +154,8 @@ public class StaticsManager
         var minDistanceToHouses = 30f;
         var minDistanceBetween = 10f;
         var minDistanceToSpawn = 20f;
+        float margin = 8f;
+        float playAreaLimit = _terrain.WidthUnits - margin;
   
         for(int i = 0; i < NumberOfDecorations; i++)
         {
@@ -164,6 +167,11 @@ public class StaticsManager
                 candidate = GetRandomPosition();
                 valid = true;
                 // chequeo contra casas o spawnpoint
+                if(Math.Abs(candidate.X) >= playAreaLimit || Math.Abs(candidate.Z) >= playAreaLimit)
+                {
+                    valid = false;
+                    continue;
+                }
                 if(IsTooNearToAHouse(candidate, minDistanceToHouses) ||
                     Vector3.Distance(candidate, spawnPoint) < minDistanceToSpawn)
                 {
@@ -204,5 +212,3 @@ public class StaticsManager
         return _decorationModels.Select(decoration => decoration.Position).ToList();
     }
 }
-
-

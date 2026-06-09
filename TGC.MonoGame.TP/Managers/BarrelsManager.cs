@@ -51,6 +51,8 @@ public class BarrelsManager
         float minDistToDecorations = 8f;
         float minDistToHouses = 20f;
         float minDistToBarrels = 6f;
+        float margin = 8f;
+        float playAreaLimit = _terrain.WidthUnits - margin;
 
         for (int i = 0; i < GameConfig.FuelBarrel.SpawnCount; i++)
         {
@@ -60,7 +62,11 @@ public class BarrelsManager
             {
                 pos = GetRandomPosition();
                 valid = true;
-
+                if(Math.Abs(pos.X) >= playAreaLimit || Math.Abs(pos.Z) >= playAreaLimit)
+                {
+                    valid = false;
+                    continue;
+                }
                 // Validar distancia contra casas
                 if (IsTooNearToAHouse(pos, minDistToHouses)) { valid = false; continue; }
 
@@ -135,3 +141,4 @@ public class BarrelsManager
     }
 
 }
+

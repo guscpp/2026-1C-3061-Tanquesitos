@@ -3,6 +3,8 @@ using BepuPhysics.Collidables;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using TGC.MonoGame.TP.Collisions;
+using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Tanks;
 
@@ -111,6 +113,52 @@ public abstract class TankBase
             }
             mesh.Draw();
         }
+    }
+
+    public virtual void DrawCollisionChamber(Gizmo gizmos, Simulation simulation, Color color)
+    {
+        if (IsDead || Model == null) return;
+
+        //obtengo la referencia del cuerpo y su pose actual en el mundo
+        var body = simulation.Bodies.GetBodyReference(TankHandler);
+        var pose = body.Pose;
+
+        //Creo la matriz de mundo del cuerpo físico completo (centrada en su Centro de Masa)
+        Matrix bodyWorld = Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(
+                            pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W)) 
+                        * Matrix.CreateTranslation(new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z));
+
+        //Vuelvo a simular las dimensiones de las cajas
+        Vector3 chassisScale = new Vector3(GameConfig.Tank.PhysicsChassisWidth, GameConfig.Tank.PhysicsChassisHeight, GameConfig.Tank.PhysicsChassisLength);
+        Vector3 turretScale = new Vector3(GameConfig.Tank.PhysicsTurretWidth, GameConfig.Tank.PhysicsTurretHeight, GameConfig.Tank.PhysicsTurretLength);
+
+        //Debo compensar el centro de masa restandolo de los offsets originales
+        using var compoundBuilder = new CompoundBuilder(simulation.BufferPool, simulation.Shapes, 3);
+        var chassisBox = new Box(GameConfig.Tank.PhysicsChassisWidth, GameConfig.Tank.PhysicsChassisHeight, GameConfig.Tank.PhysicsChassisLength);
+        var turretBox = new Box(GameConfig.Tank.PhysicsTurretWidth, GameConfig.Tank.PhysicsTurretHeight, GameConfig.Tank.PhysicsTurretLength);
+
+        compoundBuilder.Add(new Box(2.2f, 0.3f, 2.2f), new RigidPose(new System.Numerics.Vector3(0, -0.9f, 0), System.Numerics.Quaternion.Identity), 6000f);
+        compoundBuilder.Add(chassisBox, new RigidPose(new System.Numerics.Vector3(0, -0.4f, 0), System.Numerics.Quaternion.Identity), GameConfig.Tank.ChassisMass);
+        compoundBuilder.Add(turretBox, new RigidPose(new System.Numerics.Vector3(0, GameConfig.Tank.PhysicsTurretOffsetY, 0), System.Numerics.Quaternion.Identity), GameConfig.Tank.TurretMass);
+
+        compoundBuilder.BuildDynamicCompound(out _, out _, out var center);
+        Vector3 cpmCenter = new Vector3(center.X, center.Y, center.Z);
+
+        //Calculo los offsets reales corregidos respecto al centro de masa
+        Vector3 chassisOffset = new Vector3(0f, -0.4f, 0f) - cpmCenter*1.5f;
+        Vector3 turretOffset = new Vector3(0f, GameConfig.Tank.PhysicsTurretOffsetY, 0f) - cpmCenter;
+
+        //Dibujo el Chasis con la matriz final combinada
+        Matrix chassisWorld = Matrix.CreateScale(chassisScale) 
+                            * Matrix.CreateTranslation(chassisOffset) 
+                            * bodyWorld;
+        gizmos.DrawCube(chassisWorld, color);
+
+        //Dibujo la Torreta con la matriz final combinada
+        Matrix turretWorld = Matrix.CreateScale(turretScale) 
+                            * Matrix.CreateTranslation(turretOffset) 
+                            * bodyWorld;
+        gizmos.DrawCube(turretWorld, color);
     }
 
     // Método protegido que aplica física Bepu. Lo llaman Player y Enemy.

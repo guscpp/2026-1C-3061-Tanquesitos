@@ -134,7 +134,7 @@ public class DinamicsManager
 
         var x = _random.NextSingle() * horizontalRange + minHorizontal;
         var z = _random.NextSingle() * horizontalRange + minHorizontal;
-        return new Vector3(x, _terrain.GetHeight(x, z), z);
+        return new Vector3(x, _terrain.GetHeight(x, z)+0.2f, z);
     }
 
     //Me genera una nueva decoracion con la posicion que le paso
@@ -178,6 +178,8 @@ public class DinamicsManager
         var minDistanceToHouses = 30f;
         var minDistanceBetween = 10f;
         var minDistanceToSpawn = 20f;
+        float margin = 8f;
+        float playAreaLimit = _terrain.WidthUnits - margin;
   
         for(int i = 0; i < NumberOfAssets; i++)
         {
@@ -188,6 +190,11 @@ public class DinamicsManager
             {
                 candidate = GetRandomPosition();
                 valid = true;
+                if(Math.Abs(candidate.X) >= playAreaLimit || Math.Abs(candidate.Z) >= playAreaLimit)
+                {
+                    valid = false;
+                    continue;
+                }
                 // chequeo contra casas o spawnpoint
                 if(IsTooNearToAHouse(candidate, minDistanceToHouses) ||
                     Vector3.Distance(candidate, spawnPoint) < minDistanceToSpawn)
@@ -240,5 +247,4 @@ public class DinamicsManager
         return new List<Decoration>(_dynamicDecorations);
     }
 }
-
 
