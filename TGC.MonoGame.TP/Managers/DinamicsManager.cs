@@ -85,6 +85,15 @@ public class DinamicsManager
         }
     }
 
+    public void ResetDynamics(Simulation simulation)
+    {
+        foreach (var asset in _dynamicDecorations)
+            if(asset is Dinamic dinamicAsset) simulation.Bodies.Remove(dinamicAsset.bodyHandle);
+        _dynamicDecorations.Clear();
+        Initialize();
+        LoadContent(TGCGame.Instance.Content, simulation);
+    }
+
     public void Update(GameTime elapsedTime, Simulation simulation)
     {
         // Recorremos la lista de atrás hacia adelante para poder borrar elementos de forma segura

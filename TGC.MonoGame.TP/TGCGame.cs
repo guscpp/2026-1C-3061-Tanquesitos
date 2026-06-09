@@ -299,12 +299,15 @@ public class TGCGame : Game
         Vector3 spawnPos = Vector3.Zero;
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);
 
+        _simulation.Bodies.Remove(_tankHandle);
         _tank = new TankPlayer(SelectedPlayerTank);
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
         _tank.Load(tankModel, tankTexture, effect2, _simulation);
         _tankHandle = _tank.TankHandler;
 
         _enemiesManager.Reset(_simulation);
+        _dinamicsManager.ResetDynamics(_simulation);
+        _barrelsManager.Reset();
 
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
     }

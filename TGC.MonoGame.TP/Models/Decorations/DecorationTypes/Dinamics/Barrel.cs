@@ -17,6 +17,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
     {
         private float _radius;
         private float _height;
+        public BodyHandle _bodyHandle;
 
         public Barrel(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
 
@@ -49,7 +50,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             //Añado el cuerpo dinamico a la simulacion
             bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(
                 initialPos, inertia, shapeIndex, activity)); //si colocamos el 0.01f solamente en vez del activity se verá algunos objetos "temblar"
-
+            _bodyHandle = bodyHandle;
             // Le doy una identidad al cuerpo para reconocerlo en colisiones
             simulation.Bodies[bodyHandle].Collidable.Continuity = ContinuousDetection.Passive;
         }

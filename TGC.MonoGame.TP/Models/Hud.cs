@@ -53,7 +53,7 @@ public class Hud
     private int _lastDisplayedEnemies = -1;
     private int _playerHealth = 100;
 
-    private string _cachedPlayerHealth = "Health : 100 / 100 ";
+    private string _cachedPlayerHealth = "Health : / ";
     private float _lastDisplayedHealth = -1.0f;
 
     // Propiedades expuestas que actualiza el juego en cada frame
@@ -111,7 +111,7 @@ public class Hud
         _playerHealth = getPlayerHealth();
         if (_playerHealth != _lastDisplayedHealth)
         {
-            _cachedPlayerHealth = $"HEALTH: {_playerHealth} / 100";
+            _cachedPlayerHealth = $"HEALTH: {_playerHealth} / {TGCGame.Instance._tank.initialHealth}";
             _lastDisplayedHealth = _playerHealth;            
         }
 
@@ -220,18 +220,15 @@ public class Hud
         _spriteBatch.DrawString(_font, _cachedEnemiesCount, killsPosition, Color.White);
 
         // === VIDA RESTANTE ===
-        Color healthColor = _playerHealth > 50f ? Color.Lime : _playerHealth > 25f ? Color.Yellow : Color.Red;
+        var healthPorc = getPlayerHealth() / TGCGame.Instance._tank.initialHealth * 100;
+        Color healthColor = healthPorc > 50f ? Color.Lime : healthPorc > 25f ? Color.Yellow : Color.Red;
         _spriteBatch.DrawString(_font, _cachedPlayerHealth, drawPosition + Vector2.One, Color.Black);
         _spriteBatch.DrawString(_font, _cachedPlayerHealth, drawPosition, healthColor);
 
         _spriteBatch.End();
     }
 
-    private int getPlayerHealth()
-    {
-        var health = TGCGame.Instance._tank.initialHealth;
-        return (int)(TGCGame.Instance._tank.HealthPoints / health * 100);
-    }
+    private int getPlayerHealth() => (int)(TGCGame.Instance._tank.HealthPoints);
 
     public void Dispose()
     {

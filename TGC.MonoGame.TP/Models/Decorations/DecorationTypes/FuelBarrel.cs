@@ -25,6 +25,8 @@ namespace TGC.MonoGame.TP.Models.Decorations
             _visualScale = 1f;
         }
 
+        public void ResetBarrel() => IsCollected = false;
+
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
         {
             base.LoadContent(content, simulation, effect);

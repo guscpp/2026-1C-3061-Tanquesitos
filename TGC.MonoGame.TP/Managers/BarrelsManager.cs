@@ -101,6 +101,12 @@ public class BarrelsManager
 
     }
 
+    public void Reset()
+    {
+        foreach(var barrel in _fuelBarrels)
+            barrel.ResetBarrel();
+    }
+
     public void Update(float dt) { 
         foreach (var barrel in _fuelBarrels)
         {
