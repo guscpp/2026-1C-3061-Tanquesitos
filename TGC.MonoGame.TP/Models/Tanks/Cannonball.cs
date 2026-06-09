@@ -33,7 +33,8 @@ public class Cannonball
 
     private bool _isDead = false;
 
-
+    // indica de que tipo de tanque proviene la bala (esto afecta el daño que provoca)
+    public float AttackDamage { get; }
 
     public bool IsDead => _isDead;
     public void killCannonball()
@@ -41,7 +42,7 @@ public class Cannonball
         _isDead = true;
     }
 
-    public Cannonball(Model model, Effect effect, Vector3 position, Vector3 direction, Simulation simulation)
+    public Cannonball(Model model, float damage, Effect effect, Vector3 position, Vector3 direction, Simulation simulation)
     {
         _model = model;
 
@@ -55,6 +56,8 @@ public class Cannonball
                 part.Effect = _effect;
             }
         }
+
+        AttackDamage = damage;
 
         // =====================================
         // CUERPO FISICO

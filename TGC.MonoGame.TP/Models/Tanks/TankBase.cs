@@ -86,7 +86,10 @@ public abstract class TankBase
     public void HandleHealth(float damage)
     {
         HealthPoints -= damage;
-        if (HealthPoints <= 0) { HealthPoints = 0; IsDead = true; }
+        if (HealthPoints <= 0) { 
+            HealthPoints = 0;
+            if (!(this is TankPlayer)) TGCGame.Instance.EnemiesKilled++;
+            IsDead = true; }
     }
 
     public virtual void Draw(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)

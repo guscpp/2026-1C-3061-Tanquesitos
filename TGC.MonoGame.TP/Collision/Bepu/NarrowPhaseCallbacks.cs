@@ -102,9 +102,15 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
             {
                 BodyHandle obstacleHandle = (cannonball.BodyHandle == handleA) ? handleB : handleA;
 
+                if(handleA == tankHandle || handleB == tankHandle && !cannonball.IsDead)
+                {
+                    TGCGame.Instance._tank.HandleHealth(cannonball.AttackDamage);
+                    cannonball.killCannonball();
+                }
+
                 var objetoChocado = TGCGame.Instance._dinamicsManager._dynamicDecorations.OfType<Dinamic>().FirstOrDefault(d => d.bodyHandle == obstacleHandle);
 
-                if (objetoChocado != null && !objetoChocado.IsDead)
+                if (objetoChocado != null && !objetoChocado.IsDead && !cannonball.IsDead)
                 {
                     objetoChocado.HandleCollision();
                     cannonball.killCannonball();
@@ -112,10 +118,9 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
 
                 // Reviso si se impacto a un enemigo
                 var enemyChocado = TGCGame.Instance._enemiesManager._enemies.FirstOrDefault(e => e.TankHandler == obstacleHandle);
-                if(enemyChocado != null && !enemyChocado.IsDead)
+                if(enemyChocado != null && !enemyChocado.IsDead && !cannonball.IsDead)
                 {
-                    //enemyChocado.HandleHealth(GameConfig.Tank.AttackDamage);
-                    enemyChocado.HandleHealth(0);
+                    enemyChocado.HandleHealth(cannonball.AttackDamage);
                     cannonball.killCannonball();
                 }              
             }

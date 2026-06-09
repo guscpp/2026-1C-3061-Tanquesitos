@@ -29,7 +29,7 @@ public class EnemiesManager
     public const string ContentFolderSpriteFonts = "SpriteFonts/";
     public const string ContentFolderTextures = "Textures/";
 
-    private int _enemiesCount = 15;
+    private int _enemiesCount = GameConfig.Enemies.EnemiesCount;
     public List<TankEnemy> _enemies = new();
     private List<BodyHandle> _enemiesHandles = new();
     
@@ -86,5 +86,18 @@ public class EnemiesManager
         {
             tankEnemy.Draw(view, projection);
         }
+    }
+
+    public void Reset(Simulation simulation)
+    {
+        // remover cuerpos físicos de la simulación
+        foreach (var handle in _enemiesHandles)
+            simulation.Bodies.Remove(handle);
+
+        _enemies.Clear();
+        _enemiesHandles.Clear();
+
+        // recargar a los enemigos
+        LoadContent(TGCGame.Instance.Content);
     }
 }

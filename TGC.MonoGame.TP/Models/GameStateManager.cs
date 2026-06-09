@@ -60,6 +60,8 @@ public class GameStateManager
     private float _idleTime = 0f;
     private const float IdleAnimationSpeed = 2.5f; // Controls how fast the pulse is
 
+    private bool isFirstRun = true;
+
     public GameStateManager(GraphicsDevice graphicsDevice, ContentManager content, SoundManager soundManager)
     {
         _graphicsDevice = graphicsDevice;
@@ -137,12 +139,15 @@ public class GameStateManager
                     CurrentState = GameState.Paused;
                 break;
             case GameState.Paused:
+                // SoundManager.StopMusic();
                 if (kb.IsKeyDown(Keys.P) && lastKb.IsKeyUp(Keys.P))
                     CurrentState = GameState.Playing;
                 break;
-            case GameState.GameOver:
+            case GameState.GameOver: case GameState.Win: // por ahora, mismo comportamiento que cuando se pierde
+                SoundManager.StopMusic();
                 if (kb.IsKeyDown(Keys.Enter) && lastKb.IsKeyUp(Keys.Enter))
                 {
+                    isFirstRun = false;
                     CurrentState = GameState.Menu;
                     _selectedIndex = 0;
                     _lastSelectedIndex = -1;
@@ -224,14 +229,17 @@ public class GameStateManager
         {
             case 0: // Iniciar Scout
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Scout;
+                if(!isFirstRun) TGCGame.Instance.ResetGame(); 
                 CurrentState = GameState.Playing;
                 break;
             case 1: // Iniciar Medio
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Medium;
+                if(!isFirstRun) TGCGame.Instance.ResetGame(); 
                 CurrentState = GameState.Playing;
                 break;
             case 2: // Iniciar Pesado
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Heavy;
+                if(!isFirstRun) TGCGame.Instance.ResetGame(); 
                 CurrentState = GameState.Playing;
                 break;
             case 3: // Salir
@@ -271,7 +279,7 @@ public class GameStateManager
             DrawMenu(center);
             _spriteBatch.End();
         }
-        else if (CurrentState == GameState.Paused || CurrentState == GameState.GameOver)
+        else if (CurrentState == GameState.Paused || CurrentState == GameState.GameOver || CurrentState == GameState.Win)
         {
             //_graphicsDevice.Clear(Color.Black);
             _spriteBatch.Begin();
@@ -284,6 +292,11 @@ public class GameStateManager
             {
                 _spriteBatch.Draw(_whitePixel, new Rectangle(0, 0, vp.Width, vp.Height), Color.Black * 0.66f);
                 DrawCenteredText($"GAME OVER\n{extraInfo}\nPresiona ENTER para volver al menu", center);
+            }
+            else if (CurrentState == GameState.Win)
+            {
+                _spriteBatch.Draw(_whitePixel, new Rectangle(0, 0, vp.Width, vp.Height), Color.Black * 0.66f);
+                DrawCenteredText($"! GANASTE !\n{extraInfo}\nPresiona ENTER para volver al menu", center);
             }
 
             _spriteBatch.End();

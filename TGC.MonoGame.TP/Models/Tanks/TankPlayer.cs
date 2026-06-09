@@ -7,6 +7,7 @@ namespace TGC.MonoGame.TP.Models.Tanks;
 public class TankPlayer : TankBase
 {
     public float CurrentFuel { get; private set; } = GameConfig.Tank.MaxFuel;
+    public float initialHealth { get; }
 
     public TankPlayer(GameConfig.TankClass tankClass)
     {
@@ -37,6 +38,8 @@ public class TankPlayer : TankBase
                 AttackDamage = GameConfig.TankClasses.Medium.AttackDamage;
                 break;
         }
+
+        initialHealth = HealthPoints;
 
         // Propiedades comunes a todos los tanques del jugador
         ForwardDrag = GameConfig.Tank.ForwardDrag;

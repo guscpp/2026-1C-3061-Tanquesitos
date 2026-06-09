@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using TGC.MonoGame.TP.Managers;
 
 namespace TGC.MonoGame.TP.Models;
 
@@ -48,6 +49,13 @@ public class Hud
     private string _cachedCooldownText = "DISPARO: LISTO";
     private float _lastRemainingSeconds = -1f;
 
+    private string _cachedEnemiesCount = "KILL COUNT: 0 / " + GameConfig.Enemies.EnemiesCount.ToString();
+    private int _lastDisplayedEnemies = -1;
+    private int _playerHealth = 100;
+
+    private string _cachedPlayerHealth = "Health : 100 / 100 ";
+    private float _lastDisplayedHealth = -1.0f;
+
     // Propiedades expuestas que actualiza el juego en cada frame
     public Vector3 TankPosition { get; set; }
     public float TankFuel { get; set; }
@@ -90,6 +98,23 @@ public class Hud
             _fpsAccumulator = 0f;
             _fpsFrameCount = 0;
         }
+
+        // calcular la cantidad de kills
+        var kills = TGCGame.Instance.EnemiesKilled;
+        if (kills != _lastDisplayedEnemies)
+        {
+            _cachedEnemiesCount = "KILL COUNT: " + kills + " / " + GameConfig.Enemies.EnemiesCount.ToString();
+            _lastDisplayedEnemies = kills;
+        }
+
+        // calculo la vida del jugador
+        _playerHealth = getPlayerHealth();
+        if (_playerHealth != _lastDisplayedHealth)
+        {
+            _cachedPlayerHealth = $"HEALTH: {_playerHealth} / 100";
+            _lastDisplayedHealth = _playerHealth;            
+        }
+
     }
 
     public void Draw()
@@ -189,7 +214,23 @@ public class Hud
         // Dibujar relleno dinámico escalado según el cooldown
         _spriteBatch.Draw(_whitePixel, barFillRect, cooldownColor);
 
+        // === ENEMIGOS DERROTADOS ===
+        var killsPosition = new Vector2(cooldownPosition.X, barY + ProgressBarHeight + spacing);
+        _spriteBatch.DrawString(_font, _cachedEnemiesCount, killsPosition + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_font, _cachedEnemiesCount, killsPosition, Color.White);
+
+        // === VIDA RESTANTE ===
+        Color healthColor = _playerHealth > 50f ? Color.Lime : _playerHealth > 25f ? Color.Yellow : Color.Red;
+        _spriteBatch.DrawString(_font, _cachedPlayerHealth, drawPosition + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_font, _cachedPlayerHealth, drawPosition, healthColor);
+
         _spriteBatch.End();
+    }
+
+    private int getPlayerHealth()
+    {
+        var health = TGCGame.Instance._tank.initialHealth;
+        return (int)(TGCGame.Instance._tank.HealthPoints / health * 100);
     }
 
     public void Dispose()

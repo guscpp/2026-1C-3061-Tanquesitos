@@ -29,7 +29,7 @@ public abstract class TankEnemy : TankBase
     // Mantengo la firma original para no tocar TGCGame.cs
     public void UpdateEnemy(GameTime gameTime, Simulation simulation, Microsoft.Xna.Framework.Vector3 targetPos, Terrain terrain)
     {
-        if (IsDead) return;
+        if (IsDead) { return;}
 
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         _targetPosition = targetPos;
@@ -65,14 +65,14 @@ public abstract class TankEnemy : TankBase
 
         // 3. DISPARAR CONSTANTEMENTE CUANDO EL COOLDOWN LO PERMITA
         var numericsToTarget = toTarget.ToNumerics();
-        if (_currentShootCooldown <= 0f && dist > 15f &&
+        if (_currentShootCooldown <= 0f && dist > 5f &&
             (System.Numerics.Vector3.Dot(numericsToTarget, numericsToTarget) < attackRadiusSq)) // Distancia mínima para no dispararse a sí mismo
         {
             var dir = CannonForward;
             var spawnPos = Position + dir * 3f + Microsoft.Xna.Framework.Vector3.Up * 2f;
 
             // Agrega la bala a la lista global del juego
-            TGCGame.Instance.Cannonballs.Add(TGCGame.Instance.CreateCannonball(spawnPos, dir));
+            TGCGame.Instance.Cannonballs.Add(TGCGame.Instance.CreateCannonball(spawnPos, dir, AttackDamage));
             TGCGame.Instance.SoundManager.PlaySound3D("cannon_fire", spawnPos,
                 TGCGame.Instance.Camera.ListenerPosition, TGCGame.Instance.Camera.ListenerForward);
             _currentShootCooldown = ShootCooldown;
@@ -82,8 +82,8 @@ public abstract class TankEnemy : TankBase
     // Posicion inicial aleatoria (sin cambios)
     public Microsoft.Xna.Framework.Vector3 GetPosition(Terrain terrain, Random random)
     {
-        var min = -terrain.WidthUnits;
-        var max = terrain.WidthUnits;
+        var min = -terrain.WidthUnits - 20f;
+        var max = terrain.WidthUnits - 20f;
         var x = random.NextSingle() * (max - min) + min;
         var z = random.NextSingle() * (max - min) + min;
         return new Microsoft.Xna.Framework.Vector3(x, terrain.GetHeight(x, z) + GameConfig.Tank.SpawnZMargin, z);

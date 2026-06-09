@@ -88,6 +88,8 @@ public class TGCGame : Game
 
     // Variable para guardar la eleccion del jugador desde el menu
     public static GameConfig.TankClass SelectedPlayerTank;
+    // Variable para contabilizar las kills del jugador
+    public int EnemiesKilled = 0;
 
     public TGCGame()
     {
@@ -203,6 +205,11 @@ public class TGCGame : Game
         _gameStateManager.Update(kb, _lastKeyboardState);
         _lastKeyboardState = kb;
 
+        if (kb.IsKeyDown(Keys.P) && !_lastKeyboardState.IsKeyDown(Keys.P)) 
+        {
+            _gameStateManager.ForceState(_gameStateManager.CurrentState == GameState.Playing ? 
+                GameState.Paused : GameState.Playing);
+        }
         //El update del juego ocurre unicamente en estado Playing, sino se sale temprano
         if (_gameStateManager.CurrentState != GameState.Playing)
         {
@@ -242,7 +249,7 @@ public class TGCGame : Game
 
             // Posición desde donde sale la bala
             Vector3 spawnPosition = _tank.CannonMuzzlePosition;
-            Cannonball cannonball = CreateCannonball(spawnPosition, direction);
+            Cannonball cannonball = CreateCannonball(spawnPosition, direction, _tank.AttackDamage);
             _cannonballs.Add(cannonball);
             _currentShootCooldown = _shootCooldown;
 
@@ -270,13 +277,38 @@ public class TGCGame : Game
         _hud.Update(gameTime);
 
         if (_tank.IsDead) _gameStateManager.ForceState(GameState.GameOver);
+        if (EnemiesKilled == GameConfig.Enemies.EnemiesCount) _gameStateManager.ForceState(GameState.Win);
 
         base.Update(gameTime);
     }
 
-    public Cannonball CreateCannonball(Vector3 spawnPosition, Vector3 direction)
+    public void ResetGame()
     {
-        return new Cannonball(_cannonballModel, _effect, spawnPosition, direction, _simulation);
+        _cannonballs.Clear();
+        
+        _currentShootCooldown = 0f;
+        EnemiesKilled = 0;
+
+        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v4");
+        var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+        var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+
+        Vector3 spawnPos = Vector3.Zero;
+        float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);
+
+        _tank = new TankPlayer(SelectedPlayerTank);
+        _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
+        _tank.Load(tankModel, tankTexture, effect2, _simulation);
+        _tankHandle = _tank.TankHandler;
+
+        _enemiesManager.Reset(_simulation);
+
+        _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
+    }
+
+    public Cannonball CreateCannonball(Vector3 spawnPosition, Vector3 direction, float damage)
+    {
+        return new Cannonball(_cannonballModel, damage, _effect, spawnPosition, direction, _simulation);
     }
 
     protected override void Draw(GameTime gameTime)
