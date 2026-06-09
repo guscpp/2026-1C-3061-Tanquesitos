@@ -121,7 +121,7 @@ public class DinamicsManager
         foreach (var asset in _dynamicDecorations)
         {
             asset.Draw(view, projection);
-            asset.DrawCollisionChamber(gizmos, simulation);
+            //asset.DrawCollisionChamber(gizmos, simulation);
         }
     }
 
@@ -134,7 +134,7 @@ public class DinamicsManager
 
         var x = _random.NextSingle() * horizontalRange + minHorizontal;
         var z = _random.NextSingle() * horizontalRange + minHorizontal;
-        return new Vector3(x, _terrain.GetHeight(x, z)+0.2f, z);
+        return new Vector3(x, _terrain.GetHeight(x, z)+2, z);
     }
 
     //Me genera una nueva decoracion con la posicion que le paso

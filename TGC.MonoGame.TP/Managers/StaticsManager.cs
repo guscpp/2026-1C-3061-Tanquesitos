@@ -98,7 +98,7 @@ public class StaticsManager
         foreach (var asset in _decorationModels)
         {
             asset.Draw(view, projection);
-            asset.DrawCollisionChamber(gizmos, simulation);
+            //asset.DrawCollisionChamber(gizmos, simulation);
         }
     }
 

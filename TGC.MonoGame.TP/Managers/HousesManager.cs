@@ -75,7 +75,7 @@ public class HousesManager
         foreach (var house in _houses)
         {
             house.Draw(view, projection);
-            house.DrawCollisionChamber(gizmos, simulation);
+            //house.DrawCollisionChamber(gizmos, simulation);
         }
     }
 

@@ -85,7 +85,7 @@ public class EnemiesManager
         foreach(var tankEnemy in _enemies)
         {
             tankEnemy.Draw(view, projection);
-            tankEnemy.DrawCollisionChamber(gizmos, simulation, Color.Red);
+            //tankEnemy.DrawCollisionChamber(gizmos, simulation, Color.Red);
         }
     }
 

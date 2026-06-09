@@ -113,7 +113,7 @@ public class BarrelsManager
         foreach (var barrel in _fuelBarrels)
         {
             if (!barrel.IsCollected) barrel.Draw(view, projection);
-            barrel.DrawCollisionChamber(gizmos, simulation);
+            //barrel.DrawCollisionChamber(gizmos, simulation);
         }
     }
 
