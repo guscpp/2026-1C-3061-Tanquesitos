@@ -111,6 +111,16 @@ public class GameStateManager
         }
     }
 
+    public void HandleMenuState(KeyboardState kb, KeyboardState lastkb)
+    {
+        HandleMenuInput(kb, lastkb);
+        if (_selectedIndex != _lastSelectedIndex && _selectedIndex < 3)
+        {
+            UpdateMenuTankModel(_selectedIndex);
+            _lastSelectedIndex = _selectedIndex;
+        }
+    }
+
     public void Update(KeyboardState kb, KeyboardState lastKb)
     {
         HandleMusic();
@@ -123,13 +133,7 @@ public class GameStateManager
         //el menu maneja su propia logica, early return
         if (CurrentState == GameState.Menu)
         {
-            HandleMenuInput(kb, lastKb);
-
-            if (_selectedIndex != _lastSelectedIndex && _selectedIndex < 3)
-            {
-                UpdateMenuTankModel(_selectedIndex);
-                _lastSelectedIndex = _selectedIndex;
-            }
+            HandleMenuState(kb, lastKb);
             return;
         }
 

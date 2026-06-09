@@ -60,6 +60,12 @@ public class TGCGame : Game
     public TankPlayer _tank;
     private TankFollowCamera _camera;
     public TankFollowCamera Camera => _camera;
+    public string[] tankPaths =
+    {
+        "tanques/tank v3", // Scout
+        "tanques/tank v4", // Medium
+        "tanques/tank v3"  // Heavy
+    };
     //-----------TERRENO
     private Terrain _terrain;
     private Wall _wall;
@@ -136,7 +142,6 @@ public class TGCGame : Game
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
         //modelos
-        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v4");
         _cannonballModel = Content.Load<Model>(ContentFolder3D + "cannonball/cannonball");
 
         //AUXILIARES
@@ -177,8 +182,12 @@ public class TGCGame : Game
         _barrelsManager.LoadContent(Content, _simulation);
 
         //TANQUE
+        var kb = Keyboard.GetState();
+        _gameStateManager.HandleMenuState(kb, _lastKeyboardState);
+        _lastKeyboardState = kb;
         // Crear el tanque usando la eleccion del jugador
         _tank = new TankPlayer(SelectedPlayerTank);
+        var tankModel = Content.Load<Model>(ContentFolder3D + getTankPath());
         //Determino una posicion para el tanque
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);//Se spawnea unos metros por encima del terreno
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
@@ -198,6 +207,13 @@ public class TGCGame : Game
         _gizmos.LoadContent(GraphicsDevice, Content);
 
         base.LoadContent();
+    }
+
+    private String getTankPath()
+    {
+        return SelectedPlayerTank is GameConfig.TankClass.Scout ? tankPaths[0] :
+            SelectedPlayerTank is GameConfig.TankClass.Medium ? tankPaths[1] :
+            tankPaths[2];
     }
 
     protected override void Update(GameTime gameTime)

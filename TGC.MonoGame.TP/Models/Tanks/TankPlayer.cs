@@ -15,6 +15,7 @@ public class TankPlayer : TankBase
         {
             case GameConfig.TankClass.Scout:
                 HealthPoints = GameConfig.TankClasses.Scout.PlayerHealth;
+                initialHealth = HealthPoints;
                 MaxSpeed = GameConfig.TankClasses.Scout.MaxSpeed;
                 MotorForce = GameConfig.TankClasses.Scout.MotorForce;
                 TurnSpeed = GameConfig.TankClasses.Scout.TurnSpeed;
@@ -23,6 +24,7 @@ public class TankPlayer : TankBase
 
             case GameConfig.TankClass.Heavy:
                 HealthPoints = GameConfig.TankClasses.Heavy.PlayerHealth;
+                initialHealth = HealthPoints;
                 MaxSpeed = GameConfig.TankClasses.Heavy.MaxSpeed;
                 MotorForce = GameConfig.TankClasses.Heavy.MotorForce;
                 TurnSpeed = GameConfig.TankClasses.Heavy.TurnSpeed;
@@ -32,14 +34,13 @@ public class TankPlayer : TankBase
             case GameConfig.TankClass.Medium:
             default:
                 HealthPoints = GameConfig.TankClasses.Medium.PlayerHealth;
+                initialHealth = HealthPoints;
                 MaxSpeed = GameConfig.TankClasses.Medium.MaxSpeed;
                 MotorForce = GameConfig.TankClasses.Medium.MotorForce;
                 TurnSpeed = GameConfig.TankClasses.Medium.TurnSpeed;
                 AttackDamage = GameConfig.TankClasses.Medium.AttackDamage;
                 break;
         }
-
-        initialHealth = HealthPoints;
 
         // Propiedades comunes a todos los tanques del jugador
         ForwardDrag = GameConfig.Tank.ForwardDrag;
