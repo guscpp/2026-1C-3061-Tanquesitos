@@ -13,17 +13,19 @@ public static class AimAssist
 
     private static List<AimAssistSphere> _visualSpheres = new();
 
-    public static void CalculateTrajectory(BepuVector3 startPosition, BepuVector3 initialVelocity, BepuVector3 gravity, Simulation simulation, BodyHandle tankHandle)
+    public static void UpdateTrajectory(BepuVector3 startPosition, BepuVector3 initialVelocity, BepuVector3 gravity, Simulation simulation, BodyHandle tankHandle)
     {
         RayHitHandler rayHandler = new(tankHandle);
-        _points.Clear();  // Limpiamos la lista para que no se mezclen las trayectorias de frames diferentes
+        // Limpiamos las listas para que no se mezclen trayectorias de frames diferentes
+        _points.Clear();
+        _visualSpheres.Clear();
         
         BepuVector3 currentPoint = startPosition;
-        _points.Add(currentPoint);
+        _points.Add(currentPoint.ToXna());
 
         for (int i = 1; !rayHandler.Hit; i++)
         {
-            float time = i * 0.05f;    // Multiplicamos por un "time step" (a menor valor, mas suave es la curva)
+            float time = i * 0.05f;  // Multiplicamos por un "time step" (a menor valor, mas suave es la curva)
 
             BepuVector3 nextPoint = startPosition + initialVelocity * time + gravity * (0.5f * time * time);
             BepuVector3 rayDirection = nextPoint - currentPoint;
@@ -39,17 +41,19 @@ public static class AimAssist
                 _points.Add(nextPoint.ToXna());
                 currentPoint = nextPoint;  
             }
+
+            AimAssistSphere sphere = new(_points[_points.Count - 1]);
+            _visualSpheres.Add(sphere);
         }
     }
 
     public static void DrawTrajectory(Matrix view, Matrix projection)
     {
-        _visualSpheres.Clear();  // Borramos las esferas correspondientes a la trayectoria anterior
+        // Si el juego está iniciando y no hay datos estables, salimos temprano y evitamos corromper las matrices del shader.
+        if (_points.Count < 2 || _visualSpheres.Count == 0) return;
 
-        for (int i = 1; i < _points.Count; i++)
+        foreach (var sphere in _visualSpheres)
         {
-            AimAssistSphere sphere = new(_points[i]);
-            _visualSpheres.Add(sphere);
             sphere.Draw(view, projection);
         }
     }

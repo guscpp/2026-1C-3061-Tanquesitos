@@ -270,7 +270,7 @@ public class TGCGame : Game
         barrelDirection.Normalize();
 
         // TO DO: Modificar datos hardcodeados
-        AimAssist.CalculateTrajectory(_tank.CannonMuzzlePosition.ToNumerics(), barrelDirection.ToNumerics() * 25f, new System.Numerics.Vector3(0, -9.8f, 0), _simulation, _tank.TankHandler);
+        AimAssist.UpdateTrajectory(_tank.CannonMuzzlePosition.ToNumerics(), barrelDirection.ToNumerics() * 25f, new System.Numerics.Vector3(0, -9.8f, 0), _simulation, _tank.TankHandler);
         
         if (currentMouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released && _currentShootCooldown <= 0f)
         {
