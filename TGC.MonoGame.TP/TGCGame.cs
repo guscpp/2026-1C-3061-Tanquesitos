@@ -15,6 +15,7 @@ using TGC.MonoGame.Samples.Physics.Bepu;
 using TGC.MonoGame.TP.Cameras;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models;
+using TGC.MonoGame.TP.Models.AimAssist;
 using TGC.MonoGame.TP.Models.Decorations;
 using TGC.MonoGame.TP.Models.Tanks;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
@@ -141,6 +142,8 @@ public class TGCGame : Game
         //modelos
         var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v3");
         _cannonballModel = Content.Load<Model>(ContentFolder3D + "cannonball/cannonball");
+        // TO DO: Modificar nombre del archivo
+        var aimAssistSphere = Content.Load<Model>(ContentFolder3D + "cannonball/cannonball");
 
         //AUXILIARES
         Vector3 spawnPos = new Vector3(0, 0, 0);
@@ -214,6 +217,8 @@ public class TGCGame : Game
         //fisicas
         _tankHandle = _tank.TankHandler;
 
+        AimAssistSphere.LoadContent(aimAssistSphere, _effect);
+
         //HUD
         _hud = new Hud();
         _hud.LoadContent(Content, GraphicsDevice);
@@ -265,9 +270,7 @@ public class TGCGame : Game
         barrelDirection.Normalize();
 
         // TO DO: Modificar datos hardcodeados
-        var trajectory = AimAssist.CalculateTrajectory(_tank.CannonMuzzlePosition.ToNumerics(), barrelDirection.ToNumerics() * 25f, new System.Numerics.Vector3(0, -9.8f, 0), _simulation, _tank.TankHandler);
-
-        _gizmos.DrawPolyLine(trajectory.ToArray(), Color.Red);
+        AimAssist.CalculateTrajectory(_tank.CannonMuzzlePosition.ToNumerics(), barrelDirection.ToNumerics() * 25f, new System.Numerics.Vector3(0, -9.8f, 0), _simulation, _tank.TankHandler);
         
         if (currentMouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released && _currentShootCooldown <= 0f)
         {
@@ -326,6 +329,7 @@ public class TGCGame : Game
             {
                 cannonball.Draw(_camera.View, _camera.Projection);
             }
+            AimAssist.DrawTrajectory(_camera.View, _camera.Projection);
             _assets.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
             _hud.Draw();
