@@ -84,14 +84,32 @@ public static class GameConfig
         public const float SpawnZMargin = 7f;   // metros, el tanque spawnea esta altura por encima del terreno
         public const float MaxFuel = 100f;              // litros
         public const float FuelConsumptionRate = 1f;    // litros
-        public const float Cooldown = 0.5f;
+        public const float Cooldown = 0.5f;             // segundos
+        public const float AngularVelocityClampX = 0.5f;    // radianes/segundo
+        public const float AngularVelocityClampZ = 0.3f;    // radianes/segundo
+        public const float AngularDampingXZ = 0.88f;        // adimensional
+        public const float AngularDampingY = 0.98f;         // adimensional
+
+        public const float CannonMuzzleOffsetY = 1.5f;  // metros
+        public const float CannonMuzzleOffsetZ = 2.0f;  // metros
+        public const float MinCannonPitch = -20f;  // grados
+        public const float MaxCannonPitch = 10f;   // grados
+
+        public static class Stabilizer
+        {
+            public const float Width = 2.2f;    // metros
+            public const float Height = 0.3f;   // metros
+            public const float Length = 2.2f;   // metros
+            public const float Mass = 6000f;    // kg
+            public const float YOffset = -0.9f; // metros
+        }
 
         //Bepu
         public const float PhysicsChassisWidth = 2f;    // metros
         public const float PhysicsChassisLength = 2f;   // metros
         public const float PhysicsChassisHeight = 1.2f; // metros
         public const float PhysicsTurretWidth = 1.4f;   // metros
-        public const float PhysicsTurretLength = 2f;    // metros
+        public const float PhysicsTurretLength = 1.4f;  // metros
         public const float PhysicsTurretHeight = 1f;    // metros
         public const float PhysicsTurretOffsetY = PhysicsChassisHeight;     // justo encima del chasis
         public const float ForwardDrag = 5000f;         // Coeficiente de arrastre (para velocidad terminal = MotorForce / Drag)
@@ -104,14 +122,28 @@ public static class GameConfig
     public static class Enemies
     {
         public const int EnemiesCount = 10;
-        public const float AttackRadius = 50f;
-        public const float Cooldown = 1.0f; // Cooldown base para IA
+        public const float AttackRadius = 50f;      // metros
+        public const float Cooldown = 1.0f;         // segundos
+
+        public const float AttackStopDistance = 8f;         // metros
+        public const float AttackFireDistance = 5f;         // metros
+        public const float CannonSpawnOffsetForward = 3f;   // metros
+        public const float CannonSpawnOffsetUp = 2f;        // metros
+        public const float SpawnMapMargin = 20f;            // metros
+    }
+
+    public static class CannonBall
+    {
+        public const float Radius = 0.2f;           // metros
+        public const float LifetimeSeconds = 5f;    // segundos
+        public const float InitialVelocity = 25f;   // metros/segundo
+        public const float VisualScale = 0.010f;    // adimensional
     }
 
     // TERRENO
     public static class Terrain
     {
-        public const float CellSizeMeters = 1f;   // 1 píxel del heightmap = 1 metro
+        public const float CellSizeMeters = 1f;   // 1 pixel del heightmap = 1 metro
         public const float MaxHeightMeters = 35f; // relieve maximo
         public const float PhysicsMargin = 0.2f;  // margen de seguridad para Bepu
         public const int PhysicsSubsampleStep = 4;// cuanto dividir la resolucion del heightmap para el mesh de Bepu , (1, 2, 4, 8, ...)

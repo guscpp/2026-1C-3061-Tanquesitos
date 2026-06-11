@@ -25,9 +25,9 @@ public class Cannonball
         }
     }
 
-    private float _radius = 0.3f;
+    private float _radius = GameConfig.CannonBall.Radius;
 
-    private float _lifeTime = 5f;
+    private float _lifeTime = GameConfig.CannonBall.LifetimeSeconds;
 
     private float _currentLifeTime = 0f;
 
@@ -71,12 +71,12 @@ public class Cannonball
 
         _bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(new BepuVector3(position.X, position.Y, position.Z), inertia, shapeIndex, 0.01f));
 
-        float shootForce = 25f;
+        float initialVelocity = GameConfig.CannonBall.InitialVelocity;
 
-        simulation.Bodies[_bodyHandle].Velocity.Linear = new BepuVector3(direction.X * shootForce, direction.Y * shootForce, direction.Z * shootForce);
+        simulation.Bodies[_bodyHandle].Velocity.Linear = new BepuVector3(direction.X * initialVelocity, direction.Y * initialVelocity, direction.Z * initialVelocity);
 
         // Matriz mundo
-        _world = Matrix.CreateScale(0.015f) * Matrix.CreateTranslation(position);
+        _world = Matrix.CreateScale(GameConfig.CannonBall.VisualScale) * Matrix.CreateTranslation(position);
     }
 
     public void Update(GameTime gameTime, Simulation simulation)  
@@ -100,7 +100,7 @@ public class Cannonball
 
         var position = body.Pose.Position;
 
-        _world = Matrix.CreateScale(0.015f) * Matrix.CreateTranslation(position.X, position.Y, position.Z);
+        _world = Matrix.CreateScale(GameConfig.CannonBall.VisualScale) * Matrix.CreateTranslation(position.X, position.Y, position.Z);
     }
 
     public void Draw(Matrix view, Matrix projection)

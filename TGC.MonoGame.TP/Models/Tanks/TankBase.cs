@@ -30,8 +30,8 @@ public abstract class TankBase
     protected System.Numerics.Quaternion _physicsOrientation = System.Numerics.Quaternion.Identity;
     protected float _turretRotation = 0f;
     protected float _cannonRotation = 0f;
-    protected readonly float _minCannonPitch = MathHelper.ToRadians(-20f);
-    protected readonly float _maxCannonPitch = MathHelper.ToRadians(10f);
+    protected readonly float _minCannonPitch = MathHelper.ToRadians(GameConfig.Tank.MinCannonPitch);
+    protected readonly float _maxCannonPitch = MathHelper.ToRadians(GameConfig.Tank.MaxCannonPitch);
 
     public float TurretRotationWorld => RotationY + _turretRotation;
     public float CannonRotation => _cannonRotation;
@@ -55,7 +55,8 @@ public abstract class TankBase
 
     public Matrix CannonWorld => Matrix.CreateTranslation(0f, 0f, -1.5f) * Matrix.CreateRotationX(_cannonRotation) * Matrix.CreateTranslation(0f, 0f, 1.5f) * TurretWorld;
 
-    public Vector3 CannonMuzzlePosition => Vector3.Transform(new Vector3(0f, 1.5f, 2f), CannonWorld);
+    public Vector3 CannonMuzzlePosition => Vector3.Transform(
+        new Vector3(0f, GameConfig.Tank.CannonMuzzleOffsetY, GameConfig.Tank.CannonMuzzleOffsetZ), CannonWorld);
 
     public void Load(Model model, Texture2D texture, Effect effect, Simulation simulation)
     {
@@ -73,7 +74,10 @@ public abstract class TankBase
 
        // Reducimos de 2.6f a 2.2f de ancho y largo
       //veooooooooooooooooooooooooooooooooooooo si queda bien
-        compoundBuilder.Add(new Box(2.2f, 0.3f, 2.2f), new RigidPose(new System.Numerics.Vector3(0, -0.9f, 0), System.Numerics.Quaternion.Identity), 6000f);
+        compoundBuilder.Add(
+            new Box(GameConfig.Tank.Stabilizer.Width, GameConfig.Tank.Stabilizer.Height, GameConfig.Tank.Stabilizer.Length), 
+            new RigidPose(new System.Numerics.Vector3(0, GameConfig.Tank.Stabilizer.YOffset, 0), System.Numerics.Quaternion.Identity), 
+            GameConfig.Tank.Stabilizer.Mass);
         compoundBuilder.Add(chassisBox, new RigidPose(new System.Numerics.Vector3(0, -0.4f, 0), System.Numerics.Quaternion.Identity), GameConfig.Tank.ChassisMass);
         compoundBuilder.Add(turretBox, new RigidPose(new System.Numerics.Vector3(0, GameConfig.Tank.PhysicsTurretOffsetY, 0), System.Numerics.Quaternion.Identity), GameConfig.Tank.TurretMass);
 
@@ -137,7 +141,10 @@ public abstract class TankBase
         var chassisBox = new Box(GameConfig.Tank.PhysicsChassisWidth, GameConfig.Tank.PhysicsChassisHeight, GameConfig.Tank.PhysicsChassisLength);
         var turretBox = new Box(GameConfig.Tank.PhysicsTurretWidth, GameConfig.Tank.PhysicsTurretHeight, GameConfig.Tank.PhysicsTurretLength);
 
-        compoundBuilder.Add(new Box(2.2f, 0.3f, 2.2f), new RigidPose(new System.Numerics.Vector3(0, -0.9f, 0), System.Numerics.Quaternion.Identity), 6000f);
+        compoundBuilder.Add(
+            new Box(GameConfig.Tank.Stabilizer.Width, GameConfig.Tank.Stabilizer.Height, GameConfig.Tank.Stabilizer.Length), 
+            new RigidPose(new System.Numerics.Vector3(0, -0.9f, 0), System.Numerics.Quaternion.Identity),
+            GameConfig.Tank.Stabilizer.Mass);
         compoundBuilder.Add(chassisBox, new RigidPose(new System.Numerics.Vector3(0, -0.4f, 0), System.Numerics.Quaternion.Identity), GameConfig.Tank.ChassisMass);
         compoundBuilder.Add(turretBox, new RigidPose(new System.Numerics.Vector3(0, GameConfig.Tank.PhysicsTurretOffsetY, 0), System.Numerics.Quaternion.Identity), GameConfig.Tank.TurretMass);
 
@@ -211,11 +218,11 @@ public abstract class TankBase
         angVel.Y = turnInput * TurnSpeed;
 
         // Amortiguador para evitar que el tanque quede girando como loco en X y Z tras un choque
-        angVel.X = MathHelper.Clamp(angVel.X, -0.5f, 0.5f);
-        angVel.Z = MathHelper.Clamp(angVel.Z, -0.3f, 0.3f);
-        angVel.X *= 0.88f;
-        angVel.Y *= 0.98f;
-        angVel.Z *= 0.88f;
+        angVel.X = MathHelper.Clamp(angVel.X, -GameConfig.Tank.AngularVelocityClampX, GameConfig.Tank.AngularVelocityClampX);
+        angVel.Z = MathHelper.Clamp(angVel.Z, -GameConfig.Tank.AngularVelocityClampZ, GameConfig.Tank.AngularVelocityClampZ);
+        angVel.X *= GameConfig.Tank.AngularDampingXZ;
+        angVel.Y *= GameConfig.Tank.AngularDampingY;
+        angVel.Z *= GameConfig.Tank.AngularDampingXZ;
 
         body.Awake = true;
 

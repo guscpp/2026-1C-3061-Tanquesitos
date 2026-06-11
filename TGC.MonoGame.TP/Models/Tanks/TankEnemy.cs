@@ -105,10 +105,10 @@ public abstract class TankEnemy : TankBase
                 );
 
                 turnInput = Math.Sign(angleToTarget) * Math.Min(MathF.Abs(angleToTarget), 1f);
-                forwardInput = (distanceToPlayer > 8f) ? 1f : 0f; // Detenerse si esta muy
+                forwardInput = (distanceToPlayer > GameConfig.Enemies.AttackStopDistance) ? 1f : 0f; // Detenerse si esta muy lejos
 
                 // Disparar
-                if (_currentShootCooldown <= 0f && distanceToPlayer > 5f)
+                if (_currentShootCooldown <= 0f && distanceToPlayer > GameConfig.Enemies.AttackFireDistance)
                 {
                     FireCannon(simulation, currentPos);
                     _currentShootCooldown = ShootCooldown;
@@ -117,10 +117,10 @@ public abstract class TankEnemy : TankBase
 
             case EnemyState.Flee:
                 //Apuntar en direccion opuesta y acelerar
-                float fleeAngle = MathF.Atan2(toTarget.X, toTarget.Z); // Nota el signo invertido respecto al ataque
-                _turretRotation = fleeAngle - RotationY; // Opcional: mirar hacia atrás mientras huye
+                float fleeAngle = MathF.Atan2(toTarget.X, toTarget.Z); // Notar el signo invertido respecto al ataque
+                _turretRotation = fleeAngle - RotationY; // Mirar hacia atras mientras huye
 
-                // Calcular ángulo para darse vuelta y huir
+                // Calcular para darse vuelta y huir
                 var fleeDir = -toTarget;
                 fleeDir.Normalize();
                 float angleToFlee = MathF.Atan2(
@@ -129,7 +129,7 @@ public abstract class TankEnemy : TankBase
                 );
 
                 turnInput = Math.Sign(angleToFlee) * Math.Min(MathF.Abs(angleToFlee), 1f);
-                forwardInput = 1f; // Huir a máxima velocidad
+                forwardInput = 1f;
                 break;
 
             case EnemyState.Dead:
@@ -146,18 +146,19 @@ public abstract class TankEnemy : TankBase
     private void FireCannon(Simulation simulation, Microsoft.Xna.Framework.Vector3 currentPos)
     {
         var dir = CannonForward;
-        var spawnPos = currentPos + dir * 3f + Microsoft.Xna.Framework.Vector3.Up * 2f;
+        var spawnPos = currentPos + dir * GameConfig.Enemies.CannonSpawnOffsetForward + 
+            Microsoft.Xna.Framework.Vector3.Up * GameConfig.Enemies.CannonSpawnOffsetUp;
 
         TGCGame.Instance.Cannonballs.Add(TGCGame.Instance.CreateCannonball(spawnPos, dir, AttackDamage));
         TGCGame.Instance.SoundManager.PlaySound3D("enemy_cannon_fire", spawnPos,
             TGCGame.Instance.Camera.ListenerPosition, TGCGame.Instance.Camera.ListenerForward);
     }
 
-    // Posicion inicial aleatoria (sin cambios)
+    // Posicion inicial aleatoria para spawnear(sin cambios)
     public Microsoft.Xna.Framework.Vector3 GetPosition(Terrain terrain, Random random)
     {
-        var min = -terrain.WidthUnits - 20f;
-        var max = terrain.WidthUnits - 20f;
+        var min = -terrain.WidthUnits - GameConfig.Enemies.SpawnMapMargin;
+        var max = terrain.WidthUnits - GameConfig.Enemies.SpawnMapMargin;
         var x = random.NextSingle() * (max - min) + min;
         var z = random.NextSingle() * (max - min) + min;
         return new Microsoft.Xna.Framework.Vector3(x, terrain.GetHeight(x, z) + GameConfig.Tank.SpawnZMargin, z);

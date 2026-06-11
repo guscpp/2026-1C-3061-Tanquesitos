@@ -13,13 +13,13 @@ namespace TGC.MonoGame.TP.Models.Tanks
             using var builder = new CompoundBuilder(sim.BufferPool, sim.Shapes, 3);
             var chassis = new Box(GameConfig.Tank.PhysicsChassisWidth, GameConfig.Tank.PhysicsChassisHeight, GameConfig.Tank.PhysicsChassisLength);
             var turret = new Box(GameConfig.Tank.PhysicsTurretWidth, GameConfig.Tank.PhysicsTurretHeight, GameConfig.Tank.PhysicsTurretLength);
-            var stabilizer = new Box(2.6f, 0.3f, 2.6f);
+            var stabilizer = new Box(GameConfig.Tank.Stabilizer.Width, GameConfig.Tank.Stabilizer.Height, GameConfig.Tank.Stabilizer.Length);
 
-            var stabilizerPose = new RigidPose(new BEVector3(0, -0.9f, 0), BEQuaternion.Identity);
+            var stabilizerPose = new RigidPose(new BEVector3(0, GameConfig.Tank.Stabilizer.YOffset, 0), BEQuaternion.Identity);
             var chassisPose = new RigidPose(new BEVector3(0, -0.4f, 0), BEQuaternion.Identity);
             var turretPose = new RigidPose(new BEVector3(0, GameConfig.Tank.PhysicsTurretOffsetY, 0), BEQuaternion.Identity);
 
-            builder.Add(stabilizer, stabilizerPose, 6000f);
+            builder.Add(stabilizer, stabilizerPose, GameConfig.Tank.Stabilizer.Mass);
             builder.Add(chassis, chassisPose, GameConfig.Tank.ChassisMass);
             builder.Add(turret, turretPose, GameConfig.Tank.TurretMass);
 
