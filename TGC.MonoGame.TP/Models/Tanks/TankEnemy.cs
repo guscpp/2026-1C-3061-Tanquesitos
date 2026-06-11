@@ -8,15 +8,25 @@ namespace TGC.MonoGame.TP.Models.Tanks;
 
 public abstract class TankEnemy : TankBase
 {
+    //Estados de los enemigos
+    public enum EnemyState { Patrol, Attack, Flee, Dead }
+    protected EnemyState currentState = EnemyState.Patrol;
+
+    private float _patrolTimer = 0f;
+    private float _patrolDirection = 1f;
+
     protected Microsoft.Xna.Framework.Vector3 _targetPosition;
     private float attackRadius = GameConfig.Enemies.AttackRadius;
     private float attackRadiusSq => attackRadius * attackRadius;
+
+    protected float MaxHealthPoints { get; private set; }
     protected float _currentShootCooldown = 0f;
     public float ShootCooldown { get; protected set; }
 
     protected TankEnemy(float hp, float speed, float force, float turnSpeed, float damage, float cooldown)
     {
         HealthPoints = hp;
+        MaxHealthPoints = hp;
         MaxSpeed = speed;
         MotorForce = force;
         TurnSpeed = turnSpeed;
@@ -38,45 +48,109 @@ public abstract class TankEnemy : TankBase
         var body = simulation.Bodies.GetBodyReference(TankHandler);
         var currentPos = new Microsoft.Xna.Framework.Vector3(body.Pose.Position.X, body.Pose.Position.Y, body.Pose.Position.Z);
         var toTarget = _targetPosition - currentPos;
-        float dist = toTarget.Length();
+        float distanceToPlayer = toTarget.Length();
 
-        // 1. APUNTAR TORRETA Y CAÑÓN DIRECTAMENTE AL JUGADOR
-        float worldAngleToPlayer = MathF.Atan2(-toTarget.X, -toTarget.Z);
-        _turretRotation = worldAngleToPlayer - RotationY;
-        _cannonRotation = MathHelper.Clamp(-toTarget.Y * 0.015f, _minCannonPitch, _maxCannonPitch);
+        //Transiciones de estados
+        if (HealthPoints <= 0)
+        {
+            currentState = EnemyState.Dead;
+            IsDead = true;
+            return;
+        }
+        else if (HealthPoints < MaxHealthPoints * 0.25f)
+        {
+            currentState = EnemyState.Flee;
+        }
+        else if (distanceToPlayer <= attackRadius)
+        {
+            currentState = EnemyState.Attack;
+        }
+        else
+        {
+            currentState = EnemyState.Patrol;
+        }
 
-        // 2. MOVER EN LÍNEA RECTA HACIA EL JUGADOR
+        //Para orientarse segun el jugador
         var orientation = body.Pose.Orientation;
         var forward = System.Numerics.Vector3.Transform(new System.Numerics.Vector3(0, 0, -1), orientation);
         var forwardXna = new Microsoft.Xna.Framework.Vector3(forward.X, forward.Y, forward.Z);
 
-        // Calcular ángulo entre la dirección actual del chasis y el jugador
-        float angleToTarget = MathF.Atan2(
-            Microsoft.Xna.Framework.Vector3.Cross(forwardXna, toTarget).Y,
-            Microsoft.Xna.Framework.Vector3.Dot(forwardXna, toTarget)
-        );
+        //Ejecutar comportamiento segun el estado
+        float forwardInput = 0f;
+        float turnInput = 0f;
 
-        // Gira hacia el objetivo (max 1.0 para no girar a velocidad infinita)
-        float turnInput = Math.Sign(angleToTarget) * Math.Min(MathF.Abs(angleToTarget), 1f);
-        // Avanza constante si no está pegado al jugador
-        float forwardInput = (dist > 5f) ? 1f : 0f;
-
-        ApplyPhysics(simulation, dt, forwardInput, turnInput);
-
-        // 3. DISPARAR CONSTANTEMENTE CUANDO EL COOLDOWN LO PERMITA
-        var numericsToTarget = toTarget.ToNumerics();
-        if (_currentShootCooldown <= 0f && dist > 5f &&
-            (System.Numerics.Vector3.Dot(numericsToTarget, numericsToTarget) < attackRadiusSq)) // Distancia mínima para no dispararse a sí mismo
+        switch (currentState)
         {
-            var dir = CannonForward;
-            var spawnPos = Position + dir * 3f + Microsoft.Xna.Framework.Vector3.Up * 2f;
+            case EnemyState.Patrol:
+                //Avanzar despacio y girar aleatoriamente cada cierto tiempo
+                _patrolTimer -= dt;
+                if (_patrolTimer <= 0)
+                {
+                    _patrolDirection = new Random().Next(-1, 2); // -1, 0, o 1
+                    _patrolTimer = new Random().NextSingle() * 3f + 1f; // Cambiar entre 1 y 4 segundos
+                }
+                forwardInput = 0.7f; // Velocidad reducida (30%)
+                turnInput = _patrolDirection * 0.5f; // Giro suave
+                break;
 
-            // Agrega la bala a la lista global del juego
-            TGCGame.Instance.Cannonballs.Add(TGCGame.Instance.CreateCannonball(spawnPos, dir, AttackDamage));
-            TGCGame.Instance.SoundManager.PlaySound3D("cannon_fire", spawnPos,
-                TGCGame.Instance.Camera.ListenerPosition, TGCGame.Instance.Camera.ListenerForward);
-            _currentShootCooldown = ShootCooldown;
+            case EnemyState.Attack:
+                // Apuntarle al jugador
+                float worldAngleToPlayer = MathF.Atan2(-toTarget.X, -toTarget.Z);
+                _turretRotation = worldAngleToPlayer - RotationY;
+                _cannonRotation = MathHelper.Clamp(-toTarget.Y * 0.015f, _minCannonPitch, _maxCannonPitch);
+
+                float angleToTarget = MathF.Atan2(
+                    Microsoft.Xna.Framework.Vector3.Cross(forwardXna, toTarget).Y,
+                    Microsoft.Xna.Framework.Vector3.Dot(forwardXna, toTarget)
+                );
+
+                turnInput = Math.Sign(angleToTarget) * Math.Min(MathF.Abs(angleToTarget), 1f);
+                forwardInput = (distanceToPlayer > 8f) ? 1f : 0f; // Detenerse si esta muy
+
+                // Disparar
+                if (_currentShootCooldown <= 0f && distanceToPlayer > 5f)
+                {
+                    FireCannon(simulation, currentPos);
+                    _currentShootCooldown = ShootCooldown;
+                }
+                break;
+
+            case EnemyState.Flee:
+                //Apuntar en direccion opuesta y acelerar
+                float fleeAngle = MathF.Atan2(toTarget.X, toTarget.Z); // Nota el signo invertido respecto al ataque
+                _turretRotation = fleeAngle - RotationY; // Opcional: mirar hacia atrás mientras huye
+
+                // Calcular ángulo para darse vuelta y huir
+                var fleeDir = -toTarget;
+                fleeDir.Normalize();
+                float angleToFlee = MathF.Atan2(
+                    Microsoft.Xna.Framework.Vector3.Cross(forwardXna, fleeDir).Y,
+                    Microsoft.Xna.Framework.Vector3.Dot(forwardXna, fleeDir)
+                );
+
+                turnInput = Math.Sign(angleToFlee) * Math.Min(MathF.Abs(angleToFlee), 1f);
+                forwardInput = 1f; // Huir a máxima velocidad
+                break;
+
+            case EnemyState.Dead:
+                forwardInput = 0f;
+                turnInput = 0f;
+                break;
         }
+
+        //Aplicar fisica
+        ApplyPhysics(simulation, dt, forwardInput, turnInput);
+    }
+
+    //Metodo auxiliar
+    private void FireCannon(Simulation simulation, Microsoft.Xna.Framework.Vector3 currentPos)
+    {
+        var dir = CannonForward;
+        var spawnPos = currentPos + dir * 3f + Microsoft.Xna.Framework.Vector3.Up * 2f;
+
+        TGCGame.Instance.Cannonballs.Add(TGCGame.Instance.CreateCannonball(spawnPos, dir, AttackDamage));
+        TGCGame.Instance.SoundManager.PlaySound3D("enemy_cannon_fire", spawnPos,
+            TGCGame.Instance.Camera.ListenerPosition, TGCGame.Instance.Camera.ListenerForward);
     }
 
     // Posicion inicial aleatoria (sin cambios)
