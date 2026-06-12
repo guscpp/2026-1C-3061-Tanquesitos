@@ -143,10 +143,11 @@ public static class GameConfig
     // TERRENO
     public static class Terrain
     {
-        public const float CellSizeMeters = 1f;   // 1 pixel del heightmap = 1 metro
-        public const float MaxHeightMeters = 35f; // relieve maximo
-        public const float PhysicsMargin = 0.2f;  // margen de seguridad para Bepu
-        public const int PhysicsSubsampleStep = 4;// cuanto dividir la resolucion del heightmap para el mesh de Bepu , (1, 2, 4, 8, ...)
+        public const float CellSizeMeters = 1f;     // 1 pixel del heightmap = 1 metro
+        public const float MaxHeightMeters = 35f;   // relieve maximo
+        public const float PhysicsMargin = 0.2f;    // margen de seguridad para Bepu
+        public const int PhysicsSubsampleStep = 16; // cuanto dividir la resolucion del heightmap para el mesh de Bepu , (1, 2, 4, 8,
+                                                    // PhysicsSubsampleStep = 1 --> 512x512 quads (~500.000 _triangulos_)
     }
 
     // CAMARA

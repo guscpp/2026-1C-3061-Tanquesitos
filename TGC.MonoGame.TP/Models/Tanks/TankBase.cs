@@ -102,19 +102,22 @@ public abstract class TankBase
     {
         if (Model == null || IsDead) return;
 
+        _effect.Parameters["View"].SetValue(view);
+        _effect.Parameters["Projection"].SetValue(projection);
+        _effect.Parameters["ModelTexture"].SetValue(_texture);
+
         foreach (var mesh in Model.Meshes)
         {
             var finalWorld = WorldMatrix;
-            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola")) finalWorld = TurretWorld;
-            else if (mesh.Name.Contains("Cañon") || mesh.Name.Contains("Anillo")) finalWorld = CannonWorld;
 
-            foreach (var eff in mesh.Effects)
-            {
-                eff.Parameters["World"].SetValue(finalWorld);
-                eff.Parameters["View"].SetValue(view);
-                eff.Parameters["Projection"].SetValue(projection);
-                eff.Parameters["ModelTexture"].SetValue(_texture);
-            }
+            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola")) 
+                finalWorld = TurretWorld;
+
+            else if (mesh.Name.Contains("Cañon") || mesh.Name.Contains("Anillo"))
+                finalWorld = CannonWorld;
+
+            _effect.Parameters["World"].SetValue(finalWorld);
+
             mesh.Draw();
         }
     }

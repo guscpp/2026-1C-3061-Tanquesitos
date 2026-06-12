@@ -74,9 +74,29 @@ public class EnemiesManager
     }
 
     public void Update(GameTime gameTime, Vector3 position) {
-        foreach (var tankEnemy in _enemies)
+        //Transitar de atras para adelante para poder borrar elementos sin romper los indices
+        for (int i = _enemies.Count - 1; i >= 0; i--)
         {
+            var tankEnemy = _enemies[i];
+
+            if (tankEnemy.IsDead)
+            {
+                //Eliminar el cuerpo fisico
+                _simulation.Bodies.Remove(tankEnemy.TankHandler);
+
+                //Remover el handle de la lista auxiliar para evitar leaks
+                _enemiesHandles.Remove(tankEnemy.TankHandler);
+
+                //Remover enemigo de la lista principal
+                _enemies.RemoveAt(i);
+
+                //Salteamos UpdateEnemy
+                continue;
+            }
+
             tankEnemy.UpdateEnemy(gameTime, _simulation, position.ToNumerics(), _terrain);
+            //tankEnemy.Applyphysics(_simulation, (float)gameTime.ElapsedGameTime.TotalSeconds, 0f, 0f);
+
         }
      }
 

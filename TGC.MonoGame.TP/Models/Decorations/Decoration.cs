@@ -73,18 +73,19 @@ public class Decoration
     {
         if (_model == null) return;
 
+        //Quitamos del loop los que son iguales para mejorar performance
+        var effect = _model.Meshes[0].MeshParts[0].Effect;
+        effect.Parameters["View"].SetValue(view);
+        effect.Parameters["Projection"].SetValue(projection);
+        effect.Parameters["ModelTexture"].SetValue(_texture);
+
         //Para cada malla en la coleccion de mallas del modelo
         foreach (var mesh in _model.Meshes)
         {
             //En contraposicion a lo que estabamos haciendo en la clase Decoration, ahora buscamos el efecto de cada parte ya que lo asignamos en el LoadContent
             foreach (var meshPart in mesh.MeshParts)
             {
-                var effect = meshPart.Effect;
-                //Coloco los parametros de world, view y projection
-                effect.Parameters["World"].SetValue(_world);
-                effect.Parameters["View"].SetValue(view);
-                effect.Parameters["Projection"].SetValue(projection);
-                effect.Parameters["ModelTexture"].SetValue(_texture);
+                effect.Parameters["World"].SetValue(_world);                
             }
             mesh.Draw();
         }
