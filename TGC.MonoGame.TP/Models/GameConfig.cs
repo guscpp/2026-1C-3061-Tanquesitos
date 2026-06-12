@@ -92,8 +92,10 @@ public static class GameConfig
 
         public const float CannonMuzzleOffsetY = 1.5f;  // metros
         public const float CannonMuzzleOffsetZ = 2.0f;  // metros
-        public const float MinCannonPitch = -20f;  // grados
-        public const float MaxCannonPitch = 10f;   // grados
+        public const float MinCannonPitch = -10f;  // grados
+        public const float MaxCannonPitch = 25f;   // grados
+        public const float CannonSpawnOffsetForward = 1.25f; // metros
+        public const float CannonSpawnOffsetUp = 2f;        // metros
 
         public static class Stabilizer
         {
@@ -143,10 +145,10 @@ public static class GameConfig
     // TERRENO
     public static class Terrain
     {
-        public const float CellSizeMeters = 1f;     // 1 pixel del heightmap = 1 metro
+        public const float CellSizeMeters = 1f;     // 1 pixel del heightmap = 1 CellSizeMeters (en metros)
         public const float MaxHeightMeters = 35f;   // relieve maximo
         public const float PhysicsMargin = 0.2f;    // margen de seguridad para Bepu
-        public const int PhysicsSubsampleStep = 16; // cuanto dividir la resolucion del heightmap para el mesh de Bepu , (1, 2, 4, 8,
+        public const int PhysicsSubsampleStep = 16; // cuanto dividir la resolucion del heightmap para el mesh de Bepu , (1, 2, 4, 8, ...)
                                                     // PhysicsSubsampleStep = 1 --> 512x512 quads (~500.000 _triangulos_)
     }
 

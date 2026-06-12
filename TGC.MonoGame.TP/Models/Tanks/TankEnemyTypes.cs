@@ -9,6 +9,7 @@ namespace TGC.MonoGame.TP.Models.Tanks;
 public class TankEnemyScout : TankEnemy
 {
     public TankEnemyScout() : base(
+        GameConfig.TankClass.Scout,
         hp: GameConfig.TankClasses.Scout.EnemyHealth,
         speed: GameConfig.TankClasses.Scout.MaxSpeed,
         force: GameConfig.TankClasses.Scout.MotorForce,
@@ -21,6 +22,7 @@ public class TankEnemyScout : TankEnemy
 public class TankEnemyMedium : TankEnemy
 {
     public TankEnemyMedium() : base(
+        GameConfig.TankClass.Medium,
         hp: GameConfig.TankClasses.Medium.EnemyHealth,
         speed: GameConfig.TankClasses.Medium.MaxSpeed,
         force: GameConfig.TankClasses.Medium.MotorForce,
@@ -33,6 +35,7 @@ public class TankEnemyMedium : TankEnemy
 public class TankEnemyHeavy : TankEnemy
 {
     public TankEnemyHeavy() : base(
+        GameConfig.TankClass.Heavy,
         hp: GameConfig.TankClasses.Heavy.EnemyHealth,
         speed: GameConfig.TankClasses.Heavy.MaxSpeed,
         force: GameConfig.TankClasses.Heavy.MotorForce,

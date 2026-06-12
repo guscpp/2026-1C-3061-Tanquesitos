@@ -32,10 +32,11 @@ public class GameStateManager
     private float _menuTankRotationSpeed = 0.015f;
     private int _lastSelectedIndex = -1;
 
+    //En algun momento consideramos usar 3 modelos distintos para los 3 tipos
     private readonly string[] _menuTankModelPaths = {
-        "Models/tanques/tank v3", // Scout
+        "Models/tanques/tank v4", // Scout
         "Models/tanques/tank v4", // Medium
-        "Models/tanques/tank v3"  // Heavy
+        "Models/tanques/tank v4"  // Heavy
     };
 
     // Opciones de menu actualizadas para elegir el tipo de tanque
@@ -318,8 +319,25 @@ public class GameStateManager
             return;
         }
 
+        Microsoft.Xna.Framework.Vector3 whiteColor = Microsoft.Xna.Framework.Vector3.One;
+        Microsoft.Xna.Framework.Vector3 menuTankColor = Microsoft.Xna.Framework.Color.White.ToVector3();
+        
+        if (_selectedIndex == 0) // Scout
+            menuTankColor = new Microsoft.Xna.Framework.Color(50, 205, 50).ToVector3();   // Verde
+        else if (_selectedIndex == 1) // Medium
+            menuTankColor = new Microsoft.Xna.Framework.Color(255, 215, 0).ToVector3();   // Amarillo
+        else if (_selectedIndex == 2) // Heavy
+            menuTankColor = new Microsoft.Xna.Framework.Color(178, 34, 34).ToVector3();   // 
+
         foreach (var mesh in _currentMenuTankModel.Meshes)
         {
+            Microsoft.Xna.Framework.Vector3 colorToApply = whiteColor;
+
+            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") ||
+                mesh.Name.Contains("Proteccion_d") || mesh.Name.Contains("Proteccion_i") ||
+                mesh.Name.Contains("Cuerpo") || mesh.Name.Contains("Cubre"))
+                colorToApply = menuTankColor;
+
             foreach (var part in mesh.MeshParts)
             {
                 part.Effect = _menuTankEffect;
@@ -337,7 +355,7 @@ public class GameStateManager
                 if (texParam != null) texParam.SetValue(_menuTankTexture);
 
                 var colorParam = _menuTankEffect.Parameters["DiffuseColor"];
-                if (colorParam != null) colorParam.SetValue(Color.White.ToVector3());
+                if (colorParam != null) colorParam.SetValue(colorToApply);
             }
             mesh.Draw();
         }

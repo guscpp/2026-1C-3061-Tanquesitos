@@ -11,6 +11,8 @@ public class TankPlayer : TankBase
 
     public TankPlayer(GameConfig.TankClass tankClass)
     {
+        TankClass = tankClass;
+
         switch (tankClass)
         {
             case GameConfig.TankClass.Scout:

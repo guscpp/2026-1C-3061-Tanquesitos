@@ -17,7 +17,7 @@ float4x4 World;
 float4x4 View;
 float4x4 Projection;
 
-float3 DiffuseColor;
+float3 DiffuseColor = float3(1.0, 1.0, 1.0);
 
 float Time = 0;
 
@@ -68,8 +68,9 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 // Su trabajo es decidir el color final de cada punto.
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
-    // tex2D toma el Sampler y la coordenada UV para saber qué color de la imagen corresponde a este píxel.
-    return tex2D(textureSampler, input.TextureCoordinate);
+    float4 texColor = tex2D(textureSampler, input.TextureCoordinate);
+
+    return texColor * float4(DiffuseColor, 1.0);
 }
 
 // Define cómo se debe compilar y ejecutar el shader.

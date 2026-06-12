@@ -21,6 +21,7 @@ public abstract class TankBase
     public float LateralDrag { get; set; }
     public float HealthPoints { get; set; }
     public float AttackDamage { get; set; }
+    public GameConfig.TankClass TankClass { get; protected set; }
 
     public Microsoft.Xna.Framework.Vector3 Position { get; set; } = Microsoft.Xna.Framework.Vector3.Zero;
     public float RotationY { get; protected set; }
@@ -57,6 +58,21 @@ public abstract class TankBase
 
     public Vector3 CannonMuzzlePosition => Vector3.Transform(
         new Vector3(0f, GameConfig.Tank.CannonMuzzleOffsetY, GameConfig.Tank.CannonMuzzleOffsetZ), CannonWorld);
+
+    protected Microsoft.Xna.Framework.Color GetTankColor()
+    {
+        switch (TankClass)
+        {
+            case GameConfig.TankClass.Scout:
+                return new Color(50, 205, 50);
+            case GameConfig.TankClass.Medium:
+                return new Color(255, 215, 0);
+            case GameConfig.TankClass.Heavy:
+                return new Color(178, 34, 34);
+            default:
+                return new Color(255, 255, 255);
+        }
+    }
 
     public void Load(Model model, Texture2D texture, Effect effect, Simulation simulation)
     {
@@ -102,6 +118,9 @@ public abstract class TankBase
     {
         if (Model == null || IsDead) return;
 
+        Microsoft.Xna.Framework.Vector3 colorVector = GetTankColor().ToVector3();
+        Microsoft.Xna.Framework.Vector3 whiteColor = Microsoft.Xna.Framework.Vector3.One;
+
         _effect.Parameters["View"].SetValue(view);
         _effect.Parameters["Projection"].SetValue(projection);
         _effect.Parameters["ModelTexture"].SetValue(_texture);
@@ -110,11 +129,18 @@ public abstract class TankBase
         {
             var finalWorld = WorldMatrix;
 
-            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola")) 
+            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola"))
                 finalWorld = TurretWorld;
 
             else if (mesh.Name.Contains("Cañon") || mesh.Name.Contains("Anillo"))
                 finalWorld = CannonWorld;
+
+            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") || 
+                mesh.Name.Contains("Proteccion_d") || mesh.Name.Contains("Proteccion_i") || 
+                mesh.Name.Contains("Cuerpo") || mesh.Name.Contains("Cubre"))
+                _effect.Parameters["DiffuseColor"].SetValue(colorVector);
+            else
+                _effect.Parameters["DiffuseColor"].SetValue(whiteColor);
 
             _effect.Parameters["World"].SetValue(finalWorld);
 

@@ -62,9 +62,9 @@ public class TGCGame : Game
     public TankFollowCamera Camera => _camera;
     public string[] tankPaths =
     {
-        "tanques/tank v3", // Scout
+        "tanques/tank v4", // Scout
         "tanques/tank v4", // Medium
-        "tanques/tank v3"  // Heavy
+        "tanques/tank v4"  // Heavy
     };
     //-----------TERRENO
     private Terrain _terrain;
@@ -138,6 +138,7 @@ public class TGCGame : Game
         //shaders
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //modelos sin texturas
         var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
+        effect2.Parameters["DiffuseColor"].SetValue(Microsoft.Xna.Framework.Color.White.ToVector3());
         //texturas
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
@@ -267,7 +268,7 @@ public class TGCGame : Game
             direction.Normalize();
 
             // Posición desde donde sale la bala
-            Vector3 spawnPosition = _tank.CannonMuzzlePosition;
+            Vector3 spawnPosition = _tank.CannonMuzzlePosition + (direction * GameConfig.Tank.CannonSpawnOffsetForward);
             Cannonball cannonball = CreateCannonball(spawnPosition, direction, _tank.AttackDamage);
             _cannonballs.Add(cannonball);
             _currentShootCooldown = _shootCooldown;

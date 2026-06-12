@@ -23,8 +23,9 @@ public abstract class TankEnemy : TankBase
     protected float _currentShootCooldown = 0f;
     public float ShootCooldown { get; protected set; }
 
-    protected TankEnemy(float hp, float speed, float force, float turnSpeed, float damage, float cooldown)
+    protected TankEnemy(GameConfig.TankClass tankClass, float hp, float speed, float force, float turnSpeed, float damage, float cooldown)
     {
+        TankClass = tankClass;
         HealthPoints = hp;
         MaxHealthPoints = hp;
         MaxSpeed = speed;
