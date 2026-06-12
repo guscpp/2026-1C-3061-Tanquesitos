@@ -30,7 +30,7 @@ public static class GameConfig
     {
         public static class Scout
         {
-            public const float MaxSpeed = 100f;      // m/s
+            public const float MaxSpeed = 120f;      // m/s
             public const float MotorForce = 160000f; //
             public const float TurnSpeed = 1.5f;     //
             public const float AttackDamage = 0.8f;  //
@@ -59,7 +59,7 @@ public static class GameConfig
             public const float MaxSpeed = 70f;        // m/s
             public const float MotorForce = 130000f;  //
             public const float TurnSpeed = 0.9f;      //
-            public const float AttackDamage = 1.5f;
+            public const float AttackDamage = 2.0f;
 
             // HPs segun sea Heavy player o Heavy NPC
             public const float PlayerHealth = 30f;

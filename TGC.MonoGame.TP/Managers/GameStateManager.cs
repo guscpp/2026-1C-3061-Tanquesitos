@@ -19,6 +19,8 @@ public class GameStateManager
     private readonly SpriteFont _fontConsolas;
     private readonly Texture2D _whitePixel;
     private Texture2D _menuBackground;
+    private float _introTimer = 0f;
+    private float _menuInputLockTime = 0f;
 
     //SoundManager
     private readonly SoundManager _soundManager;
@@ -78,6 +80,9 @@ public class GameStateManager
         _whitePixel.SetData(new[] { Color.White });
 
         LoadMenu3DAssets();
+
+        CurrentState = GameState.Intro;
+        _introTimer = 0f;
     }
 
     private void LoadMenu3DAssets()
@@ -118,20 +123,49 @@ public class GameStateManager
             UpdateMenuTankModel(_selectedIndex);
             _lastSelectedIndex = _selectedIndex;
         }
+        else if (_selectedIndex == 3)
+        {
+            _currentMenuTankModel = null;
+            _lastSelectedIndex = _selectedIndex;
+        }
     }
 
-    public void Update(KeyboardState kb, KeyboardState lastKb)
+    public void Update(GameTime gameTime, KeyboardState kb, KeyboardState lastKb)
     {
         HandleMusic();
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (CurrentState == GameState.Intro)
+        {
+            _introTimer += dt;
+
+            bool keyPressed = kb.GetPressedKeys().Length > 0 && lastKb.GetPressedKeys().Length == 0;
+
+            MouseState currentMouse = Mouse.GetState();
+            bool mouseClicked = currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released;
+            _lastMouseState = currentMouse;
+
+            if (_introTimer >= 8f || keyPressed || mouseClicked)
+            {
+                CurrentState = GameState.Menu;
+                _introTimer = 0f;
+                _menuInputLockTime = 0.3f; //impide input bleed en GameState.Menu
+            }
+        }
 
         _menuTankRotation += _menuTankRotationSpeed;
-
-        // Advance idle animation timer
-        _idleTime += 0.016f;
+        _idleTime += dt;
 
         //el menu maneja su propia logica, early return
         if (CurrentState == GameState.Menu)
         {
+            //Bloquear input bleed por 0,3 seg
+            if (_menuInputLockTime > 0f)
+            {
+                _menuInputLockTime -= dt;
+                return;
+            }
+
             HandleMenuState(kb, lastKb);
             return;
         }
@@ -147,7 +181,8 @@ public class GameStateManager
                 if (kb.IsKeyDown(Keys.P) && lastKb.IsKeyUp(Keys.P))
                     CurrentState = GameState.Playing;
                 break;
-            case GameState.GameOver: case GameState.Win: // por ahora, mismo comportamiento que cuando se pierde
+            case GameState.GameOver:
+            case GameState.Win: // por ahora, mismo comportamiento que cuando se pierde
                 SoundManager.StopMusic();
                 if (kb.IsKeyDown(Keys.Enter) && lastKb.IsKeyUp(Keys.Enter))
                 {
@@ -155,6 +190,7 @@ public class GameStateManager
                     _selectedIndex = 0;
                     _lastSelectedIndex = -1;
                     _menuMusicStarted = false;
+                    _currentMenuTankModel = null;
                     UpdateMenuTankModel(0);
                 }
                 break;
@@ -164,13 +200,13 @@ public class GameStateManager
     private void HandleMenuInput(KeyboardState kb, KeyboardState lastKb)
     {
         // Teclado: flechas arriba/abajo
-        if (kb.IsKeyDown(Keys.Down) && lastKb.IsKeyUp(Keys.Down))
-        {
+        if ((kb.IsKeyDown(Keys.Down) || kb.IsKeyDown(Keys.S)) && (lastKb.IsKeyUp(Keys.Down) && lastKb.IsKeyUp(Keys.S)))
+            {
             TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
             _selectedIndex = (_selectedIndex + 1) % _menuOptions.Length;
         }
             
-        else if (kb.IsKeyDown(Keys.Up) && lastKb.IsKeyUp(Keys.Up))
+        else if ((kb.IsKeyDown(Keys.Up) || kb.IsKeyDown(Keys.W)) && (lastKb.IsKeyUp(Keys.Up) && lastKb.IsKeyUp(Keys.W)))
         {
             TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
             _selectedIndex = (_selectedIndex - 1 + _menuOptions.Length) % _menuOptions.Length;
@@ -263,27 +299,71 @@ public class GameStateManager
         var vp = _graphicsDevice.Viewport;
         Vector2 center = new Vector2(vp.Width / 2f, vp.Height / 2f);
 
+        if (CurrentState == GameState.Intro)
+        {
+            _graphicsDevice.Clear(Color.Black);
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+
+            //Dibujar la textura estirada a toda la pantalla
+            _spriteBatch.Draw(_menuBackground, new Rectangle(0, 0, vp.Width, vp.Height), Color.White);
+
+            //Texto de "Presiona cualquier tecla o clic para continuar"
+            if (_introTimer > 1.0f)
+            {
+                //Efecto de "pulso"
+                float pulse = (MathF.Sin(_introTimer * 4f) + 1f) / 2f; // Oscila suavemente entre 0 y 1
+                float alpha = MathHelper.Clamp((_introTimer - 1.0f) * 2f, 0f, 1f); // Fade-in de 0.5 segundos
+                float scale = 1.3f + (pulse * 0.1f); // Escala entre 1.3x y 1.4x
+
+                string hint = "Presiona cualquier tecla o clic para continuar";
+
+                //Usar ConsolasFont
+                Vector2 hintSize = _fontConsolas.MeasureString(hint) * scale;
+                Vector2 hintPos = new Vector2(vp.Width / 2f - hintSize.X / 2f, vp.Height - 120f);
+
+                //Fondo semitransparente detras del texto
+                Rectangle bgRect = new Rectangle((int)hintPos.X - 30, (int)hintPos.Y - 15, (int)hintSize.X + 60, (int)hintSize.Y + 30);
+                _spriteBatch.Draw(_whitePixel, bgRect, new Color(0, 0, 0, (int)(alpha * 200)));
+
+                //Sombra gruesa y desplazada
+                _spriteBatch.DrawString(_fontConsolas, hint, hintPos + new Vector2(4, 4), new Color(0, 0, 0, (int)(alpha * 255)), 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+
+                //Texto principal pulsante
+                Color textColor = Color.Lerp(Color.White, Color.Gold, pulse);
+                _spriteBatch.DrawString(_fontConsolas, hint, hintPos, new Color(textColor.R, textColor.G, textColor.B, (int)(alpha * 255)), 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+            }
+
+            _spriteBatch.End();
+        }
+
         if (CurrentState == GameState.Menu)
         {
             _graphicsDevice.Clear(Color.DarkSlateGray);
 
-            // Camera and scale adjustments
-            Matrix world = Matrix.CreateScale(4f) *
-                           Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *
-                           Matrix.CreateRotationY(_menuTankRotation);
+            if (_selectedIndex < 3 && _currentMenuTankModel != null)
+            {
 
-            Matrix view = Matrix.CreateLookAt(new Vector3(10, 13f, 18f), new Vector3(0, 4, 0), Vector3.Up);
-            Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, vp.AspectRatio, 0.1f, 100f);
+                // Camera and scale adjustments
+                Matrix world = Matrix.CreateScale(4f) *
+                               Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *
+                               Matrix.CreateRotationY(_menuTankRotation);
 
-            // Fix culling and depth issues
-            _graphicsDevice.RasterizerState = RasterizerState.CullNone;
-            _graphicsDevice.DepthStencilState = DepthStencilState.Default;
-            _graphicsDevice.BlendState = BlendState.Opaque;
+                Matrix view = Matrix.CreateLookAt(new Vector3(10, 13f, 18f), new Vector3(0, 4, 0), Vector3.Up);
+                Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, vp.AspectRatio, 0.1f, 100f);
 
-            Draw3DTank(world, view, projection);
+                // Fix culling and depth issues
+                _graphicsDevice.RasterizerState = RasterizerState.CullNone;
+                _graphicsDevice.DepthStencilState = DepthStencilState.Default;
+                _graphicsDevice.BlendState = BlendState.Opaque;
+
+                Draw3DTank(world, view, projection);
+            }
 
             _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
-            DrawTankSpecs(vp);
+
+            if (_selectedIndex < 3)
+                DrawTankSpecs(vp);
+            
             DrawMenu(center);
             _spriteBatch.End();
         }

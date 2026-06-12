@@ -170,8 +170,9 @@ public class Terrain
     {
         const int physicsStep = GameConfig.Terrain.PhysicsSubsampleStep;
 
-        int quadsX = (_width - 1) / physicsStep;
-        int quadsZ = (_height - 1) / physicsStep;
+        // 1. Calcular la cantidad exacta de quads, redondeando hacia arriba para cubrir los bordes
+        int quadsX = (int)Math.Ceiling((float)(_width - 1) / physicsStep);
+        int quadsZ = (int)Math.Ceiling((float)(_height - 1) / physicsStep);
         int triangleCount = quadsX * quadsZ * 2;
 
         var pool = simulation.BufferPool;
@@ -181,21 +182,28 @@ public class Terrain
         float halfWidth = (_width * TerrainScale) / 2f;
         float halfHeight = (_height * TerrainScale) / 2f;
 
-        for (int z = 0; z <= _height - 1 - physicsStep; z += physicsStep)
+        // 2. Usar Math.Min para asegurar que el último paso aterrice exactamente en el borde del mapa (píxel 511)
+        for (int i = 0; i < quadsZ; i++)
         {
-            for (int x = 0; x <= _width - 1 - physicsStep; x += physicsStep)
+            int z = i * physicsStep;
+            int nextZ = Math.Min(z + physicsStep, _height - 1);
+
+            for (int j = 0; j < quadsX; j++)
             {
+                int x = j * physicsStep;
+                int nextX = Math.Min(x + physicsStep, _width - 1);
+
                 // Leemos alturas EXACTAS (sin interpolar) para la física
                 float h00 = _heights[x, z];
-                float h10 = _heights[x + physicsStep, z];
-                float h01 = _heights[x, z + physicsStep];
-                float h11 = _heights[x + physicsStep, z + physicsStep];
+                float h10 = _heights[nextX, z];
+                float h01 = _heights[x, nextZ];
+                float h11 = _heights[nextX, nextZ];
 
                 // Mismas coordenadas de mundo que el terreno visual
                 System.Numerics.Vector3 v00 = new System.Numerics.Vector3(x * TerrainScale - halfWidth, h00, z * TerrainScale - halfHeight);
-                System.Numerics.Vector3 v10 = new System.Numerics.Vector3((x + physicsStep) * TerrainScale - halfWidth, h10, z * TerrainScale - halfHeight);
-                System.Numerics.Vector3 v01 = new System.Numerics.Vector3(x * TerrainScale - halfWidth, h01, (z + physicsStep) * TerrainScale - halfHeight);
-                System.Numerics.Vector3 v11 = new System.Numerics.Vector3((x + physicsStep) * TerrainScale - halfWidth, h11, (z + physicsStep) * TerrainScale - halfHeight);
+                System.Numerics.Vector3 v10 = new System.Numerics.Vector3(nextX * TerrainScale - halfWidth, h10, z * TerrainScale - halfHeight);
+                System.Numerics.Vector3 v01 = new System.Numerics.Vector3(x * TerrainScale - halfWidth, h01, nextZ * TerrainScale - halfHeight);
+                System.Numerics.Vector3 v11 = new System.Numerics.Vector3(nextX * TerrainScale - halfWidth, h11, nextZ * TerrainScale - halfHeight);
 
                 triangles[idx++] = new Triangle(v00, v10, v01);
                 triangles[idx++] = new Triangle(v10, v11, v01);

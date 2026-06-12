@@ -220,7 +220,7 @@ public class TGCGame : Game
     protected override void Update(GameTime gameTime)
     {
         var kb = Keyboard.GetState();
-        _gameStateManager.Update(kb, _lastKeyboardState);
+        _gameStateManager.Update(gameTime, kb, _lastKeyboardState);
         _lastKeyboardState = kb;
 
         if (kb.IsKeyDown(Keys.P) && !_lastKeyboardState.IsKeyDown(Keys.P)) 
