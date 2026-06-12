@@ -61,8 +61,6 @@ public class GameStateManager
     private float _idleTime = 0f;
     private const float IdleAnimationSpeed = 2.5f; // Controls how fast the pulse is
 
-    private bool isFirstRun = true;
-
     public GameStateManager(GraphicsDevice graphicsDevice, ContentManager content, SoundManager soundManager)
     {
         _graphicsDevice = graphicsDevice;
@@ -152,7 +150,6 @@ public class GameStateManager
                 SoundManager.StopMusic();
                 if (kb.IsKeyDown(Keys.Enter) && lastKb.IsKeyUp(Keys.Enter))
                 {
-                    isFirstRun = false;
                     CurrentState = GameState.Menu;
                     _selectedIndex = 0;
                     _lastSelectedIndex = -1;
@@ -239,17 +236,17 @@ public class GameStateManager
         {
             case 0: // Iniciar Scout
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Scout;
-                if(!isFirstRun) TGCGame.Instance.ResetGame(); 
+                TGCGame.Instance.ResetGame(); 
                 CurrentState = GameState.Playing;
                 break;
             case 1: // Iniciar Medio
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Medium;
-                if(!isFirstRun) TGCGame.Instance.ResetGame(); 
+                TGCGame.Instance.ResetGame(); 
                 CurrentState = GameState.Playing;
                 break;
             case 2: // Iniciar Pesado
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Heavy;
-                if(!isFirstRun) TGCGame.Instance.ResetGame(); 
+                TGCGame.Instance.ResetGame(); 
                 CurrentState = GameState.Playing;
                 break;
             case 3: // Salir

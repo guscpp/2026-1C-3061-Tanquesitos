@@ -308,7 +308,7 @@ public class TGCGame : Game
         _currentShootCooldown = 0f;
         EnemiesKilled = 0;
 
-        var tankModel = Content.Load<Model>(ContentFolder3D + "tanques/tank v4");
+        var tankModel = Content.Load<Model>(ContentFolder3D + getTankPath());
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
         var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
 
