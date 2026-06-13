@@ -137,11 +137,14 @@ public class TGCGame : Game
         //RECURSOS
         //shaders
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //modelos sin texturas
-        var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
-        effect2.Parameters["DiffuseColor"].SetValue(Microsoft.Xna.Framework.Color.White.ToVector3());
+        var textureEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
+        textureEffect.Parameters["DiffuseColor"].SetValue(Microsoft.Xna.Framework.Color.White.ToVector3());
+
         //texturas
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
+        var groundTexture = Content.Load<Texture2D>(ContentFolderTextures + "sand_1024_seamless");
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+
         //modelos
         _cannonballModel = Content.Load<Model>(ContentFolder3D + "cannonball/cannonball");
 
@@ -152,7 +155,7 @@ public class TGCGame : Game
         //Creo un terreno (suelo)
         _terrain = new Terrain(GraphicsDevice);
         //Le paso la textura y el efecto
-        _terrain.LoadContent(terrainTexture, _effect);
+        _terrain.LoadContent(terrainTexture, groundTexture, textureEffect);
         //fisicas
         _terrainStaticHandle = _terrain.CreatePhysicsTerrain(_simulation);
         //paredes invisibles
@@ -193,7 +196,7 @@ public class TGCGame : Game
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);//Se spawnea unos metros por encima del terreno
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
         //Cargo el tanque
-        _tank.Load(tankModel, tankTexture, effect2, _simulation);
+        _tank.Load(tankModel, tankTexture, textureEffect, _simulation);
         //fisicas
         _tankHandle = _tank.TankHandler;
 
@@ -311,7 +314,7 @@ public class TGCGame : Game
 
         var tankModel = Content.Load<Model>(ContentFolder3D + getTankPath());
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        var effect2 = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+        var textureEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
 
         Vector3 spawnPos = Vector3.Zero;
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);
@@ -319,7 +322,7 @@ public class TGCGame : Game
         _simulation.Bodies.Remove(_tankHandle);
         _tank = new TankPlayer(SelectedPlayerTank);
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
-        _tank.Load(tankModel, tankTexture, effect2, _simulation);
+        _tank.Load(tankModel, tankTexture, textureEffect, _simulation);
         _tankHandle = _tank.TankHandler;
 
         _enemiesManager.Reset(_simulation);
@@ -338,12 +341,12 @@ public class TGCGame : Game
     {
         // Aca deberiamos poner toda la logica de renderizado del juego.
         var totalTime = (float)gameTime.TotalGameTime.TotalSeconds;
-        GraphicsDevice.Clear(Color.Goldenrod);
+        GraphicsDevice.Clear(Color.CornflowerBlue);
 
         if (_gameStateManager.CurrentState == GameState.Playing || _gameStateManager.CurrentState == GameState.Paused)
         {
             // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
-            _terrain.Draw(_camera.View, _camera.Projection);
+            _terrain.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
             _tank.Draw(_camera.View, _camera.Projection);
 
             foreach (var cannonball in _cannonballs)

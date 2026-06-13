@@ -24,6 +24,7 @@ public class Terrain
     public float WidthUnits => 518f * TerrainScale / 2;   //unidades de ancho 
 
     private Texture2D _heightmapTexture;
+    private Texture2D _groundTexture;
 
     private readonly GraphicsDevice _graphicsDevice;
     private VertexBuffer _terrainVertexBuffer;
@@ -41,13 +42,14 @@ public class Terrain
         _graphicsDevice = graphicsDevice;
     }
 
-    public void LoadContent(Texture2D heightmapTexture, Effect BasicShader)
+    public void LoadContent(Texture2D heightmapTexture, Texture2D groundTexture, Effect BasicShader)
     {
         _heightmapTexture = heightmapTexture;
         _heightmapWidth = heightmapTexture.Width;
         _heightmapHeight = heightmapTexture.Height;
-
         CreateHeightmapMesh(heightmapTexture);
+
+        _groundTexture = groundTexture;
 
         _terrainEffect = BasicShader;
     }
@@ -56,13 +58,13 @@ public class Terrain
     {
         _width = heightmapTexture.Width;
         _height = heightmapTexture.Height;
-        //matriz con las alturas
         _heights = new float[_width, _height];
+
         Color[] heightmapData = new Color[_width * _height];
         heightmapTexture.GetData(heightmapData);
 
-        //Crear vertices e indices
-        VertexPositionColor[] vertices = new VertexPositionColor[_width * _height];
+        // 1. Usamos VertexPositionNormalTexture: listo para iluminación y texturas
+        VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[_width * _height];
         uint[] indices = new uint[(_width - 1) * (_height - 1) * 6];
 
         float halfWidth = (_width * TerrainScale) / 2f;
@@ -74,12 +76,28 @@ public class Terrain
             for (int x = 0; x < _width; x++)
             {
                 float height = heightmapData[z * _width + x].R / 255f * HeightScale;
-                _heights[x, z] = height; // Guardamos altura para colisiones/queries
+                _heights[x, z] = height;
 
                 Microsoft.Xna.Framework.Vector3 position = new Microsoft.Xna.Framework.Vector3(x * TerrainScale - halfWidth, height, z * TerrainScale - halfHeight);
-                Color color = GetColorForHeight(height);
-                vertices[z * _width + x] = new VertexPositionColor(position, color);
 
+                // 2. Cálculo de Normales (Diferencia finita central)
+                // Obtenemos la altura de los vecinos para calcular la pendiente
+                float hL = GetHeightAtPixel(Math.Max(0, x - 1), z);
+                float hR = GetHeightAtPixel(Math.Min(_width - 1, x + 1), z);
+                float hD = GetHeightAtPixel(x, Math.Max(0, z - 1));
+                float hU = GetHeightAtPixel(x, Math.Min(_height - 1, z + 1));
+
+                // El vector normal no normalizado. Y es la altura, por eso el componente Y es 2 * TerrainScale
+                Microsoft.Xna.Framework.Vector3 normal = new Microsoft.Xna.Framework.Vector3(hL - hR, 2.0f * TerrainScale, hD - hU);
+                normal.Normalize();
+
+                // 3. Cálculo de UVs para Tiling
+                float u = (x * TerrainScale) / GameConfig.Terrain.TextureTileSize;
+                float v = (z * TerrainScale) / GameConfig.Terrain.TextureTileSize;
+
+                vertices[z * _width + x] = new VertexPositionNormalTexture(position, normal, new Microsoft.Xna.Framework.Vector2(u, v));
+
+                // Generación de índices (sin cambios, ya era correcta)
                 if (x < _width - 1 && z < _height - 1)
                 {
                     int topLeft = z * _width + x;
@@ -90,7 +108,6 @@ public class Terrain
                     indices[index++] = (uint)topLeft;
                     indices[index++] = (uint)topRight;
                     indices[index++] = (uint)bottomLeft;
-
                     indices[index++] = (uint)topRight;
                     indices[index++] = (uint)bottomRight;
                     indices[index++] = (uint)bottomLeft;
@@ -99,8 +116,9 @@ public class Terrain
         }
 
         _primitiveCount = index / 3;
-        _terrainVertexBuffer = new VertexBuffer(_graphicsDevice, VertexPositionColor.VertexDeclaration, vertices.Length, BufferUsage.WriteOnly);
+        _terrainVertexBuffer = new VertexBuffer(_graphicsDevice, VertexPositionNormalTexture.VertexDeclaration, vertices.Length, BufferUsage.WriteOnly);
         _terrainVertexBuffer.SetData(vertices);
+
         _terrainIndexBuffer = new IndexBuffer(_graphicsDevice, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.WriteOnly);
         _terrainIndexBuffer.SetData(indices);
     }
@@ -112,37 +130,27 @@ public class Terrain
         return _heights[x, z];
     }
 
-
-    /// <summary>
-    ///     Retorna la altura real segun la posicion que le mandemos, de esa forma el tanque no atraviesa el suelo
-    /// </summary>
     public float GetHeight(float posX, float posZ)
     {
-        // Tomo los valores de x e y de la posicion
-        //Primero convierto el valor de la coordenada a pixel luego lo hago coincidir con el origen de la matriz
         float x = (posX / TerrainScale) + (_width / 2f);
         float z = (posZ / TerrainScale) + (_height / 2f);
 
-        //Tomo los 4 puntos más cercanos al tanque
-        int x0 = (int)Math.Floor(x); //vertice superior izquierdo
-        int x1 = MathHelper.Clamp(x0 + 1, 0, _width - 1); //vertice adyacente
-        int z0 = (int)Math.Floor(z); //vertice superior izquierdo
-        int z1 = MathHelper.Clamp(z0 + 1, 0, _height - 1); //vertice adyacente
+        int x0 = (int)Math.Floor(x);
+        int x1 = MathHelper.Clamp(x0 + 1, 0, _width - 1);
+        int z0 = (int)Math.Floor(z);
+        int z1 = MathHelper.Clamp(z0 + 1, 0, _height - 1);
+
         x0 = MathHelper.Clamp(x0, 0, _width - 1);
         z0 = MathHelper.Clamp(z0, 0, _height - 1);
 
-        // Fracciones para interpolar
         float tx = x - x0;
         float tz = z - z0;
 
-        // Obtener las alturas de los 4 puntos
         float h00 = _heights[x0, z0];
         float h10 = _heights[x1, z0];
         float h01 = _heights[x0, z1];
         float h11 = _heights[x1, z1];
 
-        // Interpolación bilineal (suaviza la pendiente)
-        //Permite que el movimiento por el terreno sea fluido y no parezca que sube y baja escaleras
         float h0 = MathHelper.Lerp(h00, h10, tx);
         float h1 = MathHelper.Lerp(h01, h11, tx);
         return MathHelper.Lerp(h0, h1, tz);
@@ -216,29 +224,31 @@ public class Terrain
         return simulation.Statics.Add(new StaticDescription(System.Numerics.Vector3.Zero, shapeIndex));
     }
 
-    public void Draw(Matrix view, Matrix projection)
+    public void Draw(Matrix view, Matrix projection, Microsoft.Xna.Framework.Vector3 cameraPosition)
     {
+        if (_terrainEffect == null || _groundTexture == null) return;
+
         _terrainEffect.Parameters["World"].SetValue(Matrix.Identity);
         _terrainEffect.Parameters["View"].SetValue(view);
         _terrainEffect.Parameters["Projection"].SetValue(projection);
-        _terrainEffect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
+
+        //Para usar con BlinnPhong habria que sacar estos comentarios y ajustar
+        _terrainEffect.Parameters["ModelTexture"].SetValue(_groundTexture);
+        //_terrainEffect.Parameters["LightDirection"].SetValue(new Microsoft.Xna.Framework.Vector3(0, -1, 0));
+        //_terrainEffect.Parameters["LightColor"].SetValue(Microsoft.Xna.Framework.Vector3.Zero);
+        //_terrainEffect.Parameters["AmbientColor"].SetValue(Microsoft.Xna.Framework.Vector3.One); 
+        //_terrainEffect.Parameters["EyePosition"].SetValue(cameraPosition);
 
         _graphicsDevice.SetVertexBuffer(_terrainVertexBuffer);
         _graphicsDevice.Indices = _terrainIndexBuffer;
-
-        _graphicsDevice.RasterizerState = RasterizerState.CullNone; //revisar si cambia algo
+        _graphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
         _graphicsDevice.DepthStencilState = DepthStencilState.Default;
         _graphicsDevice.BlendState = BlendState.Opaque;
 
         foreach (var pass in _terrainEffect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            _graphicsDevice.DrawIndexedPrimitives(
-                PrimitiveType.TriangleList,
-                0,
-                0,
-                _primitiveCount
-            );
+            _graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, _primitiveCount);
         }
     }
 
