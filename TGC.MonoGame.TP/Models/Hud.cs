@@ -49,7 +49,7 @@ public class Hud
     private string _cachedCooldownText = "DISPARO: LISTO";
     private float _lastRemainingSeconds = -1f;
 
-    private string _cachedEnemiesCount = "KILL COUNT: 0 / " + GameConfig.Enemies.EnemiesCount.ToString();
+    private string _cachedEnemiesCount = "KILL COUNT: 0 / " + GameConfig.Enemies.KillsToWin.ToString();
     private int _lastDisplayedEnemies = -1;
     private int _playerHealth = 100;
 
@@ -103,7 +103,7 @@ public class Hud
         var kills = TGCGame.Instance.EnemiesKilled;
         if (kills != _lastDisplayedEnemies)
         {
-            _cachedEnemiesCount = "KILL COUNT: " + kills + " / " + GameConfig.Enemies.EnemiesCount.ToString();
+            _cachedEnemiesCount = "KILL COUNT: " + kills + " / " + GameConfig.Enemies.KillsToWin.ToString();
             _lastDisplayedEnemies = kills;
         }
 

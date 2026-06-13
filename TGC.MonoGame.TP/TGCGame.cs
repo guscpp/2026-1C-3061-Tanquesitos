@@ -300,7 +300,7 @@ public class TGCGame : Game
         _hud.Update(gameTime);
 
         if (_tank.IsDead) _gameStateManager.ForceState(GameState.GameOver);
-        if (EnemiesKilled == GameConfig.Enemies.EnemiesCount) _gameStateManager.ForceState(GameState.Win);
+        if (EnemiesKilled >= GameConfig.Enemies.KillsToWin) _gameStateManager.ForceState(GameState.Win);
 
         base.Update(gameTime);
     }

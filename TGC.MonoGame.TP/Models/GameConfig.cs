@@ -123,7 +123,8 @@ public static class GameConfig
     // =========================================================================
     public static class Enemies
     {
-        public const int EnemiesCount = 10;
+        public const int EnemiesCount = 20;         // cantidad de enemigos en el mapa
+        public const int KillsToWin = 10;           // cantidad de enemigos a matar para ganar
         public const float AttackRadius = 50f;      // metros
         public const float Cooldown = 1.0f;         // segundos
 
