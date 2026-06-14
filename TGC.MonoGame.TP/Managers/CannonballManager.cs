@@ -1,0 +1,100 @@
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
+using System.Linq;
+using BepuPhysics;
+using TGC.MonoGame.TP.Models.Tanks;
+
+namespace TGC.MonoGame.TP.Managers;
+
+public class CannonballManager
+{
+    private readonly Simulation _simulation;
+    private Model _cannonballModel;
+    private Effect _cannonballEffect;
+    private readonly List<Cannonball> _cannonballs;
+
+    private readonly float _shootCooldown;
+    private float _currentCooldown;
+
+    public CannonballManager(Simulation simulation, float cooldown)
+    {
+        _simulation = simulation;
+        _shootCooldown = cooldown;
+        _currentCooldown = 0f;
+        _cannonballs = new List<Cannonball>();
+    }
+
+    public void LoadContent(ContentManager content, string modelPath, string effectPath)
+    {
+        _cannonballModel = content.Load<Model>(modelPath);
+        _cannonballEffect = content.Load<Effect>(effectPath);
+    }
+
+    public void UpdateCooldown(float deltaTime)
+    {
+        if (_currentCooldown > 0f)
+        {
+            _currentCooldown -= deltaTime;
+        }
+    }
+
+    public bool CanFire => _currentCooldown <= 0f;
+
+    public void Fire(Vector3 spawnPosition, Vector3 direction, float damage, SoundManager soundManager, Vector3 listenerPos, Vector3 listenerForward)
+    {
+        if (!CanFire) return;
+
+        var cannonball = new Cannonball(_cannonballModel, damage, _cannonballEffect, spawnPosition, direction, _simulation);
+        _cannonballs.Add(cannonball);
+        _currentCooldown = _shootCooldown;
+
+        soundManager.PlaySound3D("cannon_fire", spawnPosition, listenerPos, listenerForward);
+    }
+
+    public void Update(GameTime gameTime)
+    {
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        UpdateCooldown(dt);
+
+        // Iteramos de atras para adelante para poder eliminar elementos de forma segura
+        for (int i = _cannonballs.Count - 1; i >= 0; i--)
+        {
+            var cb = _cannonballs[i];
+            cb.Update(gameTime, _simulation);
+
+            if (cb.IsDead)
+            {
+                _simulation.Bodies.Remove(cb.BodyHandle);
+                _cannonballs.RemoveAt(i);
+            }
+        }
+    }
+
+    public void Draw(Matrix view, Matrix projection)
+    {
+        foreach (var cannonball in _cannonballs)
+        {
+            cannonball.Draw(view, projection);
+        }
+    }
+
+    public void Clear()
+    {
+        for (int i = _cannonballs.Count - 1; i >= 0; i--)
+        {
+            _simulation.Bodies.Remove(_cannonballs[i].BodyHandle);
+            _cannonballs.RemoveAt(i);
+        }
+        _currentCooldown = 0f;
+    }
+
+    // Metodo de consulta seguro para NarrowPhaseCallbacks
+    // Encapsulamiento: nos evita exponer la lista interna al resto del sistema.
+    public bool TryGetCannonball(BodyHandle handle, out Cannonball cannonball)
+    {
+        cannonball = _cannonballs.FirstOrDefault(c => c.BodyHandle == handle);
+        return cannonball != null;
+    }
+}

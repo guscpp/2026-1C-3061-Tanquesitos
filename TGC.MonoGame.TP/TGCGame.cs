@@ -87,11 +87,8 @@ public class TGCGame : Game
     public static TGCGame Instance { get; private set; } //Esto es para que lo use NarrowPhaseCallbacks
     //gizmos
     private Gizmo _gizmos = new();
-    private List<Cannonball> _cannonballs = new();
-    public List<Cannonball> Cannonballs => _cannonballs;
-    private Model _cannonballModel;
-    private float _shootCooldown = GameConfig.Tank.Cooldown;
-    private float _currentShootCooldown = 0f;
+    private CannonballManager _cannonballManager;
+    public CannonballManager CannonballManager => _cannonballManager;
 
     // Variable para guardar la eleccion del jugador desde el menu
     public static GameConfig.TankClass SelectedPlayerTank;
@@ -145,8 +142,9 @@ public class TGCGame : Game
         var groundTexture = Content.Load<Texture2D>(ContentFolderTextures + "sand_1024_seamless");
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
 
-        //modelos
-        _cannonballModel = Content.Load<Model>(ContentFolder3D + "cannonball/cannonball");
+        //CannonballManager
+        _cannonballManager = new CannonballManager(_simulation, GameConfig.Tank.Cooldown);
+        _cannonballManager.LoadContent(Content, ContentFolder3D + "cannonball/cannonball", ContentFolderEffects + "BasicShader");
 
         //AUXILIARES
         Vector3 spawnPos = new Vector3(0, 0, 0);
@@ -260,42 +258,34 @@ public class TGCGame : Game
         _barrelsManager.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
         // cada frame el tiempo restante de cooldown baja
-        _currentShootCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _cannonballManager.UpdateCooldown((float)gameTime.ElapsedGameTime.TotalSeconds);
         MouseState currentMouseState = Mouse.GetState();
 
         if (currentMouseState.LeftButton == ButtonState.Pressed 
         && _previousMouseState.LeftButton == ButtonState.Released 
-        && _currentShootCooldown <= 0f)
+        && _cannonballManager.CanFire)
         {
             Vector3 direction = _tank.CannonForward;
             direction.Normalize();
 
             // Posición desde donde sale la bala
-            Vector3 spawnPosition = _tank.CannonMuzzlePosition + (direction * GameConfig.Tank.CannonSpawnOffsetForward);
-            Cannonball cannonball = CreateCannonball(spawnPosition, direction, _tank.AttackDamage);
-            _cannonballs.Add(cannonball);
-            _currentShootCooldown = _shootCooldown;
-
-            //reproducir sonido 3d
-            _gameStateManager.SoundManager.PlaySound3D("cannon_fire", spawnPosition, _camera.ListenerPosition, _camera.ListenerForward);
+            Vector3 spawnPosition = _tank.CannonMuzzlePosition + 
+                (direction * GameConfig.Tank.CannonSpawnOffsetForward) +
+                (Vector3.Up * GameConfig.Tank.CannonSpawnOffsetUp);
+            _cannonballManager.Fire(spawnPosition, direction, _tank.AttackDamage, _gameStateManager.SoundManager, _camera.ListenerPosition, _camera.ListenerForward);
         }
         _previousMouseState = currentMouseState;
 
-        for (int i = _cannonballs.Count - 1; i >= 0; i--)
-        {
-            _cannonballs[i].Update(gameTime, _simulation);
-            if (_cannonballs[i].IsDead)
-            {
-                _cannonballs.RemoveAt(i);
-            }
-        }
-
+        _cannonballManager.Update(gameTime);
         _camera.Update(gameTime, _tank.Position, _tank.TurretRotationWorld); //A la camara ahora le paso la posicion de la torreta en vez de la base
         _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
 
         _hud.TankFuel = _tank.CurrentFuel;
+        if (_tank.CurrentFuel <= 30 && !_tank.IsDead)
+            _gameStateManager.SoundManager.PlaySoundWithCooldown("bajo_combustible_2", 1000);
+
         _hud.TankPosition = _tank.Position;
-        _hud.CannonCurrentCooldown = _currentShootCooldown;
+        //_hud.CannonCurrentCooldown = _currentShootCooldown;
         _hud.CannonMaxCooldown = GameConfig.Tank.Cooldown;
         _hud.Update(gameTime);
 
@@ -307,9 +297,7 @@ public class TGCGame : Game
 
     public void ResetGame()
     {
-        _cannonballs.Clear();
-        
-        _currentShootCooldown = 0f;
+        _cannonballManager.Clear();
         EnemiesKilled = 0;
 
         var tankModel = Content.Load<Model>(ContentFolder3D + getTankPath());
@@ -332,11 +320,6 @@ public class TGCGame : Game
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
     }
 
-    public Cannonball CreateCannonball(Vector3 spawnPosition, Vector3 direction, float damage)
-    {
-        return new Cannonball(_cannonballModel, damage, _effect, spawnPosition, direction, _simulation);
-    }
-
     protected override void Draw(GameTime gameTime)
     {
         // Aca deberiamos poner toda la logica de renderizado del juego.
@@ -349,10 +332,7 @@ public class TGCGame : Game
             _terrain.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
             _tank.Draw(_camera.View, _camera.Projection);
 
-            foreach (var cannonball in _cannonballs)
-            {
-                cannonball.Draw(_camera.View, _camera.Projection);
-            }
+            _cannonballManager.Draw(_camera.View, _camera.Projection);
             _housesManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _staticsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _dinamicsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);

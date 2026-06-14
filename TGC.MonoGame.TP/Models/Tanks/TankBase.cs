@@ -49,8 +49,12 @@ public abstract class TankBase
     public Matrix WorldMatrix =>
         Matrix.CreateScale(GameConfig.Tank.TankScale) *
         Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *
-        Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(_physicsOrientation.X, _physicsOrientation.Y, _physicsOrientation.Z, _physicsOrientation.W)) *
-        Matrix.CreateTranslation(Position);
+        Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(
+            _physicsOrientation.X, 
+            _physicsOrientation.Y, 
+            _physicsOrientation.Z, 
+            _physicsOrientation.W)) *
+        Matrix.CreateTranslation(Position + new Vector3(0, GameConfig.Tank.VisualOffsetY, 0));
 
     public Matrix TurretWorld => Matrix.CreateRotationZ(_turretRotation) * WorldMatrix;
 

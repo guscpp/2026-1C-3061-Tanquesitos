@@ -89,13 +89,14 @@ public static class GameConfig
         public const float AngularVelocityClampZ = 0.3f;    // radianes/segundo
         public const float AngularDampingXZ = 0.88f;        // adimensional
         public const float AngularDampingY = 0.98f;         // adimensional
+        public const float VisualOffsetY = -0.2f;           // metros
 
         public const float CannonMuzzleOffsetY = 1.5f;  // metros
         public const float CannonMuzzleOffsetZ = 2.0f;  // metros
         public const float MinCannonPitch = -10f;  // grados
         public const float MaxCannonPitch = 25f;   // grados
-        public const float CannonSpawnOffsetForward = 1.25f; // metros
-        public const float CannonSpawnOffsetUp = 2f;        // metros
+        public const float CannonSpawnOffsetForward = 1f;   // factor multiplicador
+        public const float CannonSpawnOffsetUp = 0f;        // factor de suma
 
         public static class Stabilizer
         {
@@ -150,7 +151,7 @@ public static class GameConfig
         public const float TextureTileSize = 20f;   // metros, tamano de la textura en el terreno
         public const float MaxHeightMeters = 35f;   // relieve maximo
         public const float PhysicsMargin = 0.2f;    // margen de seguridad para Bepu
-        public const int PhysicsSubsampleStep = 16; // cuanto dividir la resolucion del heightmap para el mesh de Bepu , (1, 2, 4, 8, ...)
+        public const int PhysicsSubsampleStep = 4;  // cuanto dividir la resolucion del heightmap para el mesh de Bepu , (1, 2, 4, 8, ...)
                                                     // PhysicsSubsampleStep = 1 --> 512x512 quads (~500.000 _triangulos_)
     }
 

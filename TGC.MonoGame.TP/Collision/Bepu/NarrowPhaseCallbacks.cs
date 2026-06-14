@@ -94,9 +94,11 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                     objetoChocado.HandleCollision(); //Aca lo declaro muerto
                 }
             }
-            
+
             // Buscar si alguno de los handles pertenece a una bala
-            var cannonball = TGCGame.Instance.Cannonballs.FirstOrDefault(c => c.BodyHandle == handleA || c.BodyHandle == handleB);
+            Cannonball cannonball = null;
+            if (TGCGame.Instance.CannonballManager.TryGetCannonball(handleA, out var cbA)) cannonball = cbA;
+            else if (TGCGame.Instance.CannonballManager.TryGetCannonball(handleB, out var cbB)) cannonball = cbB;
 
             if (cannonball != null)
             {
@@ -184,14 +186,15 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
             var terreno = TGCGame.Instance.TerrainHandle;
             Cannonball cannonball = null;
             if (pair.A.Mobility == CollidableMobility.Static && pair.A.StaticHandle == terreno)
-                cannonball = TGCGame.Instance.Cannonballs.FirstOrDefault(c => c.BodyHandle == pair.B.BodyHandle);
+                TGCGame.Instance.CannonballManager.TryGetCannonball(pair.B.BodyHandle, out cannonball);
 
             if (pair.B.Mobility == CollidableMobility.Static && pair.B.StaticHandle == terreno)
-                cannonball = TGCGame.Instance.Cannonballs.FirstOrDefault(c => c.BodyHandle == pair.A.BodyHandle);
+                TGCGame.Instance.CannonballManager.TryGetCannonball(pair.A.BodyHandle, out cannonball);
 
             if (cannonball != null) cannonball.killCannonball();
+
         }
-        
+
         return true;
     }
 
