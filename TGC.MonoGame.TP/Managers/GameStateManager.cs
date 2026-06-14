@@ -36,9 +36,9 @@ public class GameStateManager
 
     //En algun momento consideramos usar 3 modelos distintos para los 3 tipos
     private readonly string[] _menuTankModelPaths = {
-        "Models/tanques/tank v4", // Scout
-        "Models/tanques/tank v4", // Medium
-        "Models/tanques/tank v4"  // Heavy
+        "Models/tanques/tank v5", // Scout
+        "Models/tanques/tank v5", // Medium
+        "Models/tanques/tank v5"  // Heavy
     };
 
     // Opciones de menu actualizadas para elegir el tipo de tanque

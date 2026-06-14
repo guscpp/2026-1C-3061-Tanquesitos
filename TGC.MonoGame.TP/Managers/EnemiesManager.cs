@@ -53,7 +53,7 @@ public class EnemiesManager
 
     public void LoadContent(ContentManager content)
     {
-        var tankModel = content.Load<Model>(ContentFolder3D + "tanques/tank v4");
+        var tankModel = content.Load<Model>(ContentFolder3D + "tanques/tank v5");
         var tankTexture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
         var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
 

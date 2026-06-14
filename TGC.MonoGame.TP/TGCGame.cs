@@ -62,9 +62,9 @@ public class TGCGame : Game
     public TankFollowCamera Camera => _camera;
     public string[] tankPaths =
     {
-        "tanques/tank v4", // Scout
-        "tanques/tank v4", // Medium
-        "tanques/tank v4"  // Heavy
+        "tanques/tank v5", // Scout
+        "tanques/tank v5", // Medium
+        "tanques/tank v5"  // Heavy
     };
     //-----------TERRENO
     private Terrain _terrain;

@@ -9,15 +9,15 @@ namespace TGC.MonoGame.TP.Cameras;
 public class TankFollowCamera
 {
     //configuracion de la camara
-    public float Distance { get; set; } = GameConfig.Camera.DefaultDistance;        //1800f
-    public float HeightOffset { get; set; } = GameConfig.Camera.HeightOffset;       //1250f
-    public float LookAtHeight { get; set; } = GameConfig.Camera.LookAtHeight;       //8f
-    public float Smoothness { get; set; } = GameConfig.Camera.Smoothness;           //8f
+    public float Distance { get; set; } = GameConfig.Camera.DefaultDistance;
+    public float HeightOffset { get; set; } = GameConfig.Camera.HeightOffset;
+    public float LookAtHeight { get; set; } = GameConfig.Camera.LookAtHeight;
+    public float Smoothness { get; set; } = GameConfig.Camera.Smoothness;
 
     //configuracion del zoom
-    public float MinDistance { get; set; } = GameConfig.Camera.MinDistance;         //20f
-    public float MaxDistance { get; set; } = GameConfig.Camera.MaxDistance;         //4500f
-    public float ZoomSensitivity { get; set; } = GameConfig.Camera.ZoomSensitivity; //250f
+    public float MinDistance { get; set; } = GameConfig.Camera.MinDistance;
+    public float MaxDistance { get; set; } = GameConfig.Camera.MaxDistance;
+    public float ZoomSensitivity { get; set; } = GameConfig.Camera.ZoomSensitivity;
 
     //para calcular el 3d del audio 3d
     public Vector3 ListenerPosition => _currentPosition;
