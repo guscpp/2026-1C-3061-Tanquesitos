@@ -156,7 +156,8 @@ public abstract class TankEnemy : TankBase
             AttackDamage,
             TGCGame.Instance.SoundManager,
             TGCGame.Instance.Camera.ListenerPosition,
-            TGCGame.Instance.Camera.ListenerForward);
+            TGCGame.Instance.Camera.ListenerForward,
+            false);
     }
 
     // Posicion inicial aleatoria para spawnear(sin cambios)

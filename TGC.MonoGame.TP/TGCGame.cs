@@ -272,7 +272,8 @@ public class TGCGame : Game
             Vector3 spawnPosition = _tank.CannonMuzzlePosition + 
                 (direction * GameConfig.Tank.CannonSpawnOffsetForward) +
                 (Vector3.Up * GameConfig.Tank.CannonSpawnOffsetUp);
-            _cannonballManager.Fire(spawnPosition, direction, _tank.AttackDamage, _gameStateManager.SoundManager, _camera.ListenerPosition, _camera.ListenerForward);
+
+            _cannonballManager.Fire(spawnPosition, direction, _tank.AttackDamage, _gameStateManager.SoundManager, _camera.ListenerPosition, _camera.ListenerForward, true);
         }
         _previousMouseState = currentMouseState;
 
@@ -285,7 +286,7 @@ public class TGCGame : Game
             _gameStateManager.SoundManager.PlaySoundWithCooldown("bajo_combustible_2", 1000);
 
         _hud.TankPosition = _tank.Position;
-        //_hud.CannonCurrentCooldown = _currentShootCooldown;
+        _hud.CannonCurrentCooldown = _cannonballManager.CurrentCooldown;
         _hud.CannonMaxCooldown = GameConfig.Tank.Cooldown;
         _hud.Update(gameTime);
 

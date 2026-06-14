@@ -17,6 +17,8 @@ public class CannonballManager
 
     private readonly float _shootCooldown;
     private float _currentCooldown;
+    public float CurrentCooldown => _currentCooldown;
+    public bool CanFire => _currentCooldown <= 0f;
 
     public CannonballManager(Simulation simulation, float cooldown)
     {
@@ -40,15 +42,14 @@ public class CannonballManager
         }
     }
 
-    public bool CanFire => _currentCooldown <= 0f;
-
-    public void Fire(Vector3 spawnPosition, Vector3 direction, float damage, SoundManager soundManager, Vector3 listenerPos, Vector3 listenerForward)
+    public void Fire(Vector3 spawnPosition, Vector3 direction, float damage, SoundManager soundManager, Vector3 listenerPos, Vector3 listenerForward, bool isPlayer = false)
     {
-        if (!CanFire) return;
+        if (isPlayer && !CanFire) return;
 
         var cannonball = new Cannonball(_cannonballModel, damage, _cannonballEffect, spawnPosition, direction, _simulation);
         _cannonballs.Add(cannonball);
-        _currentCooldown = _shootCooldown;
+
+        if (isPlayer) _currentCooldown = _shootCooldown;
 
         soundManager.PlaySound3D("cannon_fire", spawnPosition, listenerPos, listenerForward);
     }
