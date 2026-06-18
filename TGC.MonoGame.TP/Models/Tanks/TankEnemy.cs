@@ -1,7 +1,7 @@
 ﻿using BepuPhysics;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Numerics;
 using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
 
 namespace TGC.MonoGame.TP.Models.Tanks;
@@ -15,7 +15,7 @@ public abstract class TankEnemy : TankBase
     private float _patrolTimer = 0f;
     private float _patrolDirection = 1f;
 
-    protected Microsoft.Xna.Framework.Vector3 _targetPosition;
+    protected Vector3 _targetPosition;
     private float attackRadius = GameConfig.Enemies.AttackRadius;
     private float attackRadiusSq => attackRadius * attackRadius;
 
@@ -23,8 +23,9 @@ public abstract class TankEnemy : TankBase
     protected float _currentShootCooldown = 0f;
     public float ShootCooldown { get; protected set; }
 
-    protected TankEnemy(GameConfig.TankClass tankClass, float hp, float speed, float force, float turnSpeed, float damage, float cooldown)
+    protected TankEnemy(GraphicsDevice graphicsDevice,GameConfig.TankClass tankClass, float hp, float speed, float force, float turnSpeed, float damage, float cooldown)
     {
+        _graphicsDevice = graphicsDevice;
         TankClass = tankClass;
         HealthPoints = hp;
         MaxHealthPoints = hp;
@@ -38,7 +39,7 @@ public abstract class TankEnemy : TankBase
     }
 
     // Mantengo la firma original para no tocar TGCGame.cs
-    public void UpdateEnemy(GameTime gameTime, Simulation simulation, Microsoft.Xna.Framework.Vector3 targetPos, Terrain terrain)
+    public void UpdateEnemy(GameTime gameTime, Simulation simulation, Vector3 targetPos, Terrain terrain)
     {
         if (IsDead) { return;}
 
@@ -47,7 +48,7 @@ public abstract class TankEnemy : TankBase
         _currentShootCooldown -= dt;
 
         var body = simulation.Bodies.GetBodyReference(TankHandler);
-        var currentPos = new Microsoft.Xna.Framework.Vector3(body.Pose.Position.X, body.Pose.Position.Y, body.Pose.Position.Z);
+        var currentPos = new Vector3(body.Pose.Position.X, body.Pose.Position.Y, body.Pose.Position.Z);
         var toTarget = _targetPosition - currentPos;
         float distanceToPlayer = toTarget.Length();
 
@@ -101,8 +102,8 @@ public abstract class TankEnemy : TankBase
                 _cannonRotation = MathHelper.Clamp(-toTarget.Y * 0.015f, _minCannonPitch, _maxCannonPitch);
 
                 float angleToTarget = MathF.Atan2(
-                    Microsoft.Xna.Framework.Vector3.Cross(forwardXna, toTarget).Y,
-                    Microsoft.Xna.Framework.Vector3.Dot(forwardXna, toTarget)
+                    Vector3.Cross(forwardXna, toTarget).Y,
+                    Vector3.Dot(forwardXna, toTarget)
                 );
 
                 turnInput = Math.Sign(angleToTarget) * Math.Min(MathF.Abs(angleToTarget), 1f);
@@ -125,8 +126,8 @@ public abstract class TankEnemy : TankBase
                 var fleeDir = -toTarget;
                 fleeDir.Normalize();
                 float angleToFlee = MathF.Atan2(
-                    Microsoft.Xna.Framework.Vector3.Cross(forwardXna, fleeDir).Y,
-                    Microsoft.Xna.Framework.Vector3.Dot(forwardXna, fleeDir)
+                    Vector3.Cross(forwardXna, fleeDir).Y,
+                    Vector3.Dot(forwardXna, fleeDir)
                 );
 
                 turnInput = Math.Sign(angleToFlee) * Math.Min(MathF.Abs(angleToFlee), 1f);
@@ -144,11 +145,11 @@ public abstract class TankEnemy : TankBase
     }
 
     //Metodo auxiliar
-    private void FireCannon(Simulation simulation, Microsoft.Xna.Framework.Vector3 currentPos)
+    private void FireCannon(Simulation simulation, Vector3 currentPos)
     {
         var dir = CannonForward;
         var spawnPos = currentPos + dir * GameConfig.Enemies.CannonSpawnOffsetForward + 
-            Microsoft.Xna.Framework.Vector3.Up * GameConfig.Enemies.CannonSpawnOffsetUp;
+            Vector3.Up * GameConfig.Enemies.CannonSpawnOffsetUp;
 
         TGCGame.Instance.CannonballManager.Fire(
             spawnPos,
@@ -161,12 +162,12 @@ public abstract class TankEnemy : TankBase
     }
 
     // Posicion inicial aleatoria para spawnear(sin cambios)
-    public Microsoft.Xna.Framework.Vector3 GetPosition(Terrain terrain, Random random)
+    public Vector3 GetPosition(Terrain terrain, Random random)
     {
         var min = -terrain.WidthUnits - GameConfig.Enemies.SpawnMapMargin;
         var max = terrain.WidthUnits - GameConfig.Enemies.SpawnMapMargin;
         var x = random.NextSingle() * (max - min) + min;
         var z = random.NextSingle() * (max - min) + min;
-        return new Microsoft.Xna.Framework.Vector3(x, terrain.GetHeight(x, z) + GameConfig.Tank.SpawnZMargin, z);
+        return new Vector3(x, terrain.GetHeight(x, z) + GameConfig.Tank.SpawnZMargin, z);
     }
 }

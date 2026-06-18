@@ -1,7 +1,5 @@
 using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace TGC.MonoGame.TP.Collisions
 {
@@ -258,43 +256,6 @@ namespace TGC.MonoGame.TP.Collisions
 
             return ((squaredPointX + squaredPointZ) <= squaredRadius) ? ContainmentType.Contains : ContainmentType.Disjoint;
         }
-
-
-        /// <summary>
-        ///     Gets the closest point in a cylinder from a point.
-        /// </summary>
-        /// <param name="point">The point from which to find the closest position.</param>
-        /// <returns>A position in the cylinder that is the closest to <paramref name="point"/></returns>
-        private Vector3 ClosestPoint(Vector3 point)
-        {
-            // Transform the point to cylindrical UVW coordinates
-            var uvwPoint = Vector3.Transform(point, _inverseRotation);
-
-            // Find the closest point in UVW coordinates
-
-            var direction = uvwPoint - _center;
-            direction.Y = 0;
-            if (direction.LengthSquared() > (_radius * _radius))
-            {
-                direction.Normalize();
-                direction *= _radius;
-            }
-
-            var distanceY = uvwPoint.Y - _center.Y;
-            if (MathF.Abs(distanceY) > _halfHeight)
-                return _center + new Vector3(0, _halfHeight, 0) * Math.Sign(distanceY) + direction;
-
-            var uvwResult = _center + new Vector3(0, distanceY, 0) + direction;
-
-
-
-
-            // Transform that result back to world coordinates
-            var translatedRotation = Matrix.Invert(_inverseRotation);
-            return Vector3.Transform(uvwResult, translatedRotation);
-        }
-
-
 
         /// <summary>
         ///   Check if this <see cref="BoundingCylinder"/> intersects a <see cref="BoundingSphere"/>.

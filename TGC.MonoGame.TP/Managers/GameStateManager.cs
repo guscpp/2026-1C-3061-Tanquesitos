@@ -200,13 +200,13 @@ public class GameStateManager
     private void HandleMenuInput(KeyboardState kb, KeyboardState lastKb)
     {
         // Teclado: flechas arriba/abajo
-        if ((kb.IsKeyDown(Keys.Down) || kb.IsKeyDown(Keys.S)) && (lastKb.IsKeyUp(Keys.Down) && lastKb.IsKeyUp(Keys.S)))
+        if ((kb.IsKeyDown(Keys.Down) || kb.IsKeyDown(Keys.S)) && lastKb.IsKeyUp(Keys.Down) && lastKb.IsKeyUp(Keys.S))
             {
             TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
             _selectedIndex = (_selectedIndex + 1) % _menuOptions.Length;
         }
             
-        else if ((kb.IsKeyDown(Keys.Up) || kb.IsKeyDown(Keys.W)) && (lastKb.IsKeyUp(Keys.Up) && lastKb.IsKeyUp(Keys.W)))
+        else if ((kb.IsKeyDown(Keys.Up) || kb.IsKeyDown(Keys.W)) && lastKb.IsKeyUp(Keys.Up) && lastKb.IsKeyUp(Keys.W))
         {
             TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
             _selectedIndex = (_selectedIndex - 1 + _menuOptions.Length) % _menuOptions.Length;
@@ -253,7 +253,7 @@ public class GameStateManager
         // 5. Recorrer cada opción del menú para verificar si el mouse está dentro de su area visual
         for (int i = 0; i < _menuOptions.Length; i++)
         {
-            bool isSelected = (i == _selectedIndex);
+            bool isSelected = i == _selectedIndex;
             float currentScale = isSelected ? scalePulse : 1f;
 
             Rectangle rect = CalculateOptionRectangle(i, center, currentScale);
@@ -399,19 +399,19 @@ public class GameStateManager
             return;
         }
 
-        Microsoft.Xna.Framework.Vector3 whiteColor = Microsoft.Xna.Framework.Vector3.One;
-        Microsoft.Xna.Framework.Vector3 menuTankColor = Microsoft.Xna.Framework.Color.White.ToVector3();
+        Vector3 whiteColor = Vector3.One;
+        Vector3 menuTankColor = Color.White.ToVector3();
         
         if (_selectedIndex == 0) // Scout
-            menuTankColor = new Microsoft.Xna.Framework.Color(50, 205, 50).ToVector3();   // Verde
+            menuTankColor = new Color(50, 205, 50).ToVector3();   // Verde
         else if (_selectedIndex == 1) // Medium
-            menuTankColor = new Microsoft.Xna.Framework.Color(255, 215, 0).ToVector3();   // Amarillo
+            menuTankColor = new Color(255, 215, 0).ToVector3();   // Amarillo
         else if (_selectedIndex == 2) // Heavy
-            menuTankColor = new Microsoft.Xna.Framework.Color(178, 34, 34).ToVector3();   // 
+            menuTankColor = new Color(178, 34, 34).ToVector3();   // 
 
         foreach (var mesh in _currentMenuTankModel.Meshes)
         {
-            Microsoft.Xna.Framework.Vector3 colorToApply = whiteColor;
+            Vector3 colorToApply = whiteColor;
 
             if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") ||
                 mesh.Name.Contains("Proteccion_d") || mesh.Name.Contains("Proteccion_i") ||

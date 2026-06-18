@@ -1,15 +1,8 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
-using BepuPhysics.Collidables;
-// Alias para evitar la ambigüedad molesta entre los dos motores que no se como solucionar ;_;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
-using BepuVector3 = System.Numerics.Vector3;
-//No entiendo por que debo agregar otra vez estas librerias si ya estan en decorationnnn
-using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Decorations
@@ -39,6 +32,13 @@ namespace TGC.MonoGame.TP.Models.Decorations
         {
             if (IsDead) return; //si el modelo esta muerto no lo dibuja 
             base.Draw(view, projection);
+        }
+
+        public override void DrawDepth(Matrix lightViewProjection)
+        {
+            if (IsDead) return; 
+
+            base.DrawDepth(lightViewProjection);
         }
         
         //DIBUJO LAS COLISIONES (Modificacion de la funcion en DECORATION)

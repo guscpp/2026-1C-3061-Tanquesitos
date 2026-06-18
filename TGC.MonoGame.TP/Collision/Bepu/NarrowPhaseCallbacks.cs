@@ -1,18 +1,13 @@
-using System;
-using System.Numerics;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
-using BepuUtilities;
 
 using TGC.MonoGame.TP;
 using TGC.MonoGame.TP.Models.Decorations;
 using TGC.MonoGame.TP.Models.Tanks;
-using TGC.MonoGame.TP.Models;
 
 public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
 {

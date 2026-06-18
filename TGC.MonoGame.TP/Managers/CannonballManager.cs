@@ -81,6 +81,14 @@ public class CannonballManager
         }
     }
 
+    public void DrawDepth(Matrix lightViewProjection)
+    {
+        foreach (var cannonball in _cannonballs)
+        {
+            cannonball.DrawDepth(lightViewProjection);
+        }
+    }
+
     public void Clear()
     {
         for (int i = _cannonballs.Count - 1; i >= 0; i--)

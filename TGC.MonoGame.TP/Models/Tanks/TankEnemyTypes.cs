@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.Xna.Framework.Graphics;
 
 namespace TGC.MonoGame.TP.Models.Tanks;
 
 public class TankEnemyScout : TankEnemy
 {
-    public TankEnemyScout() : base(
+    public TankEnemyScout(GraphicsDevice graphicsDevice) : base(
+        graphicsDevice: graphicsDevice,
         GameConfig.TankClass.Scout,
         hp: GameConfig.TankClasses.Scout.EnemyHealth,
         speed: GameConfig.TankClasses.Scout.MaxSpeed,
@@ -21,7 +18,8 @@ public class TankEnemyScout : TankEnemy
 
 public class TankEnemyMedium : TankEnemy
 {
-    public TankEnemyMedium() : base(
+    public TankEnemyMedium(GraphicsDevice graphicsDevice) : base(
+        graphicsDevice: graphicsDevice,
         GameConfig.TankClass.Medium,
         hp: GameConfig.TankClasses.Medium.EnemyHealth,
         speed: GameConfig.TankClasses.Medium.MaxSpeed,
@@ -34,7 +32,8 @@ public class TankEnemyMedium : TankEnemy
 
 public class TankEnemyHeavy : TankEnemy
 {
-    public TankEnemyHeavy() : base(
+    public TankEnemyHeavy(GraphicsDevice graphicsDevice) : base(
+        graphicsDevice: graphicsDevice,
         GameConfig.TankClass.Heavy,
         hp: GameConfig.TankClasses.Heavy.EnemyHealth,
         speed: GameConfig.TankClasses.Heavy.MaxSpeed,

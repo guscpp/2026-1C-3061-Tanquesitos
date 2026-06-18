@@ -1,11 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using TGC.MonoGame.TP.Managers;
 
 namespace TGC.MonoGame.TP.Models;
 
@@ -228,7 +224,7 @@ public class Hud
         _spriteBatch.End();
     }
 
-    private int getPlayerHealth() => (int)(TGCGame.Instance._tank.HealthPoints);
+    private int getPlayerHealth() => (int)TGCGame.Instance._tank.HealthPoints;
 
     public void Dispose()
     {

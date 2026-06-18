@@ -1,22 +1,5 @@
 using BepuPhysics;
 using BepuPhysics.Collidables;
-using BepuPhysics.CollisionDetection;
-using BepuPhysics.Constraints;
-using BepuUtilities.Memory;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Transactions;
-using TGC.MonoGame.Samples.Physics.Bepu;
-using TGC.MonoGame.TP.Cameras;
-using TGC.MonoGame.TP.Gizmos;
-using TGC.MonoGame.TP.Models;
-using TGC.MonoGame.TP.Models.Decorations;
-using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Models.Terrains;
 

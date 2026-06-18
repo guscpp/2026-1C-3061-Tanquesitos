@@ -1,19 +1,13 @@
 using BepuPhysics;
-using BepuPhysics.CollisionDetection;
-using BepuPhysics.Constraints;
-using BepuUtilities.Memory;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
-using static TGC.MonoGame.TP.GameConfig;
 using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
-using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Managers;
@@ -83,7 +77,7 @@ public class StaticsManager
 
     public void LoadContent(ContentManager content, Simulation simulation)
     {
-        var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+        var effect = content.Load<Effect>(ContentFolderEffects + "ShadowMap");
 
         foreach (var asset in _decorationModels)
         {
@@ -102,6 +96,14 @@ public class StaticsManager
         }
     }
 
+    public void DrawDepth(Matrix lightViewProjection)
+    {
+        foreach (var asset in _decorationModels)
+        {
+            asset.DrawDepth(lightViewProjection);
+        }
+    }
+
     //Me da una posicion aleatoria sobre el terreno
     private Vector3 GetRandomPosition()
     {
@@ -117,7 +119,7 @@ public class StaticsManager
     //Me genera una nueva decoracion con la posicion que le paso
     public Decoration GetDecoration(Vector3 position)
     {
-        Vector3 dynamicPos = position + Vector3.Up * GameConfig.Assets.DynamicSpawnOffset;
+        _ = position + Vector3.Up * GameConfig.Assets.DynamicSpawnOffset;
         Vector3 rocaPos = position + Vector3.Up * 1.5f;
         var path = GetRandomAssetPath();
         return path switch

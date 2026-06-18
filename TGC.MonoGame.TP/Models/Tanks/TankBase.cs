@@ -3,7 +3,6 @@ using BepuPhysics.Collidables;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Tanks;
@@ -23,10 +22,12 @@ public abstract class TankBase
     public float AttackDamage { get; set; }
     public GameConfig.TankClass TankClass { get; protected set; }
 
-    public Microsoft.Xna.Framework.Vector3 Position { get; set; } = Microsoft.Xna.Framework.Vector3.Zero;
+    public Vector3 Position { get; set; } = Vector3.Zero;
     public float RotationY { get; protected set; }
     public bool IsDead { get; protected set; }
     public BodyHandle TankHandler;
+
+    protected GraphicsDevice _graphicsDevice;
 
     protected System.Numerics.Quaternion _physicsOrientation = System.Numerics.Quaternion.Identity;
     protected float _turretRotation = 0f;
@@ -37,19 +38,19 @@ public abstract class TankBase
     public float TurretRotationWorld => RotationY + _turretRotation;
     public float CannonRotation => _cannonRotation;
 
-    public Microsoft.Xna.Framework.Vector3 CannonForward
+    public Vector3 CannonForward
     {
         get
         {
             var rot = Matrix.CreateRotationX(_cannonRotation) * Matrix.CreateRotationY(TurretRotationWorld);
-            return Microsoft.Xna.Framework.Vector3.Transform(Microsoft.Xna.Framework.Vector3.Forward, rot);
+            return Vector3.Transform(Vector3.Forward, rot);
         }
     }
 
     public Matrix WorldMatrix =>
         Matrix.CreateScale(GameConfig.Tank.TankScale) *
         Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *
-        Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(
+        Matrix.CreateFromQuaternion(new Quaternion(
             _physicsOrientation.X, 
             _physicsOrientation.Y, 
             _physicsOrientation.Z, 
@@ -63,7 +64,7 @@ public abstract class TankBase
     public Vector3 CannonMuzzlePosition => Vector3.Transform(
         new Vector3(0f, GameConfig.Tank.CannonMuzzleOffsetY, GameConfig.Tank.CannonMuzzleOffsetZ), CannonWorld);
 
-    protected Microsoft.Xna.Framework.Color GetTankColor()
+    protected Color GetTankColor()
     {
         switch (TankClass)
         {
@@ -118,16 +119,21 @@ public abstract class TankBase
             IsDead = true; }
     }
 
-    public virtual void Draw(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
+    public virtual void Draw(Matrix view, Matrix projection)
     {
         if (Model == null || IsDead) return;
 
-        Microsoft.Xna.Framework.Vector3 colorVector = GetTankColor().ToVector3();
-        Microsoft.Xna.Framework.Vector3 whiteColor = Microsoft.Xna.Framework.Vector3.One;
+        _effect.CurrentTechnique = _effect.Techniques["DrawShadowedHibrido"];
 
+        var smm = TGCGame.Instance.ShadowMapManager;
         _effect.Parameters["View"].SetValue(view);
         _effect.Parameters["Projection"].SetValue(projection);
         _effect.Parameters["ModelTexture"].SetValue(_texture);
+        _effect.Parameters["LightViewProjection"].SetValue(smm.LightViewProjection);
+        _effect.Parameters["lightPosition"].SetValue(smm.LightPosition);
+
+        Vector3 colorVector = GetTankColor().ToVector3();
+        Vector3 whiteColor = Vector3.One;
 
         foreach (var mesh in Model.Meshes)
         {
@@ -147,8 +153,45 @@ public abstract class TankBase
                 _effect.Parameters["DiffuseColor"].SetValue(whiteColor);
 
             _effect.Parameters["World"].SetValue(finalWorld);
+            _effect.Parameters["InverseTransposeWorld"].SetValue(
+            Matrix.Transpose(Matrix.Invert(finalWorld)));
 
             mesh.Draw();
+        }
+    }
+
+    public virtual void DrawDepth(Matrix lightViewProjection)
+    {
+        if (Model == null || IsDead) return;
+
+        _effect.CurrentTechnique = _effect.Techniques["DepthPass"];
+
+        foreach (var mesh in Model.Meshes)
+        {
+            var world = WorldMatrix;
+            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola"))
+                world = TurretWorld;
+            else if (mesh.Name.Contains("Cañon") || mesh.Name.Contains("Anillo"))
+                world = CannonWorld;
+
+            _effect.Parameters["WorldViewProjection"].SetValue(world * lightViewProjection);
+
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                _graphicsDevice.SetVertexBuffer(meshPart.VertexBuffer);
+                _graphicsDevice.Indices = meshPart.IndexBuffer;
+
+                foreach (var pass in _effect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    _graphicsDevice.DrawIndexedPrimitives(
+                        PrimitiveType.TriangleList,
+                        meshPart.VertexOffset,
+                        meshPart.StartIndex,
+                        meshPart.PrimitiveCount
+                    );
+                }
+            }
         }
     }
 
@@ -161,7 +204,7 @@ public abstract class TankBase
         var pose = body.Pose;
 
         //Creo la matriz de mundo del cuerpo físico completo (centrada en su Centro de Masa)
-        Matrix bodyWorld = Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(
+        Matrix bodyWorld = Matrix.CreateFromQuaternion(new Quaternion(
                             pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W)) 
                         * Matrix.CreateTranslation(new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z));
 
@@ -261,7 +304,7 @@ public abstract class TankBase
 
         // Actualizar variables de estado para el render y la logica de juego
         var pose = body.Pose;
-        Position = new Microsoft.Xna.Framework.Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
+        Position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
         _physicsOrientation = pose.Orientation;
 
         // Extraer el angulo de yaw para la rotacion de la torreta y camara

@@ -105,26 +105,58 @@ public class Cannonball
 
     public void Draw(Matrix view, Matrix projection)
     {
-        _effect.Parameters["World"]?.SetValue(_world);
+        if (_model == null || _isDead) return;
 
+        _effect.CurrentTechnique = _effect.Techniques["DrawShadowedHibrido"];
+
+        var smm = TGCGame.Instance.ShadowMapManager;
         _effect.Parameters["View"]?.SetValue(view);
-
         _effect.Parameters["Projection"]?.SetValue(projection);
-
-        // gris oscuro
         _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.1f, 0.1f, 0.1f));
+        _effect.Parameters["LightViewProjection"]?.SetValue(smm.LightViewProjection);
+        _effect.Parameters["lightPosition"]?.SetValue(smm.LightPosition);
+        _effect.Parameters["shadowMapStatic"]?.SetValue(smm.StaticShadowRenderTarget);
+        _effect.Parameters["shadowMapDynamic"]?.SetValue(smm.DynamicShadowRenderTarget);
+        _effect.Parameters["shadowMapSize"]?.SetValue(new Vector2(smm.StaticShadowRenderTarget.Width, smm.StaticShadowRenderTarget.Height));
 
         Matrix[] transforms = new Matrix[_model.Bones.Count];
-
         _model.CopyAbsoluteBoneTransformsTo(transforms);
 
         foreach (var mesh in _model.Meshes)
         {
             Matrix localWorld = transforms[mesh.ParentBone.Index] * _world;
-
             _effect.Parameters["World"]?.SetValue(localWorld);
-
+            _effect.Parameters["InverseTransposeWorld"]?.SetValue(Matrix.Transpose(Matrix.Invert(localWorld)));
             mesh.Draw();
         }
     }
+
+    public void DrawDepth(Matrix lightViewProjection)
+    {
+        if (_model == null || _effect == null || _isDead) return;
+
+        _effect.CurrentTechnique = _effect.Techniques["DepthPass"];
+
+        Matrix[] transforms = new Matrix[_model.Bones.Count];
+        _model.CopyAbsoluteBoneTransformsTo(transforms);
+
+        foreach (var mesh in _model.Meshes)
+        {
+            Matrix localWorld = transforms[mesh.ParentBone.Index] * _world;
+            _effect.Parameters["WorldViewProjection"]?.SetValue(localWorld * lightViewProjection);
+
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                foreach (var pass in _effect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    var gd = _effect.GraphicsDevice;
+                    gd.SetVertexBuffer(meshPart.VertexBuffer);
+                    gd.Indices = meshPart.IndexBuffer;
+                    gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, meshPart.VertexOffset, meshPart.StartIndex, meshPart.PrimitiveCount);
+                }
+            }
+        }
+    }
+    
 }

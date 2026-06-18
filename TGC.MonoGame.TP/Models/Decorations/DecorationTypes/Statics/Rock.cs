@@ -1,12 +1,9 @@
-using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
-using BepuVector3 = System.Numerics.Vector3;
-using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Decorations
@@ -23,7 +20,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
                 base.LoadContent(content, simulation, effect);
                 
                 // Calculamos el radio base y lo multiplicamos por 0.45f para achicar el diámetro general
-                _radius = ((_dimensions.X + _dimensions.Z) / 4f) * 0.45f; 
+                _radius = (_dimensions.X + _dimensions.Z) / 4f * 0.45f; 
                 
                 // Hacemos la altura un poco más baja para que el tanque no choque con el aire arriba de la piedra
                 _height = _dimensions.Y * 0.3f; 

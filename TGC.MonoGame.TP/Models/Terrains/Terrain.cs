@@ -1,12 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Data;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuUtilities.Memory;
-using System.Numerics;
 
 namespace TGC.MonoGame.TP.Models.Terrains;
 
@@ -18,12 +15,8 @@ public class Terrain
     //escalas para controlar el tamano y relieve del terreno
     private const float TerrainScale = GameConfig.Terrain.CellSizeMeters;       //100f
     private const float HeightScale = GameConfig.Terrain.MaxHeightMeters;       //3500f
-    private float _heightmapWidth;
-    private float _heightmapHeight;
-
     public float WidthUnits => 518f * TerrainScale / 2;   //unidades de ancho 
 
-    private Texture2D _heightmapTexture;
     private Texture2D _groundTexture;
 
     private readonly GraphicsDevice _graphicsDevice;
@@ -44,9 +37,6 @@ public class Terrain
 
     public void LoadContent(Texture2D heightmapTexture, Texture2D groundTexture, Effect BasicShader)
     {
-        _heightmapTexture = heightmapTexture;
-        _heightmapWidth = heightmapTexture.Width;
-        _heightmapHeight = heightmapTexture.Height;
         CreateHeightmapMesh(heightmapTexture);
 
         _groundTexture = groundTexture;
@@ -67,8 +57,8 @@ public class Terrain
         VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[_width * _height];
         uint[] indices = new uint[(_width - 1) * (_height - 1) * 6];
 
-        float halfWidth = (_width * TerrainScale) / 2f;
-        float halfHeight = (_height * TerrainScale) / 2f;
+        float halfWidth = _width * TerrainScale / 2f;
+        float halfHeight = _height * TerrainScale / 2f;
         int index = 0;
 
         for (int z = 0; z < _height; z++)
@@ -78,7 +68,7 @@ public class Terrain
                 float height = heightmapData[z * _width + x].R / 255f * HeightScale;
                 _heights[x, z] = height;
 
-                Microsoft.Xna.Framework.Vector3 position = new Microsoft.Xna.Framework.Vector3(x * TerrainScale - halfWidth, height, z * TerrainScale - halfHeight);
+                Vector3 position = new Vector3(x * TerrainScale - halfWidth, height, z * TerrainScale - halfHeight);
 
                 // 2. Cálculo de Normales (Diferencia finita central)
                 // Obtenemos la altura de los vecinos para calcular la pendiente
@@ -88,14 +78,14 @@ public class Terrain
                 float hU = GetHeightAtPixel(x, Math.Min(_height - 1, z + 1));
 
                 // El vector normal no normalizado. Y es la altura, por eso el componente Y es 2 * TerrainScale
-                Microsoft.Xna.Framework.Vector3 normal = new Microsoft.Xna.Framework.Vector3(hL - hR, 2.0f * TerrainScale, hD - hU);
+                Vector3 normal = new Vector3(hL - hR, 2.0f * TerrainScale, hD - hU);
                 normal.Normalize();
 
                 // 3. Cálculo de UVs para Tiling
-                float u = (x * TerrainScale) / GameConfig.Terrain.TextureTileSize;
-                float v = (z * TerrainScale) / GameConfig.Terrain.TextureTileSize;
+                float u = x * TerrainScale / GameConfig.Terrain.TextureTileSize;
+                float v = z * TerrainScale / GameConfig.Terrain.TextureTileSize;
 
-                vertices[z * _width + x] = new VertexPositionNormalTexture(position, normal, new Microsoft.Xna.Framework.Vector2(u, v));
+                vertices[z * _width + x] = new VertexPositionNormalTexture(position, normal, new Vector2(u, v));
 
                 // Generación de índices (sin cambios, ya era correcta)
                 if (x < _width - 1 && z < _height - 1)
@@ -187,8 +177,8 @@ public class Terrain
         pool.Take<Triangle>(triangleCount, out Buffer<Triangle> triangles);
         int idx = 0;
 
-        float halfWidth = (_width * TerrainScale) / 2f;
-        float halfHeight = (_height * TerrainScale) / 2f;
+        float halfWidth = _width * TerrainScale / 2f;
+        float halfHeight = _height * TerrainScale / 2f;
 
         // 2. Usar Math.Min para asegurar que el último paso aterrice exactamente en el borde del mapa (píxel 511)
         for (int i = 0; i < quadsZ; i++)
@@ -224,26 +214,48 @@ public class Terrain
         return simulation.Statics.Add(new StaticDescription(System.Numerics.Vector3.Zero, shapeIndex));
     }
 
-    public void Draw(Matrix view, Matrix projection, Microsoft.Xna.Framework.Vector3 cameraPosition)
+    public void Draw(Matrix view, Matrix projection, Vector3 cameraPosition)
     {
         if (_terrainEffect == null || _groundTexture == null) return;
+
+        _terrainEffect.CurrentTechnique = _terrainEffect.Techniques["DrawShadowedHibrido"];
 
         _terrainEffect.Parameters["World"].SetValue(Matrix.Identity);
         _terrainEffect.Parameters["View"].SetValue(view);
         _terrainEffect.Parameters["Projection"].SetValue(projection);
-
-        //Para usar con BlinnPhong habria que sacar estos comentarios y ajustar
         _terrainEffect.Parameters["ModelTexture"].SetValue(_groundTexture);
-        //_terrainEffect.Parameters["LightDirection"].SetValue(new Microsoft.Xna.Framework.Vector3(0, -1, 0));
-        //_terrainEffect.Parameters["LightColor"].SetValue(Microsoft.Xna.Framework.Vector3.Zero);
-        //_terrainEffect.Parameters["AmbientColor"].SetValue(Microsoft.Xna.Framework.Vector3.One); 
-        //_terrainEffect.Parameters["EyePosition"].SetValue(cameraPosition);
+
+        _terrainEffect.Parameters["DiffuseColor"]?.SetValue(Vector3.One);
+        _terrainEffect.Parameters["EyePosition"]?.SetValue(cameraPosition); 
+        // ═════════════════════
+
+        var smm = TGCGame.Instance.ShadowMapManager;
+        _terrainEffect.Parameters["LightViewProjection"].SetValue(smm.LightViewProjection);
+        _terrainEffect.Parameters["lightPosition"].SetValue(smm.LightPosition);
+        _terrainEffect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(Matrix.Identity)));
 
         _graphicsDevice.SetVertexBuffer(_terrainVertexBuffer);
         _graphicsDevice.Indices = _terrainIndexBuffer;
         _graphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
         _graphicsDevice.DepthStencilState = DepthStencilState.Default;
         _graphicsDevice.BlendState = BlendState.Opaque;
+
+        foreach (var pass in _terrainEffect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            _graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, _primitiveCount);
+        }
+    }
+
+    public void DrawDepth(Matrix lightViewProjection)
+    {
+        if (_terrainEffect == null) return;
+
+        _terrainEffect.CurrentTechnique = _terrainEffect.Techniques["DepthPass"];
+        _terrainEffect.Parameters["WorldViewProjection"].SetValue(lightViewProjection); 
+
+        _graphicsDevice.SetVertexBuffer(_terrainVertexBuffer);
+        _graphicsDevice.Indices = _terrainIndexBuffer;
 
         foreach (var pass in _terrainEffect.CurrentTechnique.Passes)
         {

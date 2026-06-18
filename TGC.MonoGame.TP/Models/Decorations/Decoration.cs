@@ -1,14 +1,8 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
-using BepuPhysics.Collidables;
-// Alias para evitar la ambigüedad molesta entre los dos motores que no se como solucionar ;_;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
-using BepuVector3 = System.Numerics.Vector3;
-//No entiendo por que debo agregar otra vez estas librerias si ya estan en decorationnnn
 using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
@@ -27,6 +21,7 @@ public class Decoration
     protected Vector3 _position; //Vector3 de monogame por si en la terminal me vuelve a tirar "qui ni sibi bujuju"
     protected float _visualScale;
     protected string _path;
+    protected Effect _effect;
     protected BoundingBox _boundingBox; //la cajita xd
     protected Vector3 _dimensions; //guarda el ancho, alto y largo del modelo
     protected Vector3 _modelCenter; //ubicacion del pivote
@@ -45,7 +40,7 @@ public class Decoration
     {
         _model = content.Load<Model>(ContentFolder3D + _path);
         _texture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512"); //Aprovechando que todos usan la misma imagen
-        var instanciaEffect = effect.Clone(); //Como lo clono en vez de usar el mismo comparto el codigo pero no el parametro world ni view que varian de modelo a modelo
+        _effect = effect.Clone(); //Como lo clono en vez de usar el mismo comparto el codigo pero no el parametro world ni view que varian de modelo a modelo
         //Para cada malla de mi coleccion de mallas del modelo
         foreach (var mesh in _model.Meshes) 
         {
@@ -53,7 +48,7 @@ public class Decoration
             foreach (var meshPart in mesh.MeshParts)
             {
                 // Reemplazamos el efecto por defecto del modelo por el nuestro
-                meshPart.Effect = instanciaEffect;
+                meshPart.Effect = _effect;
             } 
         }
 
@@ -68,26 +63,99 @@ public class Decoration
     //DIBUJO LAS COLISIONES (Modificable)
     public virtual void DrawCollisionChamber(Gizmo gizmos, Simulation simulation) {}
 
-    //DIBUJO (Modificable)
     public virtual void Draw(Matrix view, Matrix projection)
     {
-        if (_model == null) return;
+        if (_model == null || _effect == null) return;
 
-        //Quitamos del loop los que son iguales para mejorar performance
-        var effect = _model.Meshes[0].MeshParts[0].Effect;
-        effect.Parameters["View"].SetValue(view);
-        effect.Parameters["Projection"].SetValue(projection);
-        effect.Parameters["ModelTexture"].SetValue(_texture);
+        var smm = TGCGame.Instance.ShadowMapManager;
 
-        //Para cada malla en la coleccion de mallas del modelo
+        var technique = _effect.Techniques["DrawShadowedHibrido"];
+        if (technique == null)
+        {
+            if (_effect.Techniques.Count > 0)
+                _effect.CurrentTechnique = _effect.Techniques[0];
+        }
+        else
+        {
+            _effect.CurrentTechnique = technique;
+        }
+
+        _effect.Parameters["View"]?.SetValue(view);
+        _effect.Parameters["Projection"]?.SetValue(projection);
+        _effect.Parameters["ModelTexture"]?.SetValue(_texture);
+        _effect.Parameters["World"]?.SetValue(_world);
+        _effect.Parameters["DiffuseColor"]?.SetValue(Vector3.One); 
+        _effect.Parameters["InverseTransposeWorld"]?.SetValue(Matrix.Transpose(Matrix.Invert(_world)));
+
+        if (smm != null)
+        {
+            _effect.Parameters["LightViewProjection"]?.SetValue(smm.LightViewProjection);
+            _effect.Parameters["lightPosition"]?.SetValue(smm.LightPosition);
+            
+            _effect.Parameters["shadowMapStatic"]?.SetValue(smm.StaticShadowRenderTarget);
+            _effect.Parameters["shadowMapDynamic"]?.SetValue(smm.DynamicShadowRenderTarget);
+            
+            if (smm.StaticShadowRenderTarget != null)
+            {
+                _effect.Parameters["shadowMapSize"]?.SetValue(new Vector2(smm.StaticShadowRenderTarget.Width, smm.StaticShadowRenderTarget.Height));
+            }
+        }
+
+        var gd = _effect.GraphicsDevice;
+
         foreach (var mesh in _model.Meshes)
         {
-            //En contraposicion a lo que estabamos haciendo en la clase Decoration, ahora buscamos el efecto de cada parte ya que lo asignamos en el LoadContent
             foreach (var meshPart in mesh.MeshParts)
             {
-                effect.Parameters["World"].SetValue(_world);                
+                foreach (var pass in _effect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    
+                    gd.SetVertexBuffer(meshPart.VertexBuffer);
+                    gd.Indices = meshPart.IndexBuffer;
+                    gd.DrawIndexedPrimitives(
+                        PrimitiveType.TriangleList, 
+                        meshPart.VertexOffset, 
+                        meshPart.StartIndex, 
+                        meshPart.PrimitiveCount
+                    );
+                }
             }
-            mesh.Draw();
+        }
+    }
+
+    public virtual void DrawDepth(Matrix lightViewProjection)
+    {
+        if (_model == null || _effect == null) return;
+
+        var technique = _effect.Techniques["DepthPass"];
+        if (technique != null)
+        {
+            _effect.CurrentTechnique = technique;
+        }
+
+        _effect.Parameters["WorldViewProjection"]?.SetValue(_world * lightViewProjection);
+
+        var gd = _effect.GraphicsDevice;
+
+        foreach (var mesh in _model.Meshes)
+        {
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                foreach (var pass in _effect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    
+                    gd.SetVertexBuffer(meshPart.VertexBuffer);
+                    gd.Indices = meshPart.IndexBuffer;
+                    gd.DrawIndexedPrimitives(
+                        PrimitiveType.TriangleList, 
+                        meshPart.VertexOffset, 
+                        meshPart.StartIndex, 
+                        meshPart.PrimitiveCount
+                    );
+                }
+            }
         }
     }
     

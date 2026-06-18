@@ -1,19 +1,13 @@
 using BepuPhysics;
-using BepuPhysics.CollisionDetection;
-using BepuPhysics.Constraints;
-using BepuUtilities.Memory;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
-using static TGC.MonoGame.TP.GameConfig;
 using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
-using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Managers;
@@ -77,7 +71,7 @@ public class DinamicsManager
 
     public void LoadContent(ContentManager content, Simulation simulation)
     {
-        var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+        var effect = content.Load<Effect>(ContentFolderEffects + "ShadowMap");
 
         foreach (var asset in _dynamicDecorations)
         {
@@ -131,6 +125,14 @@ public class DinamicsManager
         {
             asset.Draw(view, projection);
             //asset.DrawCollisionChamber(gizmos, simulation);
+        }
+    }
+
+    public void DrawDepth(Matrix lightViewProjection)
+    {
+        foreach (var asset in _dynamicDecorations)
+        {
+            asset.DrawDepth(lightViewProjection);
         }
     }
 
@@ -253,7 +255,7 @@ public class DinamicsManager
 
     public List<Decoration> GetDecorations()
     {
-        return new List<Decoration>(_dynamicDecorations);
+        return [.. _dynamicDecorations];
     }
 }
 

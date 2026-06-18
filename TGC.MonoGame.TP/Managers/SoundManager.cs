@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Media;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace TGC.MonoGame.TP.Managers
 {
@@ -95,13 +94,13 @@ namespace TGC.MonoGame.TP.Managers
             AudioEmitter emitter = new AudioEmitter();
             // Convertimos a System.Numerics.Vector3 usando la extension del proyecto
             emitter.Position = emitterPosition.ToNumerics();
-            emitter.Forward = Microsoft.Xna.Framework.Vector3.Forward.ToNumerics();
-            emitter.Up = Microsoft.Xna.Framework.Vector3.Up.ToNumerics();
+            emitter.Forward = Vector3.Forward.ToNumerics();
+            emitter.Up = Vector3.Up.ToNumerics();
 
             // Configurar el oyente (la camara del jugador)
             _listener.Position = listenerPosition.ToNumerics();
             _listener.Forward = listenerForward.ToNumerics();
-            _listener.Up = Microsoft.Xna.Framework.Vector3.Up.ToNumerics();
+            _listener.Up = Vector3.Up.ToNumerics();
             _listener.Velocity = System.Numerics.Vector3.Zero;
 
             // Aplicar el efecto 3D y reproducir

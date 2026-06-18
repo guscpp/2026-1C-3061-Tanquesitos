@@ -4,11 +4,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
 using BepuPhysics.Collidables;
-// Alias para evitar la ambigüedad molesta entre los dos motores que no se como solucionar ;_;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
-using BepuVector3 = System.Numerics.Vector3;
-//No entiendo por que debo agregar otra vez estas librerias si ya estan en decorationnnn
-using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 namespace TGC.MonoGame.TP.Models.Decorations
 {//Dinamico (2 tipos) - Caja
@@ -79,7 +75,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             // Tomo solo la rotacion y posicion que vienen de la Pose de Bepu (el modelo se supone que ya concuerda con el modelo fisico).            
             var pose = simulation.Bodies[bodyHandle].Pose;
             
-            Matrix rotation = Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(
+            Matrix rotation = Matrix.CreateFromQuaternion(new Quaternion(
                 pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
             
             Vector3 position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
