@@ -129,7 +129,8 @@ public abstract class TankBase
         _effect.Parameters["View"].SetValue(view);
         _effect.Parameters["Projection"].SetValue(projection);
         _effect.Parameters["ModelTexture"].SetValue(_texture);
-        _effect.Parameters["LightViewProjection"].SetValue(smm.LightViewProjection);
+        _effect.Parameters["LightViewProjection"].SetValue(smm.StaticLightViewProjection);
+        _effect.Parameters["DynamicLightViewProjection"].SetValue(smm.DynamicLightViewProjection);
         _effect.Parameters["lightPosition"].SetValue(smm.LightPosition);
 
         Vector3 colorVector = GetTankColor().ToVector3();

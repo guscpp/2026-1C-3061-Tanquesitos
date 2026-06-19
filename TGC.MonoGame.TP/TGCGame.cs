@@ -142,17 +142,17 @@ public class TGCGame : Game
         _wall = new Wall(_simulation);
         _wall.LoadContent(_terrain);
 
-        _shadowMapManager = new ShadowMapManager(GraphicsDevice, 4096);
+        _shadowMapManager = new ShadowMapManager(GraphicsDevice, 8192)
+        {
+            LightPosition = new Vector3(0f, 350f, 100f),
+            LightTarget = Vector3.Zero
+        };
 
-        // El terreno mide 518x518, altura máxima 35
-        float halfSize = _terrain.WidthUnits; // ya tenés esta propiedad
+        float halfSize = _terrain.WidthUnits;
         float maxHeight = GameConfig.Terrain.MaxHeightMeters;
-
-        _shadowMapManager.LightPosition = new Vector3(0f, maxHeight * 10f, halfSize * 0.5f);
-        _shadowMapManager.LightTarget = Vector3.Zero;
-        _shadowMapManager.FitFrustumToScene(
+        _shadowMapManager.FitStaticToScene(
             new Vector3(-halfSize, 0f, -halfSize),
-            new Vector3( halfSize, maxHeight, halfSize)
+            new Vector3(halfSize, maxHeight, halfSize)
         );
 
         //ASSETS DECORATIVOS
@@ -320,28 +320,34 @@ public class TGCGame : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        if (_gameStateManager.CurrentState == GameState.Playing || 
-        _gameStateManager.CurrentState == GameState.Paused)
+        if (_gameStateManager.CurrentState == GameState.Playing ||
+            _gameStateManager.CurrentState == GameState.Paused)
         {
             var smm = _shadowMapManager;
-            var lvp = smm.LightViewProjection;
 
+            // Fit dinámico cada frame
+            var cameraFrustum = new BoundingFrustum(_camera.View * _camera.Projection);
+            smm.FitDynamicToCamera(cameraFrustum.GetCorners());
+
+            // PASADA 1A: Estáticos (solo cuando cambia la luz)
             if (smm.RebajarSombrasEstaticas)
             {
                 smm.BeginStaticShadowPass();
-                _terrain.DrawDepth(lvp);
-                _housesManager.DrawDepth(lvp);
-                _staticsManager.DrawDepth(lvp);
+                _terrain.DrawDepth(smm.StaticLightViewProjection);
+                _housesManager.DrawDepth(smm.StaticLightViewProjection);
+                _staticsManager.DrawDepth(smm.StaticLightViewProjection);
+                _barrelsManager.DrawDepth(smm.StaticLightViewProjection);
                 smm.RebajarSombrasEstaticas = false;
             }
 
+            // PASADA 1B: Dinámicos cada frame
             smm.BeginDynamicShadowPass();
-            _tank.DrawDepth(lvp);
-            _enemiesManager.DrawDepth(lvp);
-            _cannonballManager.DrawDepth(lvp);
-            _dinamicsManager.DrawDepth(lvp);
-            _barrelsManager.DrawDepth(lvp);
+            _tank.DrawDepth(smm.DynamicLightViewProjection);
+            _enemiesManager.DrawDepth(smm.DynamicLightViewProjection);
+            _cannonballManager.DrawDepth(smm.DynamicLightViewProjection);
+            _dinamicsManager.DrawDepth(smm.DynamicLightViewProjection);
 
+            // PASADA 2: Render final
             smm.BeginLightingPass(_shadowMapEffect);
             GraphicsDevice.Clear(Color.CornflowerBlue);
 

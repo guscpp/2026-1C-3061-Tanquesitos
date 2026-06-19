@@ -89,7 +89,8 @@ public class Decoration
 
         if (smm != null)
         {
-            _effect.Parameters["LightViewProjection"]?.SetValue(smm.LightViewProjection);
+            _effect.Parameters["LightViewProjection"]?.SetValue(smm.StaticLightViewProjection);
+            _effect.Parameters["DynamicLightViewProjection"]?.SetValue(smm.DynamicLightViewProjection);
             _effect.Parameters["lightPosition"]?.SetValue(smm.LightPosition);
             
             _effect.Parameters["shadowMapStatic"]?.SetValue(smm.StaticShadowRenderTarget);

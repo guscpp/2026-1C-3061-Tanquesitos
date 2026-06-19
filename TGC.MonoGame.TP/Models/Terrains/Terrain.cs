@@ -230,7 +230,8 @@ public class Terrain
         // ═════════════════════
 
         var smm = TGCGame.Instance.ShadowMapManager;
-        _terrainEffect.Parameters["LightViewProjection"].SetValue(smm.LightViewProjection);
+        _terrainEffect.Parameters["LightViewProjection"].SetValue(smm.StaticLightViewProjection);
+        _terrainEffect.Parameters["DynamicLightViewProjection"]?.SetValue(smm.DynamicLightViewProjection);
         _terrainEffect.Parameters["lightPosition"].SetValue(smm.LightPosition);
         _terrainEffect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(Matrix.Identity)));
 

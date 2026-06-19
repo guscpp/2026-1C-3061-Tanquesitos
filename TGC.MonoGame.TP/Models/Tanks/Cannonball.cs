@@ -113,7 +113,9 @@ public class Cannonball
         _effect.Parameters["View"]?.SetValue(view);
         _effect.Parameters["Projection"]?.SetValue(projection);
         _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.1f, 0.1f, 0.1f));
-        _effect.Parameters["LightViewProjection"]?.SetValue(smm.LightViewProjection);
+        
+        _effect.Parameters["LightViewProjection"]?.SetValue(smm.StaticLightViewProjection);
+        _effect.Parameters["DynamicLightViewProjection"]?.SetValue(smm.DynamicLightViewProjection);
         _effect.Parameters["lightPosition"]?.SetValue(smm.LightPosition);
         _effect.Parameters["shadowMapStatic"]?.SetValue(smm.StaticShadowRenderTarget);
         _effect.Parameters["shadowMapDynamic"]?.SetValue(smm.DynamicShadowRenderTarget);

@@ -17,6 +17,9 @@ namespace TGC.MonoGame.TP.Managers
         public Matrix LightProjection { get; private set; }
         public Matrix LightViewProjection { get; private set; }
 
+        public Matrix StaticLightViewProjection { get; private set; }
+        public Matrix DynamicLightViewProjection { get; private set; }
+
         private Vector3 _lightPosition;
         private Vector3 _lightTarget;
 
@@ -55,7 +58,7 @@ namespace TGC.MonoGame.TP.Managers
         {
             _graphicsDevice = graphicsDevice;
             _resolution = resolution;
-            _lightPosition = new Vector3(1f, 300f, 0f); 
+            _lightPosition = new Vector3(200f, 300f, 150f); 
             _lightTarget = Vector3.Zero;
 
             StaticShadowRenderTarget = new RenderTarget2D(
@@ -75,6 +78,9 @@ namespace TGC.MonoGame.TP.Managers
                 SurfaceFormat.Single, 
                 DepthFormat.Depth24
             );
+
+            DynamicLightViewProjection = Matrix.Identity;
+            StaticLightViewProjection = Matrix.Identity;
             
             ActualizarMatricesLuz();
         }
@@ -147,6 +153,56 @@ namespace TGC.MonoGame.TP.Managers
             );
 
             LightViewProjection = LightView * LightProjection;
+        }
+
+        public void FitStaticToScene(Vector3 sceneMin, Vector3 sceneMax)
+        {
+            Vector3[] corners =
+            [
+                new Vector3(sceneMin.X, sceneMin.Y, sceneMin.Z),
+                new Vector3(sceneMax.X, sceneMin.Y, sceneMin.Z),
+                new Vector3(sceneMin.X, sceneMax.Y, sceneMin.Z),
+                new Vector3(sceneMax.X, sceneMax.Y, sceneMin.Z),
+                new Vector3(sceneMin.X, sceneMin.Y, sceneMax.Z),
+                new Vector3(sceneMax.X, sceneMin.Y, sceneMax.Z),
+                new Vector3(sceneMin.X, sceneMax.Y, sceneMax.Z),
+                new Vector3(sceneMax.X, sceneMax.Y, sceneMax.Z),
+            ];
+
+            float minX = float.MaxValue, maxX = float.MinValue;
+            float minY = float.MaxValue, maxY = float.MinValue;
+            float minZ = float.MaxValue, maxZ = float.MinValue;
+
+            foreach (var corner in corners)
+            {
+                var lc = Vector3.Transform(corner, LightView);
+                minX = Math.Min(minX, lc.X); maxX = Math.Max(maxX, lc.X);
+                minY = Math.Min(minY, lc.Y); maxY = Math.Max(maxY, lc.Y);
+                minZ = Math.Min(minZ, lc.Z); maxZ = Math.Max(maxZ, lc.Z);
+            }
+
+            var proj = Matrix.CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ, -minZ);
+            StaticLightViewProjection = LightView * proj;
+            // NO toca RebajarSombrasEstaticas ni LightViewProjection
+        }
+
+        public void FitDynamicToCamera(Vector3[] cameraCorners)
+        {
+            float minX = float.MaxValue, maxX = float.MinValue;
+            float minY = float.MaxValue, maxY = float.MinValue;
+            float minZ = float.MaxValue, maxZ = float.MinValue;
+
+            foreach (var corner in cameraCorners)
+            {
+                var lc = Vector3.Transform(corner, LightView);
+                minX = Math.Min(minX, lc.X); maxX = Math.Max(maxX, lc.X);
+                minY = Math.Min(minY, lc.Y); maxY = Math.Max(maxY, lc.Y);
+                minZ = Math.Min(minZ, lc.Z); maxZ = Math.Max(maxZ, lc.Z);
+            }
+
+            var proj = Matrix.CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ, -minZ);
+            DynamicLightViewProjection = LightView * proj;
+            // NO toca RebajarSombrasEstaticas
         }
 
         public void Dispose()

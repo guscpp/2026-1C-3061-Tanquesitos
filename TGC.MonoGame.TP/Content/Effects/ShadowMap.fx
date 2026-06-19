@@ -19,6 +19,7 @@ float4x4 InverseTransposeWorld;
 
 // Matriz de la Luz (Combina la vista desde la Luz y su proyección ortográfica/perspectiva)
 float4x4 LightViewProjection;
+float4x4 DynamicLightViewProjection; // para el mapa dinámico
 
 // Posición en el espacio tridimensional de la fuente de luz
 float3 lightPosition;
@@ -28,10 +29,13 @@ float2 shadowMapSize;
 
 float3 DiffuseColor = float3(1.0, 1.0, 1.0);
 
+float staticDepthRange;
+float dynamicDepthRange;
+
 // Constantes matemáticas muy pequeñas para el cálculo del Bias Dinámico.
 // Evitan el shadow acne (las lineas raras esas, no el pixelado).
-static const float modulatedEpsilon = 0.004;
-static const float maxEpsilon = 0.002;
+static const float modulatedEpsilon = 0.008;
+static const float maxEpsilon = 0.004;
 
 texture ModelTexture;
 sampler2D textureSampler = sampler_state
@@ -131,50 +135,61 @@ ShadowedVertexShaderOutput MainVS(in ShadowedVertexShaderInput input)
 
 float4 ShadowedPCFPS(in ShadowedVertexShaderOutput input) : COLOR
 {
-	float3 lightSpacePosition = input.LightSpacePosition.xyz / input.LightSpacePosition.w;
+    // Coordenadas para el mapa ESTÁTICO
+    float4 staticLS = mul(input.WorldSpacePosition, LightViewProjection);
+    float3 staticLightSpace = staticLS.xyz / staticLS.w;
+    float2 staticCoords = 0.5 * staticLightSpace.xy + float2(0.5, 0.5);
+    staticCoords.y = 1.0f - staticCoords.y;
 
-	float2 shadowMapTextureCoordinates = 0.5 * lightSpacePosition.xy + float2(0.5, 0.5);
+    // Coordenadas para el mapa DINÁMICO
+    float4 dynLS = mul(input.WorldSpacePosition, DynamicLightViewProjection);
+    float3 dynamicLightSpace = dynLS.xyz / dynLS.w;
+    float2 dynamicCoords = 0.5 * dynamicLightSpace.xy + float2(0.5, 0.5);
+    dynamicCoords.y = 1.0f - dynamicCoords.y;
 
-	shadowMapTextureCoordinates.y = 1.0f - shadowMapTextureCoordinates.y;
-	
-	float3 normal = normalize(input.Normal.rgb);
+    // Bias dinámico
+    float3 normal = normalize(input.Normal.rgb);
+    float3 lightDirection = normalize(lightPosition - input.WorldSpacePosition.xyz);
+	float NdotL = saturate(dot(normal, lightDirection));
+    static const float modulatedEpsilon = 0.008;
+	static const float minEpsilon = 0.0008;   // antes "maxEpsilon", es el piso
+	static const float maxBiasCap = 0.0005;   // techo real para que no se dispare en paredes
 
-	float3 lightDirection = normalize(lightPosition - input.WorldSpacePosition.xyz);
+	float inclinationBias = clamp(modulatedEpsilon * (1.0 - NdotL), minEpsilon, maxBiasCap);
 
-	float inclinationBias = max(modulatedEpsilon * (1.0 - dot(normal, lightDirection)), maxEpsilon);
-	
-	float notInStaticShadow = 0.0;
+    float notInStaticShadow = 0.0;
     float notInDynamicShadow = 0.0;
-	
-	float2 texelSize = 1.0 / shadowMapSize;
-	
-	for (int x = -1; x <= 1; x++)
-	{
-		for (int y = -1; y <= 1; y++)
-		{
-			float2 offset = float2(x, y) * texelSize;
+    float2 texelSize = 1.0 / shadowMapSize;
 
-            float staticDepth = tex2D(shadowMapStaticSampler, shadowMapTextureCoordinates + offset).r + inclinationBias;
+    for (int x = -2; x <= 2; x++)
+    {
+        for (int y = -2; y <= 2; y++)
+        {
+            float2 offset = float2(x, y) * texelSize;
 
-            notInStaticShadow += step(lightSpacePosition.z, staticDepth);
-            
-            float dynamicDepth = tex2D(shadowMapDynamicSampler, shadowMapTextureCoordinates + offset).r + inclinationBias;
+            float staticDepth = tex2D(shadowMapStaticSampler, staticCoords + offset).r + inclinationBias;
+            notInStaticShadow += step(staticLightSpace.z, staticDepth);
 
-            notInDynamicShadow += step(lightSpacePosition.z, dynamicDepth);
-		}
-	}
-	
-    notInStaticShadow /= 9.0;
-    notInDynamicShadow /= 9.0;
-    
+            float dynamicDepth = tex2D(shadowMapDynamicSampler, dynamicCoords + offset).r + inclinationBias;
+            notInDynamicShadow += step(dynamicLightSpace.z, dynamicDepth);
+        }
+    }
+
+    notInStaticShadow /= 25.0;
+    notInDynamicShadow /= 25.0;
+
     float factorSombraFinal = notInStaticShadow * notInDynamicShadow;
-    
+
     float4 texColor = tex2D(textureSampler, input.TextureCoordinates);
-    
     float4 finalColor = texColor * float4(DiffuseColor, 1.0);
-    
-    finalColor.rgb *= 0.5 + 0.5 * factorSombraFinal;
-    
+
+    // Iluminación difusa
+    float3 lightDir = normalize(lightPosition - input.WorldSpacePosition.xyz);
+    float diffuse = saturate(dot(normal, lightDir));
+    float ambientAmount = 0.7;
+    float lightAmount = ambientAmount + (1.0 - ambientAmount) * diffuse * factorSombraFinal;
+    finalColor.rgb *= lightAmount;
+
     return finalColor;
 }
 
