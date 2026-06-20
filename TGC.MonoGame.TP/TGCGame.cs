@@ -95,6 +95,11 @@ public class TGCGame : Game
     // Variable para contabilizar las kills del jugador
     public int EnemiesKilled = 0;
 
+    // Añade esto junto a las otras declaraciones (como _texture)
+
+protected Texture2D _trackTexture;
+// Asegúrate de que esto esté escrito exactamente así:
+public static Texture2D TextureOrugas;
     public TGCGame()
     {
         _graphics = new GraphicsDeviceManager(this);
@@ -184,6 +189,9 @@ public class TGCGame : Game
         _barrelsManager.Initialize();
         _barrelsManager.LoadContent(Content, _simulation);
 
+        var textureOrugas = Content.Load<Texture2D>("Textures/texturaOrugas");
+        // Esto asigna el valor una sola vez:
+        TextureOrugas = Content.Load<Texture2D>("Textures/texturaOrugas");
         //TANQUE
         var kb = Keyboard.GetState();
         _gameStateManager.HandleMenuState(kb, _lastKeyboardState);
@@ -195,7 +203,7 @@ public class TGCGame : Game
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);//Se spawnea unos metros por encima del terreno
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
         //Cargo el tanque
-        _tank.Load(tankModel, tankTexture, blinnPhongEffect, _simulation);
+        _tank.Load(tankModel, tankTexture, textureOrugas, blinnPhongEffect, _simulation);
         //fisicas
         _tankHandle = _tank.TankHandler;
 
@@ -313,7 +321,7 @@ public class TGCGame : Game
         _simulation.Bodies.Remove(_tankHandle);
         _tank = new TankPlayer(SelectedPlayerTank);
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
-        _tank.Load(tankModel, tankTexture, blinnPhongEffect, _simulation);
+        _tank.Load(tankModel, tankTexture, TGCGame.TextureOrugas,blinnPhongEffect, _simulation);
         _tankHandle = _tank.TankHandler;
 
         _enemiesManager.Reset(_simulation);

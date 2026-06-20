@@ -6,6 +6,8 @@ using System;
 using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
+using System.Collections.Generic; // Necesario para List<T>
+
 namespace TGC.MonoGame.TP.Models.Tanks;
 
 public abstract class TankBase
@@ -14,6 +16,9 @@ public abstract class TankBase
     protected Texture2D _texture;
     public Model Model { get; protected set; }
 
+        // para las orugas
+    protected float _trackOffsetAccumulator = 0f;
+    private List<ModelMesh> _trackMeshes = new List<ModelMesh>();
     public float MaxSpeed { get; set; }
     public float MotorForce { get; set; }
     public float TurnSpeed { get; set; }
@@ -43,7 +48,7 @@ public abstract class TankBase
     public float ImpactRadius { get; set; } = 1.5f;  //radio de deformacion
     public float ImpactDepth { get; set; } = 0.4f;   //profundidad de deformacion
 
-
+    
     public Microsoft.Xna.Framework.Vector3 CannonForward
     {
         get
@@ -85,14 +90,47 @@ public abstract class TankBase
         }
     }
 
-    public void Load(Model model, Texture2D texture, Effect effect, Simulation simulation)
-    {
-        Model = model; _effect = effect; _texture = texture;
-        foreach (var mesh in Model.Meshes)
-            foreach (var part in mesh.MeshParts) part.Effect = _effect;
-        CreatePhysicsBody(simulation);
-    }
+  // Agrega este campo arriba, junto a _texture
+protected Texture2D _trackTexture;
 
+
+// Modifica el método Load
+public void Load(Model model, Texture2D texture, Texture2D trackTexture, Effect effect, Simulation simulation)
+{
+    Model = model; 
+    _effect = effect; 
+    _texture = texture;
+    _trackTexture = trackTexture; // Guardamos la nueva textura
+    
+    
+    _trackMeshes.Clear();
+    foreach (var mesh in Model.Meshes)
+    {
+        if (mesh.Name.Contains("Cadena_i") || mesh.Name.Contains("Cadena_d")) 
+        {
+            _trackMeshes.Add(mesh);
+        }
+        
+        // Asignamos el efecto a todas las partes
+        foreach (var part in mesh.MeshParts) 
+        {
+            part.Effect = _effect;
+        }
+    }
+    CreatePhysicsBody(simulation);
+}
+
+
+public void UpdateTrackAnimation(float deltaTime, float speed)
+{
+    // speed ya viene de la magnitud de la velocidad física (en metros/segundo).
+    // Dividimos por el radio de la rueda (ej. 0.5f) para que sea proporcional
+    float wheelRadius = 0.5f; 
+    float angularVelocity = speed / wheelRadius;
+    
+    // Ajusta este multiplicador (0.05f)para la velocidad
+    _trackOffsetAccumulator += angularVelocity * deltaTime * 0.02f;
+}
     protected virtual void CreatePhysicsBody(Simulation simulation)
     {
         using var compoundBuilder = new CompoundBuilder(simulation.BufferPool, simulation.Shapes, 3);
@@ -132,62 +170,72 @@ public abstract class TankBase
     //overload sin punto de impacto
     public void HandleHealth(float damage) => HandleHealth(damage, Position);
 
-    public virtual void Draw(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection, Vector3 cameraPosition)
+ public virtual void Draw(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection, Vector3 cameraPosition)
+{
+    if (Model == null || IsDead) return;
+
+    Microsoft.Xna.Framework.Vector3 colorVector = GetTankColor().ToVector3();
+    Microsoft.Xna.Framework.Vector3 whiteColor = Microsoft.Xna.Framework.Vector3.One;
+
+    // Parametros generales que no cambian por malla
+    _effect.Parameters["View"].SetValue(view);
+    _effect.Parameters["Projection"].SetValue(projection);
+    _effect.Parameters["LightDirection"].SetValue(new Vector3(0.5f, 1f, 0.3f));
+    _effect.Parameters["LightColor"].SetValue(Vector3.One);
+    _effect.Parameters["AmbientColor"].SetValue(new Vector3(0.2f, 0.2f, 0.2f));
+    _effect.Parameters["EyePosition"].SetValue(cameraPosition);
+    _effect.Parameters["Shininess"].SetValue(32f);
+
+    // Parametros de deformacion
+    _effect.Parameters["ImpactPointWorld"].SetValue(ImpactPointWorld);
+    _effect.Parameters["ImpactRadius"].SetValue(ImpactRadius);
+    _effect.Parameters["ImpactDepth"].SetValue(ImpactDepth);
+    _effect.Parameters["HasImpact"].SetValue(HasImpact ? 1 : 0);
+
+    foreach (var mesh in Model.Meshes)
     {
-        if (Model == null || IsDead) return;
+        // 1. Determinar si es oruga
+        bool isTrack = mesh.Name.Contains("Cadena_i") || mesh.Name.Contains("Cadena_d");
 
-        Microsoft.Xna.Framework.Vector3 colorVector = GetTankColor().ToVector3();
-        Microsoft.Xna.Framework.Vector3 whiteColor = Microsoft.Xna.Framework.Vector3.One;
+        // 2. Asignar la textura correcta
+        // Debes tener el campo _trackTexture ya cargado en el Load
+        Texture2D activeTexture = isTrack ? _trackTexture : _texture;
+        _effect.Parameters["ModelTexture"].SetValue(isTrack ? _trackTexture : _texture);
 
-        // Parametros Blinn-Phong
-        _effect.Parameters["World"].SetValue(WorldMatrix);
-        _effect.Parameters["View"].SetValue(view);
-        _effect.Parameters["Projection"].SetValue(projection);
-        _effect.Parameters["LightDirection"].SetValue(new Vector3(0.5f, 1f, 0.3f)); // normalizada
-        _effect.Parameters["LightColor"].SetValue(Vector3.One);
-        _effect.Parameters["AmbientColor"].SetValue(new Vector3(0.2f, 0.2f, 0.2f));
-        _effect.Parameters["EyePosition"].SetValue(cameraPosition);
-        _effect.Parameters["ModelTexture"].SetValue(_texture);
-        _effect.Parameters["Shininess"].SetValue(32f);
+        // 3. Configurar Shader para la malla
+        bool isDeformable = mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Cano_") ||
+            mesh.Name.Contains("Cubre") || mesh.Name.Contains("Cuerpo") ||
+            mesh.Name.Contains("Pistola") || mesh.Name.Contains("Proteccion");
 
-        // Parametros de deformacion
-        _effect.Parameters["ImpactPointWorld"].SetValue(ImpactPointWorld);
-        _effect.Parameters["ImpactRadius"].SetValue(ImpactRadius);
-        _effect.Parameters["ImpactDepth"].SetValue(ImpactDepth);
-        _effect.Parameters["HasImpact"].SetValue(HasImpact ? 1 : 0);
+        _effect.Parameters["IsDeformable"].SetValue(isDeformable ? 1 : 0);
 
-        foreach (var mesh in Model.Meshes)
+        // 4. Calcular matriz de mundo segun la pieza
+        var finalWorld = WorldMatrix;
+        if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola"))
+            finalWorld = TurretWorld;
+        else if (mesh.Name.Contains("Canon") || mesh.Name.Contains("Anillo"))
+            finalWorld = CannonWorld;
+
+        // 5. Aplicar offset solo si es oruga
+        _effect.Parameters["TextureOffset"]?.SetValue(isTrack ? new Vector2(0f, _trackOffsetAccumulator) : Vector2.Zero);
+
+        // 6. Aplicar color difuso
+        var diffuseParam = _effect.Parameters["DiffuseColor"];
+        if (diffuseParam != null)
         {
-            bool isDeformable = mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Cano_") ||
-                mesh.Name.Contains("Cubre") || mesh.Name.Contains("Cuerpo") ||
-                mesh.Name.Contains("Pistola") || mesh.Name.Contains("Proteccion");
-
-            _effect.Parameters["IsDeformable"].SetValue(isDeformable ? 1 : 0);
-
-            var finalWorld = WorldMatrix;
-
-            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola"))
-                finalWorld = TurretWorld;
-
-            else if (mesh.Name.Contains("Canon") || mesh.Name.Contains("Anillo"))
-                finalWorld = CannonWorld;
-
-            var diffuseParam = _effect.Parameters["DiffuseColor"];
-            if (diffuseParam != null)
-            {
-                if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") ||
+            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") ||
                 mesh.Name.Contains("Proteccion_d") || mesh.Name.Contains("Proteccion_i") ||
                 mesh.Name.Contains("Cuerpo") || mesh.Name.Contains("Cubre"))
-                    _effect.Parameters["DiffuseColor"].SetValue(colorVector);
-                else
-                    _effect.Parameters["DiffuseColor"].SetValue(whiteColor);
-            }
-
-            _effect.Parameters["World"].SetValue(finalWorld);
-
-            mesh.Draw();
+                diffuseParam.SetValue(colorVector);
+            else
+                diffuseParam.SetValue(whiteColor);
         }
+
+        _effect.Parameters["World"].SetValue(finalWorld);
+
+        mesh.Draw();
     }
+}
 
     public virtual void DrawCollisionChamber(Gizmo gizmos, Simulation simulation, Color color)
     {
@@ -241,71 +289,78 @@ public abstract class TankBase
     // Método protegido que aplica física Bepu. Lo llaman Player y Enemy.
     // Corregido para que los tanques no levanten vuelo como un avion cuando la trompa apunta hacia arriba
     protected void ApplyPhysics(Simulation simulation, float dt, float forwardInput, float turnInput)
+{
+    if (IsDead) return;
+
+    var body = simulation.Bodies.GetBodyReference(TankHandler);
+    var orientation = body.Pose.Orientation;
+
+    // Obtener el vector forward 3D real del tanque segun su rotacion actual
+    var forward3D = System.Numerics.Vector3.Transform(new System.Numerics.Vector3(0, 0, -1), orientation);
+
+    // Aplanar el vector al plano horizontal (X, Z) para evitar que el motor lo levante
+    var forward = new System.Numerics.Vector3(forward3D.X, 0f, forward3D.Z);
+    if (forward.LengthSquared() > 0.001f)
     {
-        if (IsDead) return;
-
-        var body = simulation.Bodies.GetBodyReference(TankHandler);
-        var orientation = body.Pose.Orientation;
-
-        // Obtener el vector forward 3D real del tanque segun su rotacion actual
-        var forward3D = System.Numerics.Vector3.Transform(new System.Numerics.Vector3(0, 0, -1), orientation);
-
-        // Aplanar el vector al plano horizontal (X, Z) para evitar que el motor lo levante
-        var forward = new System.Numerics.Vector3(forward3D.X, 0f, forward3D.Z);
-        if (forward.LengthSquared() > 0.001f)
-        {
-            forward = System.Numerics.Vector3.Normalize(forward);
-        }
-        else
-        {
-            forward = new System.Numerics.Vector3(0f, 0f, -1f); // Fallback por si mira exactamente al cielo/suelo
-        }
-
-        // Hacer lo mismo con el vector lateral (right) para que el arrastre lateral tampoco lo levante
-        var right3D = System.Numerics.Vector3.Cross(new System.Numerics.Vector3(0f, 1f, 0f), forward3D);
-        var right = new System.Numerics.Vector3(right3D.X, 0f, right3D.Z);
-        if (right.LengthSquared() > 0.001f)
-        {
-            right = System.Numerics.Vector3.Normalize(right);
-        }
-        else
-        {
-            right = new System.Numerics.Vector3(1f, 0f, 0f); // Fallback
-        }
-
-        var vel = body.Velocity.Linear;
-        float fwdSpeed = System.Numerics.Vector3.Dot(vel, forward);
-        float rightSpeed = System.Numerics.Vector3.Dot(vel, right);
-
-        // Las fuerzas ahora se calculan exclusivamente sobre el plano horizontal
-        var motorForce = forward * MotorForce * forwardInput;
-        var dragForce = -forward * (ForwardDrag * fwdSpeed) - right * (LateralDrag * rightSpeed);
-
-        body.ApplyLinearImpulse((motorForce + dragForce) * dt);
-
-        // Control de giro (solo modificar el eje Y, dejando que la fisica maneje X y Z por los choques)
-        ref var angVel = ref body.Velocity.Angular;
-        angVel.Y = turnInput * TurnSpeed;
-
-        // Amortiguador para evitar que el tanque quede girando como loco en X y Z tras un choque
-        angVel.X = MathHelper.Clamp(angVel.X, -GameConfig.Tank.AngularVelocityClampX, GameConfig.Tank.AngularVelocityClampX);
-        angVel.Z = MathHelper.Clamp(angVel.Z, -GameConfig.Tank.AngularVelocityClampZ, GameConfig.Tank.AngularVelocityClampZ);
-        angVel.X *= GameConfig.Tank.AngularDampingXZ;
-        angVel.Y *= GameConfig.Tank.AngularDampingY;
-        angVel.Z *= GameConfig.Tank.AngularDampingXZ;
-
-        body.Awake = true;
-
-        // Actualizar variables de estado para el render y la logica de juego
-        var pose = body.Pose;
-        Position = new Microsoft.Xna.Framework.Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
-        _physicsOrientation = pose.Orientation;
-
-        // Extraer el angulo de yaw para la rotacion de la torreta y camara
-        float sinYaw = 2f * (_physicsOrientation.W * _physicsOrientation.Y + _physicsOrientation.X * _physicsOrientation.Z);
-        float cosYaw = 1f - 2f * (_physicsOrientation.X * _physicsOrientation.X + _physicsOrientation.Y * _physicsOrientation.Y);
-        RotationY = MathF.Atan2(sinYaw, cosYaw);
-
-        if (HasImpact) ImpactPointWorld = Vector3.Transform(ImpactPointLocal, WorldMatrix);
+        forward = System.Numerics.Vector3.Normalize(forward);
     }
+    else
+    {
+        forward = new System.Numerics.Vector3(0f, 0f, -1f); // Fallback
+    }
+
+    // Hacer lo mismo con el vector lateral (right) para que el arrastre lateral tampoco lo levante
+    var right3D = System.Numerics.Vector3.Cross(new System.Numerics.Vector3(0f, 1f, 0f), forward3D);
+    var right = new System.Numerics.Vector3(right3D.X, 0f, right3D.Z);
+    if (right.LengthSquared() > 0.001f)
+    {
+        right = System.Numerics.Vector3.Normalize(right);
+    }
+    else
+    {
+        right = new System.Numerics.Vector3(1f, 0f, 0f); // Fallback
+    }
+
+    var vel = body.Velocity.Linear;
+    float fwdSpeed = System.Numerics.Vector3.Dot(vel, forward);
+    float rightSpeed = System.Numerics.Vector3.Dot(vel, right);
+
+    
+
+    // --- NUEVA LÓGICA DE ANIMACIÓN DE ORUGAS ---
+    // Calculamos la magnitud de la velocidad para animar la textura
+    float currentSpeed = vel.Length();
+    UpdateTrackAnimation(dt, currentSpeed);
+    // ------------------------------------------
+
+    // Las fuerzas ahora se calculan exclusivamente sobre el plano horizontal
+    var motorForce = forward * MotorForce * forwardInput;
+    var dragForce = -forward * (ForwardDrag * fwdSpeed) - right * (LateralDrag * rightSpeed);
+
+    body.ApplyLinearImpulse((motorForce + dragForce) * dt);
+
+    // Control de giro
+    ref var angVel = ref body.Velocity.Angular;
+    angVel.Y = turnInput * TurnSpeed;
+
+    // Amortiguador para evitar que el tanque quede girando como loco
+    angVel.X = MathHelper.Clamp(angVel.X, -GameConfig.Tank.AngularVelocityClampX, GameConfig.Tank.AngularVelocityClampX);
+    angVel.Z = MathHelper.Clamp(angVel.Z, -GameConfig.Tank.AngularVelocityClampZ, GameConfig.Tank.AngularVelocityClampZ);
+    angVel.X *= GameConfig.Tank.AngularDampingXZ;
+    angVel.Y *= GameConfig.Tank.AngularDampingY;
+    angVel.Z *= GameConfig.Tank.AngularDampingXZ;
+
+    body.Awake = true;
+
+    // Actualizar variables de estado
+    var pose = body.Pose;
+    Position = new Microsoft.Xna.Framework.Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);
+    _physicsOrientation = pose.Orientation;
+
+    float sinYaw = 2f * (_physicsOrientation.W * _physicsOrientation.Y + _physicsOrientation.X * _physicsOrientation.Z);
+    float cosYaw = 1f - 2f * (_physicsOrientation.X * _physicsOrientation.X + _physicsOrientation.Y * _physicsOrientation.Y);
+    RotationY = MathF.Atan2(sinYaw, cosYaw);
+
+    if (HasImpact) ImpactPointWorld = Vector3.Transform(ImpactPointLocal, WorldMatrix);
+}
 }

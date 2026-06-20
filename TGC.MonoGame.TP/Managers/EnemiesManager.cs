@@ -68,7 +68,7 @@ public class EnemiesManager
                 _ => new TankEnemyHeavy()
             };
             enemy.Position = enemy.GetPosition(_terrain, _random);
-            enemy.Load(tankModel, tankTexture, effect, _simulation);
+            enemy.Load(tankModel, tankTexture, TGCGame.TextureOrugas, effect, _simulation);
             _enemies.Add(enemy);
             _enemiesHandles.Add(enemy.TankHandler);
         }

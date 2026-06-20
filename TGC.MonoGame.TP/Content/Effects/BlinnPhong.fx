@@ -2,6 +2,8 @@
 // BlinnPhong.fx — Iluminacion Blinn-Phong + deformacion por impacto
 // Shader Model 3.0
 // =============================================================
+//orugas
+float2 TextureOffset;
 
 // ---------- Transformaciones ----------
 float4x4 World;
@@ -22,11 +24,11 @@ texture ModelTexture;
 sampler2D TextureSampler = sampler_state
 {
     Texture = <ModelTexture>;
+    // "Wrap" es la clave: hace que la textura sea un ciclo infinito
+    AddressU = Wrap; 
+    AddressV = Wrap; 
     MinFilter = Linear;
     MagFilter = Linear;
-    MipFilter = Linear;
-    AddressU = Wrap;
-    AddressV = Wrap;
 };
 
 // ---------- Deformacion por impacto ----------
@@ -90,8 +92,10 @@ VSOutput VS(VSInput input)
     float4 viewPos = mul(worldPos, View);
     output.Position = mul(viewPos, Projection);
 
-    // Pasar al pixel shader
-    output.TexCoord = input.TextureCoordinate;
+    // ---------- APLICAR OFFSET DE ORUGAS ----------
+    // Sumamos el TextureOffset a la coordenada original de la malla
+    output.TexCoord = input.TextureCoordinate + TextureOffset;
+    
     output.WorldPos = worldPos.xyz;
     output.WorldNormal = worldNormal;
 
