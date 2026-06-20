@@ -55,7 +55,8 @@ public class EnemiesManager
     {
         var tankModel = content.Load<Model>(ContentFolder3D + "tanques/tank v5");
         var tankTexture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+        //var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+        var effect = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
 
         for (int i = 0; i < _enemiesCount; i++)
         {
@@ -100,11 +101,11 @@ public class EnemiesManager
         }
      }
 
-    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation)
+    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation, Vector3 cameraPosition)
     {
         foreach(var tankEnemy in _enemies)
         {
-            tankEnemy.Draw(view, projection);
+            tankEnemy.Draw(view, projection, cameraPosition);
             //tankEnemy.DrawCollisionChamber(gizmos, simulation, Color.Red);
         }
     }

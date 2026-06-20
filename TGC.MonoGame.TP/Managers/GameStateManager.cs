@@ -53,6 +53,8 @@ public class GameStateManager
 
     private MouseState _lastMouseState;
 
+    private ContentManager _menuContent; //evita cache compartido
+
 
     //Constante compartida de separacion vertical para las opciones del menu
     private const float OptionSpacing = 20f;
@@ -89,8 +91,14 @@ public class GameStateManager
     {
         try
         {
-            _menuTankEffect = _content.Load<Effect>("Effects/BasicShaderTexture");
-            _menuTankTexture = _content.Load<Texture2D>("Textures/paleta_256x512");
+            //De este modo el modelo del menu es distinto al del juego
+            _menuContent = new ContentManager(_content.ServiceProvider, "Content");
+
+            //_menuTankEffect = _content.Load<Effect>("Effects/BasicShaderTexture");
+            _menuTankEffect = _menuContent.Load<Effect>("Effects/BlinnPhong");
+            _menuTankTexture = _menuContent.Load<Texture2D>("Textures/paleta_256x512");
+            _currentMenuTankModel = _menuContent.Load<Model>("Models/tanques/tank v5");
+
             UpdateMenuTankModel(0);
         }
         catch (Exception ex)
@@ -105,7 +113,7 @@ public class GameStateManager
         {
             try
             {
-                _currentMenuTankModel = _content.Load<Model>(_menuTankModelPaths[tankIndex]);
+                _currentMenuTankModel = _menuContent.Load<Model>(_menuTankModelPaths[tankIndex]);
             }
             catch (Exception ex)
             {
@@ -407,7 +415,13 @@ public class GameStateManager
         else if (_selectedIndex == 1) // Medium
             menuTankColor = new Microsoft.Xna.Framework.Color(255, 215, 0).ToVector3();   // Amarillo
         else if (_selectedIndex == 2) // Heavy
-            menuTankColor = new Microsoft.Xna.Framework.Color(178, 34, 34).ToVector3();   // 
+            menuTankColor = new Microsoft.Xna.Framework.Color(178, 34, 34).ToVector3();   // Rojo
+
+        _menuTankEffect.Parameters["LightDirection"].SetValue(new Microsoft.Xna.Framework.Vector3(0.5f, 1.0f, 0.3f));
+        _menuTankEffect.Parameters["LightColor"].SetValue(Vector3.One);
+        _menuTankEffect.Parameters["AmbientColor"].SetValue(new Vector3(0.2f, 0.2f, 0.2f));
+        _menuTankEffect.Parameters["EyePosition"].SetValue(new Vector3(10f, 13f, 18f));
+        _menuTankEffect.Parameters["Shininess"].SetValue(32f);
 
         foreach (var mesh in _currentMenuTankModel.Meshes)
         {
@@ -421,21 +435,17 @@ public class GameStateManager
             foreach (var part in mesh.MeshParts)
             {
                 part.Effect = _menuTankEffect;
+                _menuTankEffect.Parameters["World"].SetValue(world);
+                _menuTankEffect.Parameters["View"].SetValue(view);
+                _menuTankEffect.Parameters["Projection"].SetValue(projection);
+                _menuTankEffect.Parameters["ModelTexture"].SetValue(_menuTankTexture);
+                _menuTankEffect.Parameters["DiffuseColor"].SetValue(colorToApply);
 
-                var worldParam = _menuTankEffect.Parameters["World"];
-                if (worldParam != null) worldParam.SetValue(world);
-
-                var viewParam = _menuTankEffect.Parameters["View"];
-                if (viewParam != null) viewParam.SetValue(view);
-
-                var projParam = _menuTankEffect.Parameters["Projection"];
-                if (projParam != null) projParam.SetValue(projection);
-
-                var texParam = _menuTankEffect.Parameters["ModelTexture"];
-                if (texParam != null) texParam.SetValue(_menuTankTexture);
-
-                var colorParam = _menuTankEffect.Parameters["DiffuseColor"];
-                if (colorParam != null) colorParam.SetValue(colorToApply);
+                _menuTankEffect.Parameters["HasImpact"]?.SetValue(0);
+                _menuTankEffect.Parameters["ImpactPointWorld"]?.SetValue(Vector3.Zero);
+                _menuTankEffect.Parameters["ImpactRadius"]?.SetValue(1.5f);
+                _menuTankEffect.Parameters["ImpactDepth"]?.SetValue(0.4f);
+                _menuTankEffect.Parameters["IsDeformable"]?.SetValue(0);
             }
             mesh.Draw();
         }

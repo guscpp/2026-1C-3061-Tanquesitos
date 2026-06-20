@@ -37,6 +37,22 @@ public abstract class TankBase
     public float TurretRotationWorld => RotationY + _turretRotation;
     public float CannonRotation => _cannonRotation;
 
+    public const int MaxImpacts = 6;
+    public Vector3[] ImpactChassisLocal = new Vector3[MaxImpacts];
+    public Vector3[] ImpactTurretLocal = new Vector3[MaxImpacts];
+    public Vector3[] ImpactCannonLocal = new Vector3[MaxImpacts];
+    public float[] ImpactDepthArray = new float[MaxImpacts];
+    public bool[] ImpactActive = new bool[MaxImpacts];
+    private int _lastImpactSlot = -1;
+
+    public float ImpactRadius { get; set; } = 0.75f;
+    public float ImpactDepth { get; set; } = 0.8f;
+
+
+    public void ClearImpacts()
+    {
+        for (int i = 0; i < MaxImpacts; i++) ImpactActive[i] = false;
+    }
     public Microsoft.Xna.Framework.Vector3 CannonForward
     {
         get
@@ -109,42 +125,105 @@ public abstract class TankBase
             inertia, new CollidableDescription(shapeIdx, 0.1f), new BodyActivityDescription(0.01f)));
     }
 
-    public void HandleHealth(float damage)
+    public void HandleHealth(float damage, Vector3 impactPointWorld)
     {
         HealthPoints -= damage;
         if (HealthPoints <= 0) { 
             HealthPoints = 0;
             if (!(this is TankPlayer)) TGCGame.Instance.EnemiesKilled++;
-            IsDead = true; }
+            IsDead = true;
+        }
+
+        int slot = (_lastImpactSlot + 1) % MaxImpacts;
+        _lastImpactSlot = slot;
+
+        ImpactChassisLocal[slot] = Vector3.Transform(impactPointWorld, Matrix.Invert(WorldMatrix));
+        ImpactTurretLocal[slot] = Vector3.Transform(impactPointWorld, Matrix.Invert(TurretWorld));
+        ImpactCannonLocal[slot] = Vector3.Transform(impactPointWorld, Matrix.Invert(CannonWorld));
+
+        ImpactDepthArray[slot] = ImpactDepth;
+        ImpactActive[slot] = true;
     }
 
-    public virtual void Draw(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
+    //overload sin punto de impacto
+    public void HandleHealth(float damage) => HandleHealth(damage, Position);
+
+    public virtual void Draw(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection, Vector3 cameraPosition)
     {
         if (Model == null || IsDead) return;
 
         Microsoft.Xna.Framework.Vector3 colorVector = GetTankColor().ToVector3();
         Microsoft.Xna.Framework.Vector3 whiteColor = Microsoft.Xna.Framework.Vector3.One;
 
+        // Parametros Blinn-Phong
+        _effect.Parameters["World"].SetValue(WorldMatrix);
         _effect.Parameters["View"].SetValue(view);
         _effect.Parameters["Projection"].SetValue(projection);
+        _effect.Parameters["LightDirection"].SetValue(new Vector3(0.5f, 1f, 0.3f)); // normalizada
+        _effect.Parameters["LightColor"].SetValue(Vector3.One);
+        _effect.Parameters["AmbientColor"].SetValue(new Vector3(0.2f, 0.2f, 0.2f));
+        _effect.Parameters["EyePosition"].SetValue(cameraPosition);
         _effect.Parameters["ModelTexture"].SetValue(_texture);
+        _effect.Parameters["Shininess"].SetValue(32f);
+
+        // Parametros de deformacion
+        _effect.Parameters["ImpactRadius"].SetValue(ImpactRadius);
 
         foreach (var mesh in Model.Meshes)
         {
-            var finalWorld = WorldMatrix;
+            bool isDeformable = mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Cuerpo") || 
+                //mesh.Name.Contains("Cano_") || mesh.Name.Contains("Cubre") || 
+                mesh.Name.Contains("Pistola") || mesh.Name.Contains("Proteccion");
+            _effect.Parameters["IsDeformable"].SetValue(isDeformable ? 1 : 0);
+
+            Matrix finalWorld;
+            Vector3[] sourceImpactArray;
 
             if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola"))
+            {
                 finalWorld = TurretWorld;
-
-            else if (mesh.Name.Contains("Cañon") || mesh.Name.Contains("Anillo"))
+                sourceImpactArray = ImpactTurretLocal;
+            }
+            else if (mesh.Name.Contains("Canon") || mesh.Name.Contains("Anillo"))
+            {
                 finalWorld = CannonWorld;
-
-            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") || 
-                mesh.Name.Contains("Proteccion_d") || mesh.Name.Contains("Proteccion_i") || 
-                mesh.Name.Contains("Cuerpo") || mesh.Name.Contains("Cubre"))
-                _effect.Parameters["DiffuseColor"].SetValue(colorVector);
+                sourceImpactArray = ImpactCannonLocal;
+            }
             else
-                _effect.Parameters["DiffuseColor"].SetValue(whiteColor);
+            {
+                finalWorld = WorldMatrix;
+                sourceImpactArray = ImpactChassisLocal;
+            }
+
+            // Empaquetar los 6 impactos a Vector4 para enviarlos al shader
+            Vector4[] impactsData = new Vector4[MaxImpacts];
+            for (int i = 0; i < MaxImpacts; i++)
+            {
+                if (ImpactActive[i])
+                {
+                    // Transformar el punto local a mundo usando la matriz de la pieza actual
+                    Vector3 worldPos = Vector3.Transform(sourceImpactArray[i], finalWorld);
+                    impactsData[i] = new Vector4(worldPos, ImpactDepthArray[i]); // W = Profundidad
+                }
+                else
+                {
+                    impactsData[i] = Vector4.Zero; // W=0 indica impacto inactivo
+                }
+            }
+
+            _effect.Parameters["Impacts"].SetValue(impactsData);
+
+            // Aplicar colores segun scout/medium/heavy
+            var diffuseParam = _effect.Parameters["DiffuseColor"];
+            if (diffuseParam != null)
+            {
+                if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") ||
+                mesh.Name.Contains("Proteccion_d") || mesh.Name.Contains("Proteccion_i") ||
+                mesh.Name.Contains("Cuerpo") || mesh.Name.Contains("Cubre"))
+                    _effect.Parameters["DiffuseColor"].SetValue(colorVector);
+                else
+                    _effect.Parameters["DiffuseColor"].SetValue(whiteColor);
+            }
 
             _effect.Parameters["World"].SetValue(finalWorld);
 
