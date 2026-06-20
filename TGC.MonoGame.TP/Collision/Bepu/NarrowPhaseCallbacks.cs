@@ -13,6 +13,7 @@ using TGC.MonoGame.TP;
 using TGC.MonoGame.TP.Models.Decorations;
 using TGC.MonoGame.TP.Models.Tanks;
 using TGC.MonoGame.TP.Models;
+using TGC.MonoGame.TP.Collisions.Bepu;
 
 public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
 {
@@ -106,7 +107,9 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
 
                 if(handleA == tankHandle || handleB == tankHandle && !cannonball.IsDead)
                 {
-                    TGCGame.Instance._tank.HandleHealth(cannonball.AttackDamage);
+                    //TGCGame.Instance._tank.HandleHealth(cannonball.AttackDamage);
+                    Vector3 bulletPos = TGCGame.Instance.CannonballManager.GetCannonballPosition(cannonball.BodyHandle).ToNumerics();
+                    TGCGame.Instance._tank.HandleHealth(cannonball.AttackDamage, bulletPos);
                     cannonball.killCannonball();
                 }
 

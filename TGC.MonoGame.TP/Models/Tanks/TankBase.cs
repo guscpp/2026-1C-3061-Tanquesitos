@@ -37,6 +37,13 @@ public abstract class TankBase
     public float TurretRotationWorld => RotationY + _turretRotation;
     public float CannonRotation => _cannonRotation;
 
+    public Vector3 ImpactPointLocal { get; private set; } = Vector3.Zero;
+    public Vector3 ImpactPointWorld { get; private set; } = Vector3.Zero;
+    public bool HasImpact { get; private set; } = false;
+    public float ImpactRadius { get; set; } = 1.5f;  //radio de deformacion
+    public float ImpactDepth { get; set; } = 0.4f;   //profundidad de deformacion
+
+
     public Microsoft.Xna.Framework.Vector3 CannonForward
     {
         get
@@ -109,42 +116,72 @@ public abstract class TankBase
             inertia, new CollidableDescription(shapeIdx, 0.1f), new BodyActivityDescription(0.01f)));
     }
 
-    public void HandleHealth(float damage)
+    public void HandleHealth(float damage, Vector3 impactPointWorld)
     {
         HealthPoints -= damage;
         if (HealthPoints <= 0) { 
             HealthPoints = 0;
             if (!(this is TankPlayer)) TGCGame.Instance.EnemiesKilled++;
-            IsDead = true; }
+            IsDead = true;
+        }
+
+        ImpactPointLocal = Vector3.Transform(impactPointWorld, Matrix.Invert(WorldMatrix));
+        HasImpact = true;
     }
 
-    public virtual void Draw(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
+    //overload sin punto de impacto
+    public void HandleHealth(float damage) => HandleHealth(damage, Position);
+
+    public virtual void Draw(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection, Vector3 cameraPosition)
     {
         if (Model == null || IsDead) return;
 
         Microsoft.Xna.Framework.Vector3 colorVector = GetTankColor().ToVector3();
         Microsoft.Xna.Framework.Vector3 whiteColor = Microsoft.Xna.Framework.Vector3.One;
 
+        // Parametros Blinn-Phong
+        _effect.Parameters["World"].SetValue(WorldMatrix);
         _effect.Parameters["View"].SetValue(view);
         _effect.Parameters["Projection"].SetValue(projection);
+        _effect.Parameters["LightDirection"].SetValue(new Vector3(0.5f, 1f, 0.3f)); // normalizada
+        _effect.Parameters["LightColor"].SetValue(Vector3.One);
+        _effect.Parameters["AmbientColor"].SetValue(new Vector3(0.2f, 0.2f, 0.2f));
+        _effect.Parameters["EyePosition"].SetValue(cameraPosition);
         _effect.Parameters["ModelTexture"].SetValue(_texture);
+        _effect.Parameters["Shininess"].SetValue(32f);
+
+        // Parametros de deformacion
+        _effect.Parameters["ImpactPointWorld"].SetValue(ImpactPointWorld);
+        _effect.Parameters["ImpactRadius"].SetValue(ImpactRadius);
+        _effect.Parameters["ImpactDepth"].SetValue(ImpactDepth);
+        _effect.Parameters["HasImpact"].SetValue(HasImpact ? 1 : 0);
 
         foreach (var mesh in Model.Meshes)
         {
+            bool isDeformable = mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Cano_") ||
+                mesh.Name.Contains("Cubre") || mesh.Name.Contains("Cuerpo") ||
+                mesh.Name.Contains("Pistola") || mesh.Name.Contains("Proteccion");
+
+            _effect.Parameters["IsDeformable"].SetValue(isDeformable ? 1 : 0);
+
             var finalWorld = WorldMatrix;
 
             if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Antena") || mesh.Name.Contains("Pistola"))
                 finalWorld = TurretWorld;
 
-            else if (mesh.Name.Contains("Cañon") || mesh.Name.Contains("Anillo"))
+            else if (mesh.Name.Contains("Canon") || mesh.Name.Contains("Anillo"))
                 finalWorld = CannonWorld;
 
-            if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") || 
-                mesh.Name.Contains("Proteccion_d") || mesh.Name.Contains("Proteccion_i") || 
+            var diffuseParam = _effect.Parameters["DiffuseColor"];
+            if (diffuseParam != null)
+            {
+                if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") ||
+                mesh.Name.Contains("Proteccion_d") || mesh.Name.Contains("Proteccion_i") ||
                 mesh.Name.Contains("Cuerpo") || mesh.Name.Contains("Cubre"))
-                _effect.Parameters["DiffuseColor"].SetValue(colorVector);
-            else
-                _effect.Parameters["DiffuseColor"].SetValue(whiteColor);
+                    _effect.Parameters["DiffuseColor"].SetValue(colorVector);
+                else
+                    _effect.Parameters["DiffuseColor"].SetValue(whiteColor);
+            }
 
             _effect.Parameters["World"].SetValue(finalWorld);
 
@@ -268,5 +305,7 @@ public abstract class TankBase
         float sinYaw = 2f * (_physicsOrientation.W * _physicsOrientation.Y + _physicsOrientation.X * _physicsOrientation.Z);
         float cosYaw = 1f - 2f * (_physicsOrientation.X * _physicsOrientation.X + _physicsOrientation.Y * _physicsOrientation.Y);
         RotationY = MathF.Atan2(sinYaw, cosYaw);
+
+        if (HasImpact) ImpactPointWorld = Vector3.Transform(ImpactPointLocal, WorldMatrix);
     }
 }

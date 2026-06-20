@@ -54,6 +54,17 @@ public class CannonballManager
         soundManager.PlaySound3D("cannon_fire", spawnPosition, listenerPos, listenerForward);
     }
 
+    public Vector3 GetCannonballPosition(BodyHandle handle)
+    {
+        var cb = _cannonballs.FirstOrDefault(c => c.BodyHandle == handle);
+        if (cb != null)
+        {
+            var body = _simulation.Bodies[cb.BodyHandle];
+            return new Vector3(body.Pose.Position.X, body.Pose.Position.Y, body.Pose.Position.Z);
+        }
+        return Vector3.Zero;
+    }
+
     public void Update(GameTime gameTime)
     {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;

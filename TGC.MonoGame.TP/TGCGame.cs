@@ -135,6 +135,7 @@ public class TGCGame : Game
         //shaders
         _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //modelos sin texturas
         var textureEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
+        var blinnPhongEffect = Content.Load<Effect>(ContentFolderEffects + "BlinnPhong"); //modelos con textura
         textureEffect.Parameters["DiffuseColor"].SetValue(Microsoft.Xna.Framework.Color.White.ToVector3());
 
         //texturas
@@ -194,7 +195,7 @@ public class TGCGame : Game
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);//Se spawnea unos metros por encima del terreno
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
         //Cargo el tanque
-        _tank.Load(tankModel, tankTexture, textureEffect, _simulation);
+        _tank.Load(tankModel, tankTexture, blinnPhongEffect, _simulation);
         //fisicas
         _tankHandle = _tank.TankHandler;
 
@@ -304,6 +305,7 @@ public class TGCGame : Game
         var tankModel = Content.Load<Model>(ContentFolder3D + getTankPath());
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
         var textureEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+        var blinnPhongEffect = Content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
 
         Vector3 spawnPos = Vector3.Zero;
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);
@@ -311,7 +313,7 @@ public class TGCGame : Game
         _simulation.Bodies.Remove(_tankHandle);
         _tank = new TankPlayer(SelectedPlayerTank);
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
-        _tank.Load(tankModel, tankTexture, textureEffect, _simulation);
+        _tank.Load(tankModel, tankTexture, blinnPhongEffect, _simulation);
         _tankHandle = _tank.TankHandler;
 
         _enemiesManager.Reset(_simulation);
@@ -331,14 +333,14 @@ public class TGCGame : Game
         {
             // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
             _terrain.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
-            _tank.Draw(_camera.View, _camera.Projection);
+            _tank.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
 
             _cannonballManager.Draw(_camera.View, _camera.Projection);
             _housesManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _staticsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _dinamicsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _barrelsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
-            _enemiesManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
+            _enemiesManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation, _camera.ListenerPosition);
             // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
             _hud.Draw();
             _gizmos.Draw();

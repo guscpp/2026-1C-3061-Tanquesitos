@@ -1,92 +1,147 @@
-#if OPENGL
-#define SV_POSITION POSITION
-#define VS_SHADERMODEL vs_3_0
-#define PS_SHADERMODEL ps_3_0
-#else
-#define VS_SHADERMODEL vs_4_0_level_9_1
-#define PS_SHADERMODEL ps_4_0_level_9_1
-#endif
+// =============================================================
+// BlinnPhong.fx — Iluminacion Blinn-Phong + deformacion por impacto
+// Shader Model 3.0
+// =============================================================
 
+// ---------- Transformaciones ----------
 float4x4 World;
 float4x4 View;
 float4x4 Projection;
 
-float3 LightDirection;
+// ---------- Iluminacion Blinn-Phong ----------
+float3 LightDirection; // direccion HACIA la luz (normalizada)
 float3 LightColor;
 float3 AmbientColor;
 float3 EyePosition;
-float3 DiffuseColor = float3(1.0, 1.0, 1.0); // Default blanco para no oscurecer la textura
-float Shininess = 32.0;
+float Shininess = 32.0f;
 
-// --- SOPORTE DE TEXTURA ---
+// ---------- Textura ----------
+float3 DiffuseColor = float3(1.0, 1.0, 1.0);
+
 texture ModelTexture;
-sampler2D textureSampler = sampler_state
+sampler2D TextureSampler = sampler_state
 {
     Texture = <ModelTexture>;
-    MagFilter = Linear;
     MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;
     AddressU = Wrap;
     AddressV = Wrap;
 };
 
-struct VertexShaderInput
+// ---------- Deformacion por impacto ----------
+float3 ImpactPointWorld; // punto de impacto en coordenadas del mundo
+float ImpactRadius; // radio de deformacion
+float ImpactDepth; // profundidad maxima del hundimiento
+int HasImpact; // 1 = hay impacto activo, 0 = no
+int IsDeformable; // 1 = este mesh se puede deformar, 0 = no
+
+// =============================================================
+// Estructuras
+// =============================================================
+struct VSInput
 {
     float4 Position : POSITION0;
     float3 Normal : NORMAL0;
-    float2 TextureCoordinate : TEXCOORD0; // Requerido para mapear la textura
+    float2 TextureCoordinate : TEXCOORD0;
 };
 
-struct VertexShaderOutput
+struct VSOutput
 {
-    float4 Position : SV_POSITION;
-    float3 WorldNormal : TEXCOORD0;
-    float3 WorldPosition : TEXCOORD1;
-    float2 TextureCoordinate : TEXCOORD2; // Se pasa al Pixel Shader
+    float4 Position : POSITION0;
+    float2 TexCoord : TEXCOORD0;
+    float3 WorldPos : TEXCOORD1;
+    float3 WorldNormal : TEXCOORD2;
 };
 
-VertexShaderOutput MainVS(VertexShaderInput input)
+// =============================================================
+// Vertex Shader
+// =============================================================
+VSOutput VS(VSInput input)
 {
-    VertexShaderOutput output;
-    float4 worldPosition = mul(input.Position, World);
-    output.WorldPosition = worldPosition.xyz;
-    output.Position = mul(worldPosition, mul(View, Projection));
-    
-    output.WorldNormal = normalize(mul(input.Normal, (float3x3)World));
-    output.TextureCoordinate = input.TextureCoordinate;
-    
+    VSOutput output;
+
+    // Posicion y normal en espacio mundo
+    float4 worldPos = mul(input.Position, World);
+    float3 worldNormal = normalize(mul(input.Normal, (float3x3) World));
+
+    // ---------- Deformacion ----------
+    if (HasImpact && IsDeformable)
+    {
+        float3 delta = worldPos.xyz - ImpactPointWorld;
+        float dist = length(delta);
+
+        if (dist < ImpactRadius)
+        {
+            // Factor 1 en el centro, 0 en el borde (suavizado cuadratico)
+            float t = 1.0f - (dist / ImpactRadius);
+            float factor = t * t;
+
+            // Hundir el vertice a lo largo de su normal original
+            worldPos.xyz -= worldNormal * ImpactDepth * factor;
+
+            // Recalcular normal: inclinarla hacia afuera del crater
+            float3 craterDir = normalize(delta + float3(0.001f, 0.001f, 0.001f));
+            worldNormal = normalize(worldNormal + craterDir * factor * 1.5f);
+        }
+    }
+
+    // Proyectar a pantalla
+    float4 viewPos = mul(worldPos, View);
+    output.Position = mul(viewPos, Projection);
+
+    // Pasar al pixel shader
+    output.TexCoord = input.TextureCoordinate;
+    output.WorldPos = worldPos.xyz;
+    output.WorldNormal = worldNormal;
+
     return output;
 }
 
-float4 MainPS(VertexShaderOutput input) : COLOR
+// =============================================================
+// Pixel Shader — Blinn-Phong
+// =============================================================
+float4 PS(VSOutput input) : COLOR0
 {
+    // Muestrear textura
+    float4 texColor = tex2D(TextureSampler, input.TexCoord);
+    float3 baseColor = texColor.rgb * DiffuseColor;
+
+    // Normal interpolada (renormalizar)
     float3 N = normalize(input.WorldNormal);
-    float3 L = normalize(-LightDirection);
-    float3 V = normalize(EyePosition - input.WorldPosition);
+
+    // Vector hacia la luz
+    float3 L = normalize(LightDirection);
+
+    // Vector hacia la camara
+    float3 V = normalize(EyePosition - input.WorldPos);
+
+    // Half vector (Blinn-Phong)
     float3 H = normalize(L + V);
-    
-    float NdotL = saturate(dot(N, L));
-    float NdotH = saturate(dot(N, H));
-    
-    float3 ambient = AmbientColor;
+
+    // Componente difusa
+    float NdotL = max(dot(N, L), 0.0f);
     float3 diffuse = LightColor * NdotL;
-    float3 specular = LightColor * pow(NdotH, Shininess) * step(0.001, NdotL);
-    
-    float3 lighting = ambient + diffuse + specular;
-    
-    // Muestreamos el color de la textura en este píxel
-    float4 texColor = tex2D(textureSampler, input.TextureCoordinate);
-    
-    // Combinamos la iluminación con la textura y el color difuso base
-    float3 finalColor = lighting * texColor.rgb * DiffuseColor;
-    
-    return float4(finalColor, texColor.a);
+
+    // Componente especular
+    float NdotH = max(dot(N, H), 0.0f);
+    float3 specular = LightColor * pow(NdotH, Shininess);
+
+    // Color final = ambient + diffuse + specular, multiplicado por textura
+    float3 lighting = AmbientColor + diffuse;
+    float3 finalColor = baseColor * lighting + specular * 0.3f;
+
+    return float4(saturate(finalColor), texColor.a);
 }
 
-technique BlinnPhongTechnique
+// =============================================================
+// Technique
+// =============================================================
+technique BlinnPhong
 {
-    pass Pass0
+    pass P0
     {
-        VertexShader = compile VS_SHADERMODEL MainVS();
-        PixelShader = compile PS_SHADERMODEL MainPS();
+        VertexShader = compile vs_3_0 VS();
+        PixelShader = compile ps_3_0 PS();
     }
 }
