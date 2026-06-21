@@ -1,6 +1,5 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
-using System.Numerics;
 using BEVector3 = System.Numerics.Vector3;
 using BEQuaternion = System.Numerics.Quaternion;
 

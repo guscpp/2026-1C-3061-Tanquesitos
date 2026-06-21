@@ -92,7 +92,7 @@ public class BarrelsManager
 
     public void LoadContent(ContentManager content, Simulation simulation)
     {
-        var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+        var effect = content.Load<Effect>(ContentFolderEffects + "ShadowMap");
 
         foreach (var barrel in _fuelBarrels)
         {
@@ -119,7 +119,14 @@ public class BarrelsManager
         foreach (var barrel in _fuelBarrels)
         {
             if (!barrel.IsCollected) barrel.Draw(view, projection);
-            //barrel.DrawCollisionChamber(gizmos, simulation);
+        }
+    }
+
+    public void DrawDepth(Matrix lightViewProjection)
+    {
+        foreach (var barrel in _fuelBarrels)
+        {
+            if (!barrel.IsCollected) barrel.DrawDepth(lightViewProjection);
         }
     }
 

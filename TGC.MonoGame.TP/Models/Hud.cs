@@ -143,36 +143,36 @@ public class Hud
 
         //Cache Reactivo de String
         // === INDICADOR DE FPS (esquina superior derecha) ===
-        int currentFpsInt = (int)_fps;
-        if (currentFpsInt != _lastDisplayedFps)
-        {
-            _cachedFpsText = $"FPS: {currentFpsInt}";
-            _lastDisplayedFps = currentFpsInt;
-        }
+        //int currentFpsInt = (int)_fps;
+        //if (currentFpsInt != _lastDisplayedFps)
+        //{
+        //    _cachedFpsText = $"FPS: {currentFpsInt}";
+        //    _lastDisplayedFps = currentFpsInt;
+        //}
 
         // Color segun rendimiento (verde/amarillo/rojo)
         var fpsPosition = new Vector2(screenWidth - 100f - padX, padY);
-        Color fpsColor = currentFpsInt >= 60 
-                        ? Color.Lime : currentFpsInt >= 30 
-                        ? Color.Yellow : Color.Red;
+        //Color fpsColor = currentFpsInt >= 60 
+        //                ? Color.Lime : currentFpsInt >= 30 
+        //                ? Color.Yellow : Color.Red;
 
         //sombra para mejor legibilidad
-        _spriteBatch.DrawString(_font, _cachedFpsText, fpsPosition + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_font, _cachedFpsText, fpsPosition, fpsColor);
+        //_spriteBatch.DrawString(_font, _cachedFpsText, fpsPosition + Vector2.One, Color.Black);
+        //_spriteBatch.DrawString(_font, _cachedFpsText, fpsPosition, fpsColor);
 
         // === COORDENADAS DEL TANQUE (debajo del FPS) ===
-        int roundedX = (int)TankPosition.X;
-        int roundedZ = (int)TankPosition.Z;
-        if (roundedX != _lastDisplayedPosX || roundedZ != _lastDisplayedPosZ)
-        {
-            _cachedPosText = $"X: {TankPosition.X:F1}  Y: {TankPosition.Y:F1}  Z: {TankPosition.Z:F1}";
-            _lastDisplayedPosX = roundedX;
-            _lastDisplayedPosZ = roundedZ;
-        }
+        //int roundedX = (int)TankPosition.X;
+        //int roundedZ = (int)TankPosition.Z;
+        //if (roundedX != _lastDisplayedPosX || roundedZ != _lastDisplayedPosZ)
+        //{
+        //    _cachedPosText = $"X: {TankPosition.X:F1}  Y: {TankPosition.Y:F1}  Z: {TankPosition.Z:F1}";
+        //    _lastDisplayedPosX = roundedX;
+        //    _lastDisplayedPosZ = roundedZ;
+        //}
 
         var posPosition = new Vector2(fpsPosition.X - 150f, fpsPosition.Y + _font.LineSpacing + spacing);
-        _spriteBatch.DrawString(_font, _cachedPosText, posPosition + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_font, _cachedPosText, posPosition, _textColor);
+        //_spriteBatch.DrawString(_font, _cachedPosText, posPosition + Vector2.One, Color.Black);
+        //_spriteBatch.DrawString(_font, _cachedPosText, posPosition, _textColor);
 
         // === COMBUSTIBLE DEL TANQUE (debajo de coordenadas) ===
         int fuelInt = (int)TankFuel;

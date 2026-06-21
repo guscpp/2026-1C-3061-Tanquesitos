@@ -29,7 +29,7 @@ public class EnemiesManager
     public const string ContentFolderSpriteFonts = "SpriteFonts/";
     public const string ContentFolderTextures = "Textures/";
 
-    private int _enemiesCount = GameConfig.Enemies.EnemiesCount;
+    private int _enemiesCount = Enemies.EnemiesCount;
     public List<TankEnemy> _enemies = new();
     private List<BodyHandle> _enemiesHandles = new();
     
@@ -40,10 +40,13 @@ public class EnemiesManager
     //fisicas
     private Simulation _simulation;
 
-    public EnemiesManager(Terrain terrain, Simulation simulation)
+    private GraphicsDevice _graphicsDevice;
+
+    public EnemiesManager(Terrain terrain, Simulation simulation, GraphicsDevice graphicsDevice)
     {
         _terrain = terrain;
         _simulation = simulation;
+        _graphicsDevice = graphicsDevice;
     }
 
     public void Initialize()
@@ -55,17 +58,16 @@ public class EnemiesManager
     {
         var tankModel = content.Load<Model>(ContentFolder3D + "tanques/tank v5");
         var tankTexture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        //var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
-        var effect = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
+        var effect = content.Load<Effect>(ContentFolderEffects + "ShadowMap");
 
         for (int i = 0; i < _enemiesCount; i++)
         {
             // Inicializo los tanques y sus handles
             TankEnemy enemy = _random.Next(3) switch
             {
-                0 => new TankEnemyScout(),
-                1 => new TankEnemyMedium(),
-                _ => new TankEnemyHeavy()
+                0 => new TankEnemyScout(_graphicsDevice),
+                1 => new TankEnemyMedium(_graphicsDevice),
+                _ => new TankEnemyHeavy(_graphicsDevice)
             };
             enemy.Position = enemy.GetPosition(_terrain, _random);
             enemy.Load(tankModel, tankTexture, effect, _simulation);
@@ -107,6 +109,14 @@ public class EnemiesManager
         {
             tankEnemy.Draw(view, projection, cameraPosition);
             //tankEnemy.DrawCollisionChamber(gizmos, simulation, Color.Red);
+        }
+    }
+
+    public void DrawDepth(Matrix lightViewProjection)
+    {
+        foreach(var tankEnemy in _enemies)
+        {
+            tankEnemy.DrawDepth(lightViewProjection);
         }
     }
 

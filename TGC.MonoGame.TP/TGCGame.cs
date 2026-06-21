@@ -40,14 +40,8 @@ public class TGCGame : Game
     //-----------JUEGO
     //graficos
     private readonly GraphicsDeviceManager _graphics;
-    //effects
-    private Effect _effect;
-    //escena
-    private Matrix _projection;
-    private Matrix _view;
-    private Matrix _world;
-    //random
-    private readonly Random _random = new();
+    //efectos
+    private Effect _shadowMapEffect;
     //teclado
     private KeyboardState _lastKeyboardState;
     //mouse
@@ -76,6 +70,8 @@ public class TGCGame : Game
     public DinamicsManager _dinamicsManager;
     public BarrelsManager _barrelsManager;
     public EnemiesManager _enemiesManager;
+    private ShadowMapManager _shadowMapManager;
+    public ShadowMapManager ShadowMapManager => _shadowMapManager;
     private SoundManager _soundManager;
     public SoundManager SoundManager => _gameStateManager.SoundManager;
     public SimpleCollisionTracker CollisionTracker { get; private set; } = new SimpleCollisionTracker();
@@ -111,12 +107,6 @@ public class TGCGame : Game
         // Se activa el Backface Culling en sentido anti-horario (se renderizan las caras frontales de los triangulos)
         GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
-        // Configuramos nuestras matrices de la escena.
-        _world = Matrix.Identity;
-        _view = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
-        _projection =
-            Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
-
         InitializePhysics();
 
         base.Initialize();
@@ -133,10 +123,10 @@ public class TGCGame : Game
 
         //RECURSOS
         //shaders
-        _effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader"); //modelos sin texturas
         var textureEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
+        textureEffect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
+        _shadowMapEffect = Content.Load<Effect>(ContentFolderEffects + "ShadowMap");
         var blinnPhongEffect = Content.Load<Effect>(ContentFolderEffects + "BlinnPhong"); //modelos con textura
-        textureEffect.Parameters["DiffuseColor"].SetValue(Microsoft.Xna.Framework.Color.White.ToVector3());
 
         //texturas
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
@@ -145,7 +135,7 @@ public class TGCGame : Game
 
         //CannonballManager
         _cannonballManager = new CannonballManager(_simulation, GameConfig.Tank.Cooldown);
-        _cannonballManager.LoadContent(Content, ContentFolder3D + "cannonball/cannonball", ContentFolderEffects + "BasicShader");
+        _cannonballManager.LoadContent(Content, ContentFolder3D + "cannonball/cannonball", ContentFolderEffects + "ShadowMap");
 
         //AUXILIARES
         Vector3 spawnPos = new Vector3(0, 0, 0);
@@ -154,12 +144,25 @@ public class TGCGame : Game
         //Creo un terreno (suelo)
         _terrain = new Terrain(GraphicsDevice);
         //Le paso la textura y el efecto
-        _terrain.LoadContent(terrainTexture, groundTexture, textureEffect);
+        _terrain.LoadContent(terrainTexture, groundTexture, _shadowMapEffect);
         //fisicas
         _terrainStaticHandle = _terrain.CreatePhysicsTerrain(_simulation);
         //paredes invisibles
         _wall = new Wall(_simulation);
         _wall.LoadContent(_terrain);
+
+        _shadowMapManager = new ShadowMapManager(GraphicsDevice, 8192)
+        {
+            LightPosition = new Vector3(0f, 350f, 100f),
+            LightTarget = Vector3.Zero
+        };
+
+        float halfSize = _terrain.WidthUnits;
+        float maxHeight = GameConfig.Terrain.MaxHeightMeters;
+        _shadowMapManager.FitStaticToScene(
+            new Vector3(-halfSize, 0f, -halfSize),
+            new Vector3(halfSize, maxHeight, halfSize)
+        );
 
         //ASSETS DECORATIVOS
         //casas
@@ -176,7 +179,7 @@ public class TGCGame : Game
         _dinamicsManager.LoadContent(Content, _simulation);
         
         //ENEMIGOS
-        _enemiesManager = new EnemiesManager(_terrain, _simulation);
+        _enemiesManager = new EnemiesManager(_terrain, _simulation, GraphicsDevice);
         _enemiesManager.LoadContent(Content);
 
         //BARRELS
@@ -189,13 +192,13 @@ public class TGCGame : Game
         _gameStateManager.HandleMenuState(kb, _lastKeyboardState);
         _lastKeyboardState = kb;
         // Crear el tanque usando la eleccion del jugador
-        _tank = new TankPlayer(SelectedPlayerTank);
+        _tank = new TankPlayer(GraphicsDevice, SelectedPlayerTank);
         var tankModel = Content.Load<Model>(ContentFolder3D + getTankPath());
         //Determino una posicion para el tanque
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);//Se spawnea unos metros por encima del terreno
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
         //Cargo el tanque
-        _tank.Load(tankModel, tankTexture, blinnPhongEffect, _simulation);
+        _tank.Load(tankModel, tankTexture, _shadowMapEffect, _simulation);
         //fisicas
         _tankHandle = _tank.TankHandler;
 
@@ -212,7 +215,7 @@ public class TGCGame : Game
         base.LoadContent();
     }
 
-    private String getTankPath()
+    private string getTankPath()
     {
         return SelectedPlayerTank is GameConfig.TankClass.Scout ? tankPaths[0] :
             SelectedPlayerTank is GameConfig.TankClass.Medium ? tankPaths[1] :
@@ -304,16 +307,14 @@ public class TGCGame : Game
 
         var tankModel = Content.Load<Model>(ContentFolder3D + getTankPath());
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        var textureEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
-        var blinnPhongEffect = Content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
 
         Vector3 spawnPos = Vector3.Zero;
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);
 
         _simulation.Bodies.Remove(_tankHandle);
-        _tank = new TankPlayer(SelectedPlayerTank);
+        _tank = new TankPlayer(GraphicsDevice, SelectedPlayerTank);
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
-        _tank.Load(tankModel, tankTexture, blinnPhongEffect, _simulation);
+        _tank.Load(tankModel, tankTexture, _shadowMapEffect, _simulation);
         _tankHandle = _tank.TankHandler;
 
         _enemiesManager.Reset(_simulation);
@@ -326,22 +327,42 @@ public class TGCGame : Game
     protected override void Draw(GameTime gameTime)
     {
         // Aca deberiamos poner toda la logica de renderizado del juego.
-        var totalTime = (float)gameTime.TotalGameTime.TotalSeconds;
+        _ = (float)gameTime.TotalGameTime.TotalSeconds;
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
         if (_gameStateManager.CurrentState == GameState.Playing || _gameStateManager.CurrentState == GameState.Paused)
         {
-            // El terreno, al dibujarse, vuelve a activar el Z-Buffer (setea el DepthStencilState en "default")
+            var smm = _shadowMapManager;
+            var lvp = smm.LightViewProjection; // una sola matriz para todo
+
+            if (smm.RebajarSombrasEstaticas)
+            {
+                smm.BeginStaticShadowPass();
+                _terrain.DrawDepth(lvp);
+                _housesManager.DrawDepth(lvp);
+                _staticsManager.DrawDepth(lvp);
+                smm.RebajarSombrasEstaticas = false;
+            }
+
+            smm.BeginDynamicShadowPass();
+            _tank.DrawDepth(lvp);
+            _enemiesManager.DrawDepth(lvp);
+            _cannonballManager.DrawDepth(lvp);
+            _dinamicsManager.DrawDepth(lvp);
+            _barrelsManager.DrawDepth(lvp);
+            
+            smm.BeginLightingPass(_shadowMapEffect);
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+
             _terrain.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
             _tank.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
-
             _cannonballManager.Draw(_camera.View, _camera.Projection);
             _housesManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _staticsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _dinamicsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _barrelsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
             _enemiesManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation, _camera.ListenerPosition);
-            // El HUD se debe dibujar a lo ultimo, ya que para esto se desactiva el Z-Buffer, lo que rompe con el dibujado de los demas modelos
+
             _hud.Draw();
             _gizmos.Draw();
         }
@@ -365,6 +386,7 @@ public class TGCGame : Game
     {
         // Libero los recursos.
         Content.Unload();
+        _shadowMapManager?.Dispose();
         _simulation?.Dispose();
         _simulation = null;
         _bufferPool.Clear();

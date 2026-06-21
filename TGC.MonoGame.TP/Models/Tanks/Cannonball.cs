@@ -36,6 +36,8 @@ public class Cannonball
     // indica de que tipo de tanque proviene la bala (esto afecta el daño que provoca)
     public float AttackDamage { get; }
 
+    private float _normalOffsetScale;
+
     public bool IsDead => _isDead;
     public void killCannonball()
     {
@@ -47,6 +49,8 @@ public class Cannonball
         _model = model;
 
         _effect = effect;
+
+        _normalOffsetScale = 0.4f;
 
         // Asignamos el shader a cada mesh
         foreach (var mesh in _model.Meshes)
@@ -105,26 +109,73 @@ public class Cannonball
 
     public void Draw(Matrix view, Matrix projection)
     {
-        _effect.Parameters["World"]?.SetValue(_world);
+        if (_model == null || _isDead) return;
 
+        _effect.CurrentTechnique = _effect.Techniques["DrawShadowedHibrido"];
+
+        var smm = TGCGame.Instance.ShadowMapManager;
         _effect.Parameters["View"]?.SetValue(view);
-
         _effect.Parameters["Projection"]?.SetValue(projection);
-
-        // gris oscuro
         _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.1f, 0.1f, 0.1f));
+        _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
+
+        // NUEVO: igual que en Decoration/TankBase/Terrain
+        _effect.Parameters["LightColor"]?.SetValue(new Vector3(0.55f, 0.55f, 0.55f));
+        _effect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
+        _effect.Parameters["EyePosition"]?.SetValue(TGCGame.Instance.Camera.ListenerPosition);
+        _effect.Parameters["Shininess"]?.SetValue(16f);
+
+        _effect.Parameters["LightViewProjection"]?.SetValue(smm.LightViewProjection);
+        _effect.Parameters["lightPosition"]?.SetValue(smm.LightPosition);
+        _effect.Parameters["shadowMapStatic"]?.SetValue(smm.StaticShadowRenderTarget);
+        _effect.Parameters["shadowMapDynamic"]?.SetValue(smm.DynamicShadowRenderTarget);
+        _effect.Parameters["shadowMapSize"]?.SetValue(new Vector2(smm.StaticShadowRenderTarget.Width, smm.StaticShadowRenderTarget.Height));
+
+        _effect.Parameters["IsDeformable"]?.SetValue(0);
 
         Matrix[] transforms = new Matrix[_model.Bones.Count];
+        _model.CopyAbsoluteBoneTransformsTo(transforms);
 
+        foreach (var mesh in _model.Meshes)
+        {
+            Matrix localWorld = transforms[mesh.ParentBone.Index] * _world;
+            _effect.Parameters["World"]?.SetValue(localWorld);
+            _effect.Parameters["InverseTransposeWorld"]?.SetValue(Matrix.Transpose(Matrix.Invert(localWorld)));
+            mesh.Draw();
+        }
+    }
+
+    public void DrawDepth(Matrix lightViewProjection)
+    {
+        if (_model == null || _isDead) return;
+
+        _effect.CurrentTechnique = _effect.Techniques["DepthPass"];
+
+        Matrix[] transforms = new Matrix[_model.Bones.Count];
         _model.CopyAbsoluteBoneTransformsTo(transforms);
 
         foreach (var mesh in _model.Meshes)
         {
             Matrix localWorld = transforms[mesh.ParentBone.Index] * _world;
 
+            // CORREGIDO: World por separado + LightViewProjection
             _effect.Parameters["World"]?.SetValue(localWorld);
+            _effect.Parameters["LightViewProjection"]?.SetValue(lightViewProjection);
+            _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
+            _effect.Parameters["IsDeformable"]?.SetValue(0);
 
-            mesh.Draw();
+            var gd = _effect.GraphicsDevice;
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                foreach (var pass in _effect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    gd.SetVertexBuffer(meshPart.VertexBuffer);
+                    gd.Indices = meshPart.IndexBuffer;
+                    gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, meshPart.VertexOffset, meshPart.StartIndex, meshPart.PrimitiveCount);
+                }
+            }
+            // Saqué el mesh.Draw() duplicado que tenías al final del loop
         }
     }
 }

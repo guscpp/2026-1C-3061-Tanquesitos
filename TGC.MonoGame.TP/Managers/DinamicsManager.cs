@@ -77,7 +77,7 @@ public class DinamicsManager
 
     public void LoadContent(ContentManager content, Simulation simulation)
     {
-        var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+        var effect = content.Load<Effect>(ContentFolderEffects + "ShadowMap");
 
         foreach (var asset in _dynamicDecorations)
         {
@@ -130,7 +130,14 @@ public class DinamicsManager
         foreach (var asset in _dynamicDecorations)
         {
             asset.Draw(view, projection);
-            //asset.DrawCollisionChamber(gizmos, simulation);
+        }
+    }
+
+    public void DrawDepth(Matrix lightViewProjection)
+    {
+        foreach (var asset in _dynamicDecorations)
+        {
+            asset.DrawDepth(lightViewProjection);
         }
     }
 

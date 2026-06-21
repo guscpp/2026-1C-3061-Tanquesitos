@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
 
 namespace TGC.MonoGame.TP.Models.Tanks;
@@ -9,8 +10,10 @@ public class TankPlayer : TankBase
     public float CurrentFuel { get; private set; } = GameConfig.Tank.MaxFuel;
     public float initialHealth { get; }
 
-    public TankPlayer(GameConfig.TankClass tankClass)
+    public TankPlayer(GraphicsDevice graphicsDevice, GameConfig.TankClass tankClass)
     {
+        _graphicsDevice = graphicsDevice;
+
         TankClass = tankClass;
 
         switch (tankClass)

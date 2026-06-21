@@ -60,7 +60,7 @@ public class HousesManager
 
     public void LoadContent(ContentManager content, Simulation simulation)
     {
-        var effect = content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture");
+        var effect = content.Load<Effect>(ContentFolderEffects + "ShadowMap");
 
         foreach (var house in _houses)
         {
@@ -75,7 +75,14 @@ public class HousesManager
         foreach (var house in _houses)
         {
             house.Draw(view, projection);
-            //house.DrawCollisionChamber(gizmos, simulation);
+        }
+    }
+
+    public void DrawDepth(Matrix lightViewProjection)
+    {
+        foreach (var house in _houses)
+        {
+            house.DrawDepth(lightViewProjection);
         }
     }
 
