@@ -182,8 +182,7 @@ namespace TGC.MonoGame.TP.Managers
             }
 
             var proj = Matrix.CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ, -minZ);
-            StaticLightViewProjection = LightView * proj;
-            // NO toca RebajarSombrasEstaticas ni LightViewProjection
+            LightViewProjection = LightView * proj;
         }
 
         public void FitDynamicToCamera(Vector3[] cameraCorners)

@@ -38,6 +38,8 @@ public abstract class TankBase
     public float TurretRotationWorld => RotationY + _turretRotation;
     public float CannonRotation => _cannonRotation;
 
+    private float _normalOffsetScale;
+
     public Vector3 CannonForward
     {
         get
@@ -81,6 +83,8 @@ public abstract class TankBase
 
     public void Load(Model model, Texture2D texture, Effect effect, Simulation simulation)
     {
+        _normalOffsetScale = 0.55f; // Valor recomendado para tanques, ajustable según necesidad
+
         Model = model; _effect = effect; _texture = texture;
         foreach (var mesh in Model.Meshes)
             foreach (var part in mesh.MeshParts) part.Effect = _effect;
@@ -121,17 +125,18 @@ public abstract class TankBase
 
     public virtual void Draw(Matrix view, Matrix projection)
     {
+
         if (Model == null || IsDead) return;
 
         _effect.CurrentTechnique = _effect.Techniques["DrawShadowedHibrido"];
 
         var smm = TGCGame.Instance.ShadowMapManager;
-        _effect.Parameters["View"].SetValue(view);
-        _effect.Parameters["Projection"].SetValue(projection);
-        _effect.Parameters["ModelTexture"].SetValue(_texture);
-        _effect.Parameters["LightViewProjection"].SetValue(smm.StaticLightViewProjection);
-        _effect.Parameters["DynamicLightViewProjection"].SetValue(smm.DynamicLightViewProjection);
-        _effect.Parameters["lightPosition"].SetValue(smm.LightPosition);
+        _effect.Parameters["View"]?.SetValue(view);
+        _effect.Parameters["Projection"]?.SetValue(projection);
+        _effect.Parameters["ModelTexture"]?.SetValue(_texture);
+        _effect.Parameters["LightViewProjection"]?.SetValue(smm.LightViewProjection);
+        _effect.Parameters["lightPosition"]?.SetValue(smm.LightPosition);
+        _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
 
         Vector3 colorVector = GetTankColor().ToVector3();
         Vector3 whiteColor = Vector3.One;
@@ -149,12 +154,12 @@ public abstract class TankBase
             if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") || 
                 mesh.Name.Contains("Proteccion_d") || mesh.Name.Contains("Proteccion_i") || 
                 mesh.Name.Contains("Cuerpo") || mesh.Name.Contains("Cubre"))
-                _effect.Parameters["DiffuseColor"].SetValue(colorVector);
+                _effect.Parameters["DiffuseColor"]?.SetValue(colorVector);
             else
-                _effect.Parameters["DiffuseColor"].SetValue(whiteColor);
+                _effect.Parameters["DiffuseColor"]?.SetValue(whiteColor);
 
-            _effect.Parameters["World"].SetValue(finalWorld);
-            _effect.Parameters["InverseTransposeWorld"].SetValue(
+            _effect.Parameters["World"]?.SetValue(finalWorld);
+            _effect.Parameters["InverseTransposeWorld"]?.SetValue(
             Matrix.Transpose(Matrix.Invert(finalWorld)));
 
             mesh.Draw();
@@ -175,7 +180,8 @@ public abstract class TankBase
             else if (mesh.Name.Contains("Cañon") || mesh.Name.Contains("Anillo"))
                 world = CannonWorld;
 
-            _effect.Parameters["WorldViewProjection"].SetValue(world * lightViewProjection);
+            _effect.Parameters["WorldViewProjection"]?.SetValue(world * lightViewProjection);
+            _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
 
             foreach (var meshPart in mesh.MeshParts)
             {

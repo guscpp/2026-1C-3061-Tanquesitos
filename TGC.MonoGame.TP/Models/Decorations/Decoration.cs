@@ -26,10 +26,13 @@ public class Decoration
     protected Vector3 _dimensions; //guarda el ancho, alto y largo del modelo
     protected Vector3 _modelCenter; //ubicacion del pivote
 
+    protected float _normalOffsetScale;
+
     public Vector3 Position => _position; //Es la variable de solo lectura de la posicion
 
     public Decoration(Vector3 position, string path)
     {
+        _normalOffsetScale = 0.4f; // Valor recomendado para decoraciones, ajustable según necesidad
         _position = position;
         _path = path;
         _visualScale = 1f; //Hasta delimitar el tamaño de cada modelo con el modelo fisico
@@ -86,11 +89,11 @@ public class Decoration
         _effect.Parameters["World"]?.SetValue(_world);
         _effect.Parameters["DiffuseColor"]?.SetValue(Vector3.One); 
         _effect.Parameters["InverseTransposeWorld"]?.SetValue(Matrix.Transpose(Matrix.Invert(_world)));
+        _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
 
         if (smm != null)
         {
-            _effect.Parameters["LightViewProjection"]?.SetValue(smm.StaticLightViewProjection);
-            _effect.Parameters["DynamicLightViewProjection"]?.SetValue(smm.DynamicLightViewProjection);
+            _effect.Parameters["LightViewProjection"]?.SetValue(smm.LightViewProjection);
             _effect.Parameters["lightPosition"]?.SetValue(smm.LightPosition);
             
             _effect.Parameters["shadowMapStatic"]?.SetValue(smm.StaticShadowRenderTarget);
@@ -136,6 +139,7 @@ public class Decoration
         }
 
         _effect.Parameters["WorldViewProjection"]?.SetValue(_world * lightViewProjection);
+        //_effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale); debo modificar el valor segun el objeto
 
         var gd = _effect.GraphicsDevice;
 

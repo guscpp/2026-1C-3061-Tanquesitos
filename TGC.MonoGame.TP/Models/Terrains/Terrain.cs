@@ -30,9 +30,12 @@ public class Terrain
     private int _width;
     private int _height;
 
+    private float _normalOffsetScale;
+
     public Terrain(GraphicsDevice graphicsDevice)
     {
         _graphicsDevice = graphicsDevice;
+        _normalOffsetScale = 0.6f; // Valor recomendado para terrenos, ajustable según necesidad
     }
 
     public void LoadContent(Texture2D heightmapTexture, Texture2D groundTexture, Effect BasicShader)
@@ -220,20 +223,19 @@ public class Terrain
 
         _terrainEffect.CurrentTechnique = _terrainEffect.Techniques["DrawShadowedHibrido"];
 
-        _terrainEffect.Parameters["World"].SetValue(Matrix.Identity);
-        _terrainEffect.Parameters["View"].SetValue(view);
-        _terrainEffect.Parameters["Projection"].SetValue(projection);
-        _terrainEffect.Parameters["ModelTexture"].SetValue(_groundTexture);
+        _terrainEffect.Parameters["World"]?.SetValue(Matrix.Identity);
+        _terrainEffect.Parameters["View"]?.SetValue(view);
+        _terrainEffect.Parameters["Projection"]?.SetValue(projection);
+        _terrainEffect.Parameters["ModelTexture"]?.SetValue(_groundTexture);
 
         _terrainEffect.Parameters["DiffuseColor"]?.SetValue(Vector3.One);
         _terrainEffect.Parameters["EyePosition"]?.SetValue(cameraPosition); 
-        // ═════════════════════
+        _terrainEffect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
 
         var smm = TGCGame.Instance.ShadowMapManager;
-        _terrainEffect.Parameters["LightViewProjection"].SetValue(smm.StaticLightViewProjection);
-        _terrainEffect.Parameters["DynamicLightViewProjection"]?.SetValue(smm.DynamicLightViewProjection);
-        _terrainEffect.Parameters["lightPosition"].SetValue(smm.LightPosition);
-        _terrainEffect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(Matrix.Identity)));
+        _terrainEffect.Parameters["LightViewProjection"]?.SetValue(smm.LightViewProjection);
+        _terrainEffect.Parameters["lightPosition"]?.SetValue(smm.LightPosition);
+        _terrainEffect.Parameters["InverseTransposeWorld"]?.SetValue(Matrix.Transpose(Matrix.Invert(Matrix.Identity)));
 
         _graphicsDevice.SetVertexBuffer(_terrainVertexBuffer);
         _graphicsDevice.Indices = _terrainIndexBuffer;
@@ -253,7 +255,8 @@ public class Terrain
         if (_terrainEffect == null) return;
 
         _terrainEffect.CurrentTechnique = _terrainEffect.Techniques["DepthPass"];
-        _terrainEffect.Parameters["WorldViewProjection"].SetValue(lightViewProjection); 
+        _terrainEffect.Parameters["WorldViewProjection"]?.SetValue(lightViewProjection); 
+        _terrainEffect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
 
         _graphicsDevice.SetVertexBuffer(_terrainVertexBuffer);
         _graphicsDevice.Indices = _terrainIndexBuffer;

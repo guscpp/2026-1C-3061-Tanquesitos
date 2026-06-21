@@ -33,6 +33,8 @@ public class Cannonball
 
     private bool _isDead = false;
 
+    private float _normalOffsetScale;
+
     // indica de que tipo de tanque proviene la bala (esto afecta el daño que provoca)
     public float AttackDamage { get; }
 
@@ -47,6 +49,8 @@ public class Cannonball
         _model = model;
 
         _effect = effect;
+        
+        _normalOffsetScale = 0.4f; // Valor recomendado para balas, ajustable según necesidad
 
         // Asignamos el shader a cada mesh
         foreach (var mesh in _model.Meshes)
@@ -113,9 +117,9 @@ public class Cannonball
         _effect.Parameters["View"]?.SetValue(view);
         _effect.Parameters["Projection"]?.SetValue(projection);
         _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.1f, 0.1f, 0.1f));
+        _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
         
-        _effect.Parameters["LightViewProjection"]?.SetValue(smm.StaticLightViewProjection);
-        _effect.Parameters["DynamicLightViewProjection"]?.SetValue(smm.DynamicLightViewProjection);
+        _effect.Parameters["LightViewProjection"]?.SetValue(smm.LightViewProjection);
         _effect.Parameters["lightPosition"]?.SetValue(smm.LightPosition);
         _effect.Parameters["shadowMapStatic"]?.SetValue(smm.StaticShadowRenderTarget);
         _effect.Parameters["shadowMapDynamic"]?.SetValue(smm.DynamicShadowRenderTarget);
@@ -146,6 +150,7 @@ public class Cannonball
         {
             Matrix localWorld = transforms[mesh.ParentBone.Index] * _world;
             _effect.Parameters["WorldViewProjection"]?.SetValue(localWorld * lightViewProjection);
+            _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
 
             foreach (var meshPart in mesh.MeshParts)
             {

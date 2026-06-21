@@ -324,30 +324,24 @@ public class TGCGame : Game
             _gameStateManager.CurrentState == GameState.Paused)
         {
             var smm = _shadowMapManager;
+            var lvp = smm.LightViewProjection; // una sola matriz para todo
 
-            // Fit dinámico cada frame
-            var cameraFrustum = new BoundingFrustum(_camera.View * _camera.Projection);
-            smm.FitDynamicToCamera(cameraFrustum.GetCorners());
-
-            // PASADA 1A: Estáticos (solo cuando cambia la luz)
             if (smm.RebajarSombrasEstaticas)
             {
                 smm.BeginStaticShadowPass();
-                _terrain.DrawDepth(smm.StaticLightViewProjection);
-                _housesManager.DrawDepth(smm.StaticLightViewProjection);
-                _staticsManager.DrawDepth(smm.StaticLightViewProjection);
-                _barrelsManager.DrawDepth(smm.StaticLightViewProjection);
+                _terrain.DrawDepth(lvp);
+                _housesManager.DrawDepth(lvp);
+                _staticsManager.DrawDepth(lvp);
+                _barrelsManager.DrawDepth(lvp);
                 smm.RebajarSombrasEstaticas = false;
             }
 
-            // PASADA 1B: Dinámicos cada frame
             smm.BeginDynamicShadowPass();
-            _tank.DrawDepth(smm.DynamicLightViewProjection);
-            _enemiesManager.DrawDepth(smm.DynamicLightViewProjection);
-            _cannonballManager.DrawDepth(smm.DynamicLightViewProjection);
-            _dinamicsManager.DrawDepth(smm.DynamicLightViewProjection);
+            _tank.DrawDepth(lvp);
+            _enemiesManager.DrawDepth(lvp);
+            _cannonballManager.DrawDepth(lvp);
+            _dinamicsManager.DrawDepth(lvp);
 
-            // PASADA 2: Render final
             smm.BeginLightingPass(_shadowMapEffect);
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
