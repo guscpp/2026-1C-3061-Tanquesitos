@@ -1,14 +1,10 @@
-using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
 using BepuPhysics.Collidables;
-// Alias para evitar la ambigüedad molesta entre los dos motores que no se como solucionar ;_;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 using BepuVector3 = System.Numerics.Vector3;
-//No entiendo por que debo agregar otra vez estas librerias si ya estan en decorationnnn
-using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 namespace TGC.MonoGame.TP.Models.Decorations
 {//Dinamico (2 tipos) - Caja
@@ -23,7 +19,6 @@ namespace TGC.MonoGame.TP.Models.Decorations
         //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
         {
-            //_normalOffsetScale = 0.4f;
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             _width = _dimensions.X;
@@ -40,7 +35,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
             // Posicion inicial, se ajusta el centro (Bepu usa el centro, MonoGame la base)
             //Uso la posicion del modelo visual para definir donde ubico el modelo fisico al inicio, pero la altura no por lo del pivote (el centro del modelo)
-            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
+            var initialPos = new BepuVector3(_position.X, _position.Y, _position.Z);
 
             //Para que no consuma recursos a lo loco cuando no lo estoy tocando y asegurarme de que se va quedar quieto hasta que el tanque lo choque
             //Primer parametro --> umbral de sueño --> si no se mueve demasiado bepu lo congela
@@ -80,7 +75,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             // Tomo solo la rotacion y posicion que vienen de la Pose de Bepu (el modelo se supone que ya concuerda con el modelo fisico).            
             var pose = simulation.Bodies[bodyHandle].Pose;
             
-            Matrix rotation = Matrix.CreateFromQuaternion(new Microsoft.Xna.Framework.Quaternion(
+            Matrix rotation = Matrix.CreateFromQuaternion(new Quaternion(
                 pose.Orientation.X, pose.Orientation.Y, pose.Orientation.Z, pose.Orientation.W));
             
             Vector3 position = new Vector3(pose.Position.X, pose.Position.Y, pose.Position.Z);

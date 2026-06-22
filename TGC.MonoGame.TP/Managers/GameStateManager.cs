@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using System;
-using System.Reflection.Metadata;
 using TGC.MonoGame.TP.Models;
 
 namespace TGC.MonoGame.TP.Managers;
@@ -40,7 +39,6 @@ public class GameStateManager
     private Effect _menuTankEffect;
     private float _menuTankRotation = 0f;
     private float _menuTankRotationSpeed = 0.015f;
-    private int _lastSelectedIndex = -1;
 
     //En algun momento consideramos usar 3 modelos distintos para los 3 tipos
     private readonly string[] _menuTankModelPaths = {
@@ -195,7 +193,6 @@ public class GameStateManager
                 {
                     CurrentState = GameState.Menu;
                     _selectedIndex = 0;
-                    _lastSelectedIndex = -1;
                     _menuMusicStarted = false;
                     _currentMenuTankModel = null;
                     UpdateMenuTankModel(0);

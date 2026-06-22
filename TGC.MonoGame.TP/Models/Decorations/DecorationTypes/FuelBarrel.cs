@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
@@ -7,6 +6,7 @@ using BepuPhysics.Collidables;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Tanks;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
+using BepuVector3 = System.Numerics.Vector3;
 
 namespace TGC.MonoGame.TP.Models.Decorations
 {
@@ -44,7 +44,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             {
                 var shape = new Cylinder(GameConfig.FuelBarrel.Radius, _height);
                 var shapeIndex = simulation.Shapes.Add(shape);
-                var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
+                var initialPos = new BepuVector3(_position.X, _position.Y, _position.Z);
                 _staticHandle = simulation.Statics.Add(new StaticDescription(initialPos, shapeIndex));
             }
         }
@@ -62,7 +62,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
             var shapeIndex = simulation.Shapes.Add(shape);
 
             // offset y: bepu usa centro geometrico, el terrain.getheight devuelve base
-            var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
+            var initialPos = new BepuVector3(_position.X, _position.Y, _position.Z);
             _staticHandle = simulation.Statics.Add(new StaticDescription(initialPos, shapeIndex));
 
             // correccion de orientacion: fbx exportado en z-up, mono game usa y-up

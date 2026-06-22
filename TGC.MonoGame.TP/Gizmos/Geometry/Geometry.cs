@@ -28,7 +28,7 @@ namespace TGC.MonoGame.TP.Gizmos.Geometry
                 new IndexBuffer(_graphicsDevice, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
             _indexBuffer.SetData(indices);
 
-            _primitiveCount = indices.Length/2;     // por cada linea hay dos indices?
+            _primitiveCount = indices.Length/2;
         }
 
         /// <summary>

@@ -175,7 +175,6 @@ public abstract class TankBase
         _effect.Parameters["Shininess"]?.SetValue(32f); // valor típico, ajustable
         //Es mas una cuestion de gustos, pero prefiero que el tanque resalte mas
         _effect.Parameters["LightColor"]?.SetValue(Vector3.One);
-        //_effect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.2f, 0.2f, 0.2f));
         _effect.Parameters["ImpactRadius"]?.SetValue(ImpactRadius);
 
         Vector3 colorVector = GetTankColor().ToVector3();
@@ -199,7 +198,6 @@ public abstract class TankBase
             }
 
             bool isDeformable = mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Cuerpo") || 
-                //mesh.Name.Contains("Cano_") || mesh.Name.Contains("Cubre") || 
                 mesh.Name.Contains("Pistola") || mesh.Name.Contains("Proteccion");
             _effect.Parameters["IsDeformable"].SetValue(isDeformable ? 1 : 0);
 
@@ -266,7 +264,6 @@ public abstract class TankBase
         _effect.CurrentTechnique = _effect.Techniques["DepthPass"];
 
         _effect.Parameters["LightViewProjection"]?.SetValue(lightViewProjection);
-        //_effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
         _effect.Parameters["ImpactRadius"]?.SetValue(ImpactRadius);
 
         foreach (var mesh in Model.Meshes)

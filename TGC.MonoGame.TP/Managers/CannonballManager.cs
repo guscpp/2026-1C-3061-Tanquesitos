@@ -70,7 +70,6 @@ public class CannonballManager
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         UpdateCooldown(dt);
 
-        // Iteramos de atras para adelante para poder eliminar elementos de forma segura
         for (int i = _cannonballs.Count - 1; i >= 0; i--)
         {
             var cb = _cannonballs[i];
@@ -110,8 +109,6 @@ public class CannonballManager
         _currentCooldown = 0f;
     }
 
-    // Metodo de consulta seguro para NarrowPhaseCallbacks
-    // Encapsulamiento: nos evita exponer la lista interna al resto del sistema.
     public bool TryGetCannonball(BodyHandle handle, out Cannonball cannonball)
     {
         cannonball = _cannonballs.FirstOrDefault(c => c.BodyHandle == handle);

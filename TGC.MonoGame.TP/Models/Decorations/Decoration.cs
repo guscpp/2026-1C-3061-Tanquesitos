@@ -1,14 +1,9 @@
 using System;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
-using BepuPhysics.Collidables;
-// Alias para evitar la ambigüedad molesta entre los dos motores que no se como solucionar ;_;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
-using BepuVector3 = System.Numerics.Vector3;
-//No entiendo por que debo agregar otra vez estas librerias si ya estan en decorationnnn
 using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
@@ -52,9 +47,6 @@ public class Decoration
         _effect = effect.Clone(); //Como lo clono en vez de usar el mismo comparto el codigo pero no el parametro world ni view que varian de modelo a modelo
         //Para cada malla de mi coleccion de mallas del modelo
 
-        //_effect.Parameters["LightColor"]?.SetValue(new Vector3(0.65f, 0.55f, 0.40f));
-        //_effect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
-
         foreach (var mesh in _model.Meshes) 
         {
            //Para cada parte de la malla de mi coleccion de partes de la malla
@@ -68,7 +60,7 @@ public class Decoration
         _boundingBox = BoundingVolumesUtils.CreateBoundingBox(_model);
         _dimensions = _boundingBox.Max - _boundingBox.Min; //tomo el punto maximo y el punto minimo de mi caja y luego calculo la diferencia para saber la distancia, se usa el Min porque el modelo puede estar un poquito mal posicionado y no lo voy andar corrigiendo 80 veces en blender, ya lo intente
         _modelCenter = (_boundingBox.Max + _boundingBox.Min) / 2f; //ajustamos el pivote que originalmente esta en los pies del modelo visual para que concuerde con el del modelo fisico que es en el centro
-        float objectSize = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z));
+        _ = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z));
         //_normalOffsetScale = MathHelper.Clamp(objectSize * 0.02f, 0.03f, 0.6f);
         _normalOffsetScale = 0.02f;
     }

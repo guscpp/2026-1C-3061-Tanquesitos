@@ -21,8 +21,6 @@ public class Hud
 {
     private SpriteBatch _spriteBatch;
     private SpriteFont _font;
-    private readonly string[] _instructions;
-    private readonly Color _textColor = Color.White;
 
     // Parámetros de diseño responsive
     private readonly float _paddingPercentX = 0.02f;
@@ -40,15 +38,9 @@ public class Hud
     private int _fpsFrameCount;
 
     // --- VARIABLES DE CACHÉ REACTIVA (Evitan miles de allocations de strings por segundo) ---
-    private string _cachedFpsText = "FPS: 0";
-    private int _lastDisplayedFps = -1;
 
     private string _cachedFuelText = "FUEL: 100 / 100";
     private int _lastDisplayedFuel = -1;
-
-    // private string _cachedPosText = "X: 0.0  Y: 0.0  Z: 0.0";
-    // private int _lastDisplayedPosX = -9999;
-    // private int _lastDisplayedPosZ = -9999;
 
     private string _cachedCooldownText = "DISPARO: LISTO";
     private float _lastRemainingSeconds = -1f;
@@ -79,17 +71,7 @@ public class Hud
     public float CannonCurrentCooldown { get; set; }
     public float CannonMaxCooldown { get; set; } = 0.5f;
 
-    public Hud()
-    {
-        _instructions = new[]
-        {
-            "movimiento: w / a / s / d",
-            "pausa: p",
-            "zoom: rueda del mouse",
-            "salir: escape"
-        };
-
-    }
+    public Hud(){ }
 
     public void LoadContent(ContentManager content, GraphicsDevice graphicsDevice)
     {
@@ -160,46 +142,11 @@ public class Hud
         float leftCurrentY = leftPanelPosition.Y;
 
         // === INSTRUCCIONES (esquina superior izquierda) ===
-        var drawPosition = new Vector2(padX, padY);
-        // foreach (var line in _instructions)
-        // {
-        //     _spriteBatch.DrawString(_font, line, drawPosition + new Vector2(1, 1), Color.Black);
-        //     _spriteBatch.DrawString(_font, line, drawPosition, _textColor);
-        //     drawPosition.Y += _font.LineSpacing + spacing;
-        // }
+        _ = new Vector2(padX, padY);
 
-        //Cache Reactivo de String
-        // === INDICADOR DE FPS (esquina superior derecha) ===
-        //int currentFpsInt = (int)_fps;
-        //if (currentFpsInt != _lastDisplayedFps)
-        //{
-        //    _cachedFpsText = $"FPS: {currentFpsInt}";
-        //    _lastDisplayedFps = currentFpsInt;
-        //}
-
-        // Color segun rendimiento (verde/amarillo/rojo)
         var fpsPosition = new Vector2(screenWidth - 100f - padX, padY);
-        //Color fpsColor = currentFpsInt >= 60 
-        //                ? Color.Lime : currentFpsInt >= 30 
-        //                ? Color.Yellow : Color.Red;
 
-        //sombra para mejor legibilidad
-        //_spriteBatch.DrawString(_font, _cachedFpsText, fpsPosition + Vector2.One, Color.Black);
-        //_spriteBatch.DrawString(_font, _cachedFpsText, fpsPosition, fpsColor);
-
-        // === COORDENADAS DEL TANQUE (debajo del FPS) ===
-        //int roundedX = (int)TankPosition.X;
-        //int roundedZ = (int)TankPosition.Z;
-        //if (roundedX != _lastDisplayedPosX || roundedZ != _lastDisplayedPosZ)
-        //{
-        //    _cachedPosText = $"X: {TankPosition.X:F1}  Y: {TankPosition.Y:F1}  Z: {TankPosition.Z:F1}";
-        //    _lastDisplayedPosX = roundedX;
-        //    _lastDisplayedPosZ = roundedZ;
-        //}
-
-        var posPosition = new Vector2(fpsPosition.X - 150f, fpsPosition.Y + _font.LineSpacing + spacing);
-        //_spriteBatch.DrawString(_font, _cachedPosText, posPosition + Vector2.One, Color.Black);
-        //_spriteBatch.DrawString(_font, _cachedPosText, posPosition, _textColor);
+        _ = new Vector2(fpsPosition.X - 150f, fpsPosition.Y + _font.LineSpacing + spacing);
 
         // === COMBUSTIBLE DEL TANQUE (debajo de coordenadas) ===
         int fuelInt = (int)TankFuel;
@@ -305,7 +252,7 @@ public class Hud
         _spriteBatch.End();
     }
 
-    private int getPlayerHealth() => (int)(TGCGame.Instance._tank.HealthPoints);
+    private int getPlayerHealth() => (int)TGCGame.Instance._tank.HealthPoints;
 
     private void DrawBar(Vector2 position, Color color, float percent)
     {

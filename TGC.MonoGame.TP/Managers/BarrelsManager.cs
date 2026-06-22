@@ -1,26 +1,17 @@
 using BepuPhysics;
-using BepuPhysics.CollisionDetection;
-using BepuPhysics.Constraints;
-using BepuUtilities.Memory;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
-using TGC.MonoGame.TP.Models.Decorations;
-using static TGC.MonoGame.TP.GameConfig;
 using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
 using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Managers;
 
-/// <summary>
-///     Genera todas las clases de assets dentro del escenario aleatoriamente
-/// </summary>
 public class BarrelsManager
 {
     public const string ContentFolder3D = "Models/";
@@ -34,9 +25,7 @@ public class BarrelsManager
     public List<Vector3> _decorationModels = new();
     public List<Vector3> _houses = new();
 
-    // sobre el terreno
     private Terrain _terrain;
-    //Random
     private readonly Random _random = new();
 
     public BarrelsManager(Terrain terrain, List<Vector3> decorationModels, List<Vector3> houses)
@@ -67,17 +56,15 @@ public class BarrelsManager
                     valid = false;
                     continue;
                 }
-                // Validar distancia contra casas
+
                 if (IsTooNearToAHouse(pos, minDistToHouses)) { valid = false; continue; }
 
-                // Validar distancia contra decoraciones existentes
                 foreach (var dec in _decorationModels)
                 {
                     if (Vector3.Distance(pos, dec) < minDistToDecorations) { valid = false; break; }
                 }
                 if (!valid) continue;
 
-                // Validar distancia contra otros barriles ya colocados
                 foreach (var barrel in _fuelBarrels)
                 {
                     if (Vector3.Distance(pos, barrel.Position) < minDistToBarrels) { valid = false; break; }
@@ -130,7 +117,6 @@ public class BarrelsManager
         }
     }
 
-    //Me da una posicion aleatoria sobre el terreno
     private Vector3 GetRandomPosition()
     {
         var minHorizontal = -_terrain.WidthUnits;
@@ -150,7 +136,6 @@ public class BarrelsManager
         return positions;
     }
 
-    //Me dice si la posicion esta muy cerca de una casa
     private bool IsTooNearToAHouse(Vector3 position, float minDistance)
     {
         for(int i=0; i<_houses.Count(); i++)

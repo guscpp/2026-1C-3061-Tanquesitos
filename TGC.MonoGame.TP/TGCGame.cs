@@ -117,8 +117,6 @@ public class TGCGame : Game
 
         //RECURSOS
         //shaders
-        var textureEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
-        textureEffect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
         _shadowMapEffect = Content.Load<Effect>(ContentFolderEffects + "ShadowMap");
         //La luz es la misma para todos los objetos, asi que la seteamos desde el principio en el efecto de sombras y lo mismo para la luz ambiental
         _shadowMapEffect.Parameters["LightColor"]?.SetValue(new Vector3(0.65f, 0.55f, 0.40f));
@@ -252,9 +250,9 @@ public class TGCGame : Game
 
         _enemiesManager.Update(gameTime, _tank.Position);
 
-        _housesManager.Update(gameTime, _simulation);
-        _staticsManager.Update(gameTime, _simulation);
-        _dinamicsManager.Update(gameTime, _simulation);
+        _housesManager.Update();
+        _staticsManager.Update();
+        _dinamicsManager.Update(_simulation);
         _barrelsManager.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
         // cada frame el tiempo restante de cooldown baja
@@ -358,11 +356,11 @@ public class TGCGame : Game
             _terrain.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
             _tank.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
             _cannonballManager.Draw(_camera.View, _camera.Projection);
-            _housesManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
-            _staticsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
-            _dinamicsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
+            _housesManager.Draw(_camera.View, _camera.Projection);
+            _staticsManager.Draw(_camera.View, _camera.Projection);
+            _dinamicsManager.Draw(_camera.View, _camera.Projection);
             _barrelsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
-            _enemiesManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation, _camera.ListenerPosition);
+            _enemiesManager.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
 
             _hud.Draw();
             _gizmos.Draw();

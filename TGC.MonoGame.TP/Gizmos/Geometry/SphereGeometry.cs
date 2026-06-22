@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Gizmos.Geometry
 {

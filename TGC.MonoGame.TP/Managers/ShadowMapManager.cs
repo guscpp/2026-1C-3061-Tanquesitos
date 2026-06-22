@@ -201,7 +201,6 @@ namespace TGC.MonoGame.TP.Managers
 
             var proj = Matrix.CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ, -minZ);
             DynamicLightViewProjection = LightView * proj;
-            // NO toca RebajarSombrasEstaticas
         }
 
         public void Dispose()

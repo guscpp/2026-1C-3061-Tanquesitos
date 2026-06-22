@@ -1,15 +1,9 @@
 using BepuPhysics;
-using BepuPhysics.CollisionDetection;
-using BepuPhysics.Constraints;
-using BepuUtilities.Memory;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Reflection.Metadata;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Tanks;
 using static TGC.MonoGame.TP.GameConfig;
@@ -18,9 +12,6 @@ using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Managers;
 
-/// <summary>
-///     Genera todas las clases de assets dentro del escenario aleatoriamente
-/// </summary>
 public class EnemiesManager
 {
     public const string ContentFolder3D = "Models/";
@@ -57,9 +48,9 @@ public class EnemiesManager
 
     public void LoadContent(ContentManager content)
     {
-        var tankModel = content.Load<Model>(ContentFolder3D + GameConfig.Tank.TankModelPath);
+        var tankModel = content.Load<Model>(ContentFolder3D + Tank.TankModelPath);
         var tankTexture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        var tracksTexture = content.Load<Texture2D>(ContentFolderTextures + GameConfig.Tank.TankTracksTexture);
+        var tracksTexture = content.Load<Texture2D>(ContentFolderTextures + Tank.TankTracksTexture);
         var effect = content.Load<Effect>(ContentFolderEffects + "ShadowMap");
 
         for (int i = 0; i < _enemiesCount; i++)
@@ -107,18 +98,16 @@ public class EnemiesManager
                 continue;
             }
 
-            tankEnemy.UpdateEnemy(gameTime, _simulation, position.ToNumerics(), _terrain);
-            //tankEnemy.Applyphysics(_simulation, (float)gameTime.ElapsedGameTime.TotalSeconds, 0f, 0f);
+            tankEnemy.UpdateEnemy(gameTime, _simulation, position.ToNumerics());
 
         }
      }
 
-    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation, Vector3 cameraPosition)
+    public void Draw(Matrix view, Matrix projection, Vector3 cameraPosition)
     {
         foreach(var tankEnemy in _enemies)
         {
             tankEnemy.Draw(view, projection, cameraPosition);
-            //tankEnemy.DrawCollisionChamber(gizmos, simulation, Color.Red);
         }
     }
 

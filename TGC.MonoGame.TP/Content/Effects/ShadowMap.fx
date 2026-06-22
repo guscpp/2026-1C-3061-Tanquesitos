@@ -25,14 +25,14 @@ static const float maxEpsilon = 0.0025;
 
 int IsDeformable;
 float ImpactRadius;
-float4 Impacts[6]; // XYZ = posicion mundo, W = profundidad
+float4 Impacts[6];
 
 float3 EyePosition;
 float Shininess;
 float3 LightColor;
 float3 AmbientColor;
 
-float TrackOffset; //orugas
+float TrackOffset;
 
 texture ModelTexture;
 sampler2D textureSampler = sampler_state
@@ -152,7 +152,6 @@ ShadowedVertexShaderOutput MainVS(in ShadowedVertexShaderInput input)
     output.TextureCoordinates = input.TextureCoordinates;
     output.TextureCoordinates.y += TrackOffset;
 
-    // Offset de normal para la sombra, sobre la posición ya deformada
     float4 offsetWorldPos = worldPos + float4(worldNormal * normalOffsetScale, 0);
     output.LightSpacePosition = mul(offsetWorldPos, LightViewProjection);
 
@@ -194,14 +193,11 @@ float4 ShadowedPCFPS(in ShadowedVertexShaderOutput input) : COLOR
     float4 texColor = tex2D(textureSampler, input.TextureCoordinates);
     float3 surfaceColor = texColor.rgb * DiffuseColor;
 
-    // Ambient
     float3 ambient = AmbientColor * surfaceColor;
 
-    // Diffuse (multiplicado por la sombra)
     float diffuseFactor = saturate(dot(normal, lightDirection));
     float3 diffuse = diffuseFactor * LightColor * surfaceColor * factorSombraFinal;
 
-    // Specular Blinn-Phong (NUEVO, también afectado por la sombra)
     float3 viewDir = normalize(EyePosition - input.WorldSpacePosition.xyz);
     float3 halfVec = normalize(lightDirection + viewDir);
     float3 specular = 0;

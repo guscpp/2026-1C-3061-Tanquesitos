@@ -38,7 +38,7 @@ public abstract class TankEnemy : TankBase
     }
 
     // Mantengo la firma original para no tocar TGCGame.cs
-    public void UpdateEnemy(GameTime gameTime, Simulation simulation, Vector3 targetPos, Terrain terrain)
+    public void UpdateEnemy(GameTime gameTime, Simulation simulation, Vector3 targetPos)
     {
         if (IsDead) { return;}
 
@@ -111,7 +111,7 @@ public abstract class TankEnemy : TankBase
                 // Disparar
                 if (_currentShootCooldown <= 0f && distanceToPlayer > GameConfig.Enemies.AttackFireDistance)
                 {
-                    FireCannon(simulation, currentPos);
+                    FireCannon(currentPos);
                     _currentShootCooldown = ShootCooldown;
                 }
                 break;
@@ -144,7 +144,7 @@ public abstract class TankEnemy : TankBase
     }
 
     //Metodo auxiliar
-    private void FireCannon(Simulation simulation, Vector3 currentPos)
+    private void FireCannon(Vector3 currentPos)
     {
         var dir = CannonForward;
         var spawnPos = currentPos + dir * GameConfig.Enemies.CannonSpawnOffsetForward +

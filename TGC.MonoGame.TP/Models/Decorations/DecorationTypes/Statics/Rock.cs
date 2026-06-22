@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,7 +5,6 @@ using BepuPhysics;
 using BepuPhysics.Collidables;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 using BepuVector3 = System.Numerics.Vector3;
-using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Decorations
@@ -20,11 +18,10 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
             {
-                //_normalOffsetScale = 0.4f;
                 base.LoadContent(content, simulation, effect);
                 
                 // Calculamos el radio base y lo multiplicamos por 0.45f para achicar el diámetro general
-                _radius = ((_dimensions.X + _dimensions.Z) / 4f) * 0.45f; 
+                _radius = (_dimensions.X + _dimensions.Z) / 4f * 0.45f; 
                 
                 // Hacemos la altura un poco más baja para que el tanque no choque con el aire arriba de la piedra
                 _height = _dimensions.Y * 0.3f; 
@@ -36,7 +33,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
                 var shapeIndex = simulation.Shapes.Add(shape);
 
                 // Dejamos la posición y la matriz de mundo igual
-                var initialPos = new System.Numerics.Vector3(_position.X, _position.Y, _position.Z);
+                var initialPos = new BepuVector3(_position.X, _position.Y, _position.Z);
                 _staticHandle = simulation.Statics.Add(new StaticDescription(initialPos, shapeIndex));
 
                 Matrix rotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90));

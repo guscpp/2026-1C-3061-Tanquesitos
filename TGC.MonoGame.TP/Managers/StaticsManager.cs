@@ -1,26 +1,17 @@
 using BepuPhysics;
-using BepuPhysics.CollisionDetection;
-using BepuPhysics.Constraints;
-using BepuUtilities.Memory;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models.Decorations;
-using static TGC.MonoGame.TP.GameConfig;
 using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
-using FuelBarrel = TGC.MonoGame.TP.Models.Decorations.FuelBarrel;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Managers;
 
-/// <summary>
-///     Genera todas las clases de assets dentro del escenario aleatoriamente
-/// </summary>
 public class StaticsManager
 {
     public const string ContentFolder3D = "Models/";
@@ -55,15 +46,11 @@ public class StaticsManager
         0.13f,  // roca_2         
         0.03f,  // roca_3         
     };
-    //Entrega 1: exige 400 minimo
     private const int NumberOfAssets = 200; 
-    // sobre modelos de decoraciones
     private int NumberOfDecorations => NumberOfAssets - 15;
     public List<Decoration> _decorationModels = new();
     public List<Vector3> _houses = new();
-    // sobre el terreno
     private Terrain _terrain;
-    //Random
     private readonly Random _random = new();  
 
     public StaticsManager(Terrain terrain, List<Vector3> houses)
@@ -91,9 +78,9 @@ public class StaticsManager
         }
     }
 
-    public void Update(GameTime elapsedTime, Simulation simulation) { }
+    public void Update() { }
 
-    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation)
+    public void Draw(Matrix view, Matrix projection)
     {
         foreach (var asset in _decorationModels)
         {
@@ -109,7 +96,6 @@ public class StaticsManager
         }
     }
 
-    //Me da una posicion aleatoria sobre el terreno
     private Vector3 GetRandomPosition()
     {
         var minHorizontal = -_terrain.WidthUnits;
@@ -121,10 +107,9 @@ public class StaticsManager
         return new Vector3(x, _terrain.GetHeight(x, z), z);
     }
 
-    //Me genera una nueva decoracion con la posicion que le paso
     public Decoration GetDecoration(Vector3 position)
     {
-        Vector3 dynamicPos = position + Vector3.Up * GameConfig.Assets.DynamicSpawnOffset;
+        _ = position + Vector3.Up * GameConfig.Assets.DynamicSpawnOffset;
         Vector3 rocaPos = position + Vector3.Up * 1.0f;
         var path = GetRandomAssetPath();
         return path switch
@@ -137,7 +122,6 @@ public class StaticsManager
         };
     }
 
-    // Me da un path aleatorio para una decoracion
     private string GetRandomAssetPath()
     {
         var aux = _random.NextSingle();
@@ -154,7 +138,6 @@ public class StaticsManager
         return DecorationModelPaths[index];
     }
     
-    // Genera posiciones para las decoraciones
     private List<Vector3> GetValidDecorationPositions()
     {
         var positions = new List<Vector3> {};
@@ -173,7 +156,7 @@ public class StaticsManager
             {
                 candidate = GetRandomPosition();
                 valid = true;
-                // chequeo contra casas o spawnpoint
+
                 if(Math.Abs(candidate.X) >= playAreaLimit || Math.Abs(candidate.Z) >= playAreaLimit)
                 {
                     valid = false;
@@ -185,7 +168,6 @@ public class StaticsManager
                     valid = false;
                     continue;
                 }
-                // chequeo contra otras decoraciones ya colocadas
                 for(int j = 0; j < i; j++)
                 {
                     if(Vector3.Distance(candidate, positions[j]) < minDistanceBetween)
@@ -203,7 +185,6 @@ public class StaticsManager
         return positions;
     }
 
-    //Me dice si la posicion esta muy cerca de una casa
     private bool IsTooNearToAHouse(Vector3 position, float minDistance)
     {
         for(int i=0; i<_houses.Count(); i++)

@@ -2,8 +2,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-using System.Collections.Generic;
-
 namespace TGC.MonoGame.TP.Collisions
 {
     /// <summary>
@@ -256,7 +254,6 @@ namespace TGC.MonoGame.TP.Collisions
                     }
                 }
             }
-            //var difference = (maxPoint - minPoint) * 0.5f;
             var center = (minPoint + maxPoint) * 0.5f;
             var radius = (maxPoint - center).Length();
 

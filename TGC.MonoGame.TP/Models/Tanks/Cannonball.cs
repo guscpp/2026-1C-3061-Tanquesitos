@@ -10,13 +10,9 @@ namespace TGC.MonoGame.TP.Models.Tanks;
 public class Cannonball
 {
     private Model _model;
-
     private Effect _effect;
-
     private Matrix _world;
-
     private BodyHandle _bodyHandle;
-
     public BodyHandle BodyHandle
     {
         get
@@ -26,11 +22,8 @@ public class Cannonball
     }
 
     private float _radius = GameConfig.CannonBall.Radius;
-
     private float _lifeTime = GameConfig.CannonBall.LifetimeSeconds;
-
     private float _currentLifeTime = 0f;
-
     private bool _isDead = false;
 
     // indica de que tipo de tanque proviene la bala (esto afecta el daño que provoca)
@@ -52,7 +45,6 @@ public class Cannonball
 
         _normalOffsetScale = 0.01f;
 
-        // Asignamos el shader a cada mesh
         foreach (var mesh in _model.Meshes)
         {
             foreach (var part in mesh.MeshParts)
@@ -62,10 +54,6 @@ public class Cannonball
         }
 
         AttackDamage = damage;
-
-        // =====================================
-        // CUERPO FISICO
-        // =====================================
 
         Sphere sphere = new Sphere(_radius);
 
@@ -119,7 +107,6 @@ public class Cannonball
         _effect.Parameters["DiffuseColor"]?.SetValue(new Vector3(0.1f, 0.1f, 0.1f));
         _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
 
-        // NUEVO: igual que en Decoration/TankBase/Terrain
         _effect.Parameters["LightColor"]?.SetValue(new Vector3(0.55f, 0.55f, 0.55f));
         _effect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
         _effect.Parameters["EyePosition"]?.SetValue(TGCGame.Instance.Camera.ListenerPosition);
@@ -158,7 +145,6 @@ public class Cannonball
         {
             Matrix localWorld = transforms[mesh.ParentBone.Index] * _world;
 
-            // CORREGIDO: World por separado + LightViewProjection
             _effect.Parameters["World"]?.SetValue(localWorld);
             _effect.Parameters["LightViewProjection"]?.SetValue(lightViewProjection);
             _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
@@ -175,7 +161,6 @@ public class Cannonball
                     gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, meshPart.VertexOffset, meshPart.StartIndex, meshPart.PrimitiveCount);
                 }
             }
-            // Saqué el mesh.Draw() duplicado que tenías al final del loop
         }
     }
 }

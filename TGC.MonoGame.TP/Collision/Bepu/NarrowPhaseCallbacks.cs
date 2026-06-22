@@ -1,19 +1,14 @@
-using System;
 using System.Numerics;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
-using BepuUtilities;
 
 using TGC.MonoGame.TP;
 using TGC.MonoGame.TP.Models.Decorations;
 using TGC.MonoGame.TP.Models.Tanks;
-using TGC.MonoGame.TP.Models;
-using TGC.MonoGame.TP.Collisions.Bepu;
 
 public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
 {
@@ -107,7 +102,6 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
 
                 if(handleA == tankHandle || handleB == tankHandle && !cannonball.IsDead)
                 {
-                    //TGCGame.Instance._tank.HandleHealth(cannonball.AttackDamage);
                     Vector3 bulletPos = TGCGame.Instance.CannonballManager.GetCannonballPosition(cannonball.BodyHandle).ToNumerics();
                     TGCGame.Instance._tank.HandleHealth(cannonball.AttackDamage, bulletPos);
                     cannonball.killCannonball();

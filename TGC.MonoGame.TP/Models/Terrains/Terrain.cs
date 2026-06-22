@@ -219,8 +219,6 @@ public class Terrain
         _terrainEffect.Parameters["EyePosition"]?.SetValue(cameraPosition);
         _terrainEffect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
 
-        //_terrainEffect.Parameters["LightColor"]?.SetValue(new Vector3(0.55f, 0.55f, 0.55f));
-        //_terrainEffect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
         _terrainEffect.Parameters["Shininess"]?.SetValue(16f); // el terreno no debería brillar mucho
 
         var smm = TGCGame.Instance.ShadowMapManager;
@@ -263,7 +261,6 @@ public class Terrain
 
         _terrainEffect.Parameters["World"]?.SetValue(Matrix.Identity);
         _terrainEffect.Parameters["LightViewProjection"]?.SetValue(lightViewProjection);
-        //_terrainEffect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
         _terrainEffect.Parameters["IsDeformable"]?.SetValue(0);
 
         _graphicsDevice.SetVertexBuffer(_terrainVertexBuffer);
