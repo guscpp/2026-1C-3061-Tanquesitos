@@ -12,6 +12,8 @@ public abstract class TankBase
     protected Effect _effect;
     protected Texture2D _texture;
     protected Texture2D _tracksTexture;
+    protected float _trackOffsetLeft = 0f;
+    protected float _trackOffsetRight = 0f;
     public Model Model { get; protected set; }
 
     public float MaxSpeed { get; set; }
@@ -181,11 +183,22 @@ public abstract class TankBase
 
         foreach (var mesh in Model.Meshes)
         {
-            Texture2D activeTexture = _texture;
-            if (mesh.Name.Contains("Cadena")) activeTexture = _tracksTexture;
-            _effect.Parameters["ModelTexture"]?.SetValue(activeTexture);
+            bool isLeftTrack = mesh.Name.Contains("Cadena_i");
+            bool isRightTrack = mesh.Name.Contains("Cadena_d");
 
-                bool isDeformable = mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Cuerpo") || 
+            if (isLeftTrack || isRightTrack)
+            {
+                _effect.Parameters["ModelTexture"]?.SetValue(_tracksTexture);
+                float offset = isLeftTrack ? _trackOffsetLeft : _trackOffsetRight;
+                _effect.Parameters["TrackOffset"]?.SetValue(offset);
+            }
+            else
+            {
+                _effect.Parameters["ModelTexture"]?.SetValue(_texture);
+                _effect.Parameters["TrackOffset"]?.SetValue(0f);
+            }
+
+            bool isDeformable = mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Cuerpo") || 
                 //mesh.Name.Contains("Cano_") || mesh.Name.Contains("Cubre") || 
                 mesh.Name.Contains("Pistola") || mesh.Name.Contains("Proteccion");
             _effect.Parameters["IsDeformable"].SetValue(isDeformable ? 1 : 0);
@@ -240,8 +253,7 @@ public abstract class TankBase
             }
 
             _effect.Parameters["World"]?.SetValue(finalWorld);
-            _effect.Parameters["InverseTransposeWorld"]?.SetValue(
-            Matrix.Transpose(Matrix.Invert(finalWorld)));
+            _effect.Parameters["InverseTransposeWorld"]?.SetValue(Matrix.Transpose(Matrix.Invert(finalWorld)));
 
             mesh.Draw();
         }
@@ -436,5 +448,12 @@ public abstract class TankBase
         float sinYaw = 2f * (_physicsOrientation.W * _physicsOrientation.Y + _physicsOrientation.X * _physicsOrientation.Z);
         float cosYaw = 1f - 2f * (_physicsOrientation.X * _physicsOrientation.X + _physicsOrientation.Y * _physicsOrientation.Y);
         RotationY = MathF.Atan2(sinYaw, cosYaw);
+
+
+        float trackHalfWidth = 1.0f;
+        float leftTrackSpeed = fwdSpeed - angVel.Y * trackHalfWidth;
+        float rightTrackSpeed = fwdSpeed + angVel.Y * trackHalfWidth;
+        _trackOffsetLeft += leftTrackSpeed * dt * 0.1f;
+        _trackOffsetRight += rightTrackSpeed * dt * 0.1f;
     }
 }

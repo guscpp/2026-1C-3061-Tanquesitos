@@ -32,6 +32,8 @@ float Shininess;
 float3 LightColor;
 float3 AmbientColor;
 
+float TrackOffset; //orugas
+
 texture ModelTexture;
 sampler2D textureSampler = sampler_state
 {
@@ -148,6 +150,7 @@ ShadowedVertexShaderOutput MainVS(in ShadowedVertexShaderInput input)
     output.Position = mul(viewPosition, Projection);
 
     output.TextureCoordinates = input.TextureCoordinates;
+    output.TextureCoordinates.y += TrackOffset;
 
     // Offset de normal para la sombra, sobre la posición ya deformada
     float4 offsetWorldPos = worldPos + float4(worldNormal * normalOffsetScale, 0);
