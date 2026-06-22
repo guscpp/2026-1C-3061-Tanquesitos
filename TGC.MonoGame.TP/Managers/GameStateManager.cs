@@ -4,12 +4,19 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using System;
+using System.Reflection.Metadata;
 using TGC.MonoGame.TP.Models;
 
 namespace TGC.MonoGame.TP.Managers;
 
 public class GameStateManager
 {
+    public const string ContentFolder3D = "Models/";
+    public const string ContentFolderEffects = "Effects/";
+    public const string ContentFolderMusic = "Music/";
+    public const string ContentFolderSounds = "Sounds/";
+    public const string ContentFolderSpriteFonts = "SpriteFonts/";
+    public const string ContentFolderTextures = "Textures/";
     public GameState CurrentState { get; private set; } = GameState.Menu;
 
     private readonly GraphicsDevice _graphicsDevice;
@@ -97,9 +104,9 @@ public class GameStateManager
 
             //_menuTankEffect = _content.Load<Effect>("Effects/BasicShaderTexture");
             _menuTankEffect = _menuContent.Load<Effect>("Effects/BlinnPhong");
-            _menuTankTexture = _menuContent.Load<Texture2D>("Textures/paleta_256x512");
-            _menuTankTexture = _menuContent.Load<Texture2D>("Textures/tracks_2");
-            _currentMenuTankModel = _menuContent.Load<Model>("Models/" + GameConfig.Tank.TankModelPath);
+            _menuTankTexture = _menuContent.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+            _menuTracksTexture = _menuContent.Load<Texture2D>(ContentFolderTextures + GameConfig.Tank.TankTracksTexture);
+            _currentMenuTankModel = _menuContent.Load<Model>(ContentFolder3D + GameConfig.Tank.TankModelPath);
 
             UpdateMenuTankModel(0);
         }
@@ -419,6 +426,7 @@ public class GameStateManager
         {
             Texture2D activeTexture = _menuTankTexture;
             if (mesh.Name.Contains("Cadena")) activeTexture = _menuTracksTexture;
+            else activeTexture = _menuTankTexture;
             _menuTankEffect.Parameters["ModelTexture"].SetValue(activeTexture);
 
             Microsoft.Xna.Framework.Vector3 colorToApply = whiteColor;
@@ -434,7 +442,7 @@ public class GameStateManager
                 _menuTankEffect.Parameters["World"].SetValue(world);
                 _menuTankEffect.Parameters["View"].SetValue(view);
                 _menuTankEffect.Parameters["Projection"].SetValue(projection);
-                _menuTankEffect.Parameters["ModelTexture"].SetValue(_menuTankTexture);
+                _menuTankEffect.Parameters["ModelTexture"].SetValue(activeTexture);
                 _menuTankEffect.Parameters["DiffuseColor"].SetValue(colorToApply);
 
                 _menuTankEffect.Parameters["HasImpact"]?.SetValue(0);

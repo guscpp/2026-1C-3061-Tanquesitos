@@ -102,6 +102,7 @@ public static class GameConfig
         public const float ImpactDepth = 0.3f;   // metros
 
         public static string TankModelPath = "tanques/tank v6";
+        public static string TankTracksTexture = "tracks_3_252525";
 
         public static class Stabilizer
         {

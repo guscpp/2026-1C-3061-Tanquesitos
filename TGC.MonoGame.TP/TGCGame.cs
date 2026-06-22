@@ -128,7 +128,7 @@ public class TGCGame : Game
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
         var groundTexture = Content.Load<Texture2D>(ContentFolderTextures + "sand_1024_seamless");
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        var tracksTexture = Content.Load<Texture2D>(ContentFolderTextures + "tracks_2");
+        var tracksTexture = Content.Load<Texture2D>(ContentFolderTextures + GameConfig.Tank.TankTracksTexture);
 
         //CannonballManager
         _cannonballManager = new CannonballManager(_simulation, GameConfig.Tank.Cooldown);
@@ -297,7 +297,7 @@ public class TGCGame : Game
 
         var tankModel = Content.Load<Model>(ContentFolder3D + GameConfig.Tank.TankModelPath);
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        var tracksTexture = Content.Load<Texture2D>(ContentFolderTextures + "tracks_2");
+        var tracksTexture = Content.Load<Texture2D>(ContentFolderTextures + GameConfig.Tank.TankTracksTexture);
 
         Vector3 spawnPos = Vector3.Zero;
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);

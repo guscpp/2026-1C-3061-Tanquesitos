@@ -59,7 +59,7 @@ public class EnemiesManager
     {
         var tankModel = content.Load<Model>(ContentFolder3D + GameConfig.Tank.TankModelPath);
         var tankTexture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
-        var tracksTexture = content.Load<Texture2D>(ContentFolderTextures + "tracks_2");
+        var tracksTexture = content.Load<Texture2D>(ContentFolderTextures + GameConfig.Tank.TankTracksTexture);
         var effect = content.Load<Effect>(ContentFolderEffects + "ShadowMap");
 
         for (int i = 0; i < _enemiesCount; i++)
