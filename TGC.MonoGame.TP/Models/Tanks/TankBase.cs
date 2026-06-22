@@ -11,6 +11,9 @@ public abstract class TankBase
 {
     protected Effect _effect;
     protected Texture2D _texture;
+    protected Texture2D _tracksTexture;
+    protected float _trackOffsetLeft = 0f;
+    protected float _trackOffsetRight = 0f;
     public Model Model { get; protected set; }
 
     public float MaxSpeed { get; set; }
@@ -44,8 +47,8 @@ public abstract class TankBase
     public bool[] ImpactActive = new bool[MaxImpacts];
     private int _lastImpactSlot = -1;
 
-    public float ImpactRadius { get; set; } = 0.75f;
-    public float ImpactDepth { get; set; } = 0.8f;
+    public float ImpactRadius { get; set; } = GameConfig.Tank.ImpactRadius;
+    public float ImpactDepth { get; set; } = GameConfig.Tank.ImpactDepth;
 
     protected GraphicsDevice _graphicsDevice;
     private float _normalOffsetScale;
@@ -96,10 +99,13 @@ public abstract class TankBase
         }
     }
 
-    public void Load(Model model, Texture2D texture, Effect effect, Simulation simulation)
+    public void Load(Model model, Texture2D texture, Texture2D tracksTexture, Effect effect, Simulation simulation)
     {
-        _normalOffsetScale = 0.04f;
-        Model = model; _effect = effect; _texture = texture;
+        _normalOffsetScale = 0.4f;
+        Model = model; 
+        _effect = effect; 
+        _texture = texture;
+        _tracksTexture = tracksTexture;
         foreach (var mesh in Model.Meshes)
             foreach (var part in mesh.MeshParts) part.Effect = _effect;
         CreatePhysicsBody(simulation);
@@ -167,8 +173,9 @@ public abstract class TankBase
         _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
         _effect.Parameters["EyePosition"]?.SetValue(cameraPosition); // necesitás pasarle la posición de cámara
         _effect.Parameters["Shininess"]?.SetValue(32f); // valor típico, ajustable
+        //Es mas una cuestion de gustos, pero prefiero que el tanque resalte mas
         _effect.Parameters["LightColor"]?.SetValue(Vector3.One);
-        _effect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.2f, 0.2f, 0.2f));
+        //_effect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.2f, 0.2f, 0.2f));
         _effect.Parameters["ImpactRadius"]?.SetValue(ImpactRadius);
 
         Vector3 colorVector = GetTankColor().ToVector3();
@@ -176,6 +183,21 @@ public abstract class TankBase
 
         foreach (var mesh in Model.Meshes)
         {
+            bool isLeftTrack = mesh.Name.Contains("Cadena_i");
+            bool isRightTrack = mesh.Name.Contains("Cadena_d");
+
+            if (isLeftTrack || isRightTrack)
+            {
+                _effect.Parameters["ModelTexture"]?.SetValue(_tracksTexture);
+                float offset = isLeftTrack ? _trackOffsetLeft : _trackOffsetRight;
+                _effect.Parameters["TrackOffset"]?.SetValue(offset);
+            }
+            else
+            {
+                _effect.Parameters["ModelTexture"]?.SetValue(_texture);
+                _effect.Parameters["TrackOffset"]?.SetValue(0f);
+            }
+
             bool isDeformable = mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Cuerpo") || 
                 //mesh.Name.Contains("Cano_") || mesh.Name.Contains("Cubre") || 
                 mesh.Name.Contains("Pistola") || mesh.Name.Contains("Proteccion");
@@ -231,8 +253,7 @@ public abstract class TankBase
             }
 
             _effect.Parameters["World"]?.SetValue(finalWorld);
-            _effect.Parameters["InverseTransposeWorld"]?.SetValue(
-            Matrix.Transpose(Matrix.Invert(finalWorld)));
+            _effect.Parameters["InverseTransposeWorld"]?.SetValue(Matrix.Transpose(Matrix.Invert(finalWorld)));
 
             mesh.Draw();
         }
@@ -245,7 +266,7 @@ public abstract class TankBase
         _effect.CurrentTechnique = _effect.Techniques["DepthPass"];
 
         _effect.Parameters["LightViewProjection"]?.SetValue(lightViewProjection);
-        _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
+        //_effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
         _effect.Parameters["ImpactRadius"]?.SetValue(ImpactRadius);
 
         foreach (var mesh in Model.Meshes)
@@ -427,5 +448,12 @@ public abstract class TankBase
         float sinYaw = 2f * (_physicsOrientation.W * _physicsOrientation.Y + _physicsOrientation.X * _physicsOrientation.Z);
         float cosYaw = 1f - 2f * (_physicsOrientation.X * _physicsOrientation.X + _physicsOrientation.Y * _physicsOrientation.Y);
         RotationY = MathF.Atan2(sinYaw, cosYaw);
+
+
+        float trackHalfWidth = 1.0f;
+        float leftTrackSpeed = fwdSpeed - angVel.Y * trackHalfWidth;
+        float rightTrackSpeed = fwdSpeed + angVel.Y * trackHalfWidth;
+        _trackOffsetLeft += leftTrackSpeed * dt * 0.1f;
+        _trackOffsetRight += rightTrackSpeed * dt * 0.1f;
     }
 }

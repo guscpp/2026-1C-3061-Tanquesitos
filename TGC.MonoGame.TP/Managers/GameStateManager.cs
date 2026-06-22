@@ -4,12 +4,19 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using System;
+using System.Reflection.Metadata;
 using TGC.MonoGame.TP.Models;
 
 namespace TGC.MonoGame.TP.Managers;
 
 public class GameStateManager
 {
+    public const string ContentFolder3D = "Models/";
+    public const string ContentFolderEffects = "Effects/";
+    public const string ContentFolderMusic = "Music/";
+    public const string ContentFolderSounds = "Sounds/";
+    public const string ContentFolderSpriteFonts = "SpriteFonts/";
+    public const string ContentFolderTextures = "Textures/";
     public GameState CurrentState { get; private set; } = GameState.Menu;
 
     private readonly GraphicsDevice _graphicsDevice;
@@ -29,6 +36,7 @@ public class GameStateManager
     // 3D Menu Variables
     private Model _currentMenuTankModel;
     private Texture2D _menuTankTexture;
+    private Texture2D _menuTracksTexture;
     private Effect _menuTankEffect;
     private float _menuTankRotation = 0f;
     private float _menuTankRotationSpeed = 0.015f;
@@ -96,8 +104,9 @@ public class GameStateManager
 
             //_menuTankEffect = _content.Load<Effect>("Effects/BasicShaderTexture");
             _menuTankEffect = _menuContent.Load<Effect>("Effects/BlinnPhong");
-            _menuTankTexture = _menuContent.Load<Texture2D>("Textures/paleta_256x512");
-            _currentMenuTankModel = _menuContent.Load<Model>("Models/tanques/tank v5");
+            _menuTankTexture = _menuContent.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+            _menuTracksTexture = _menuContent.Load<Texture2D>(ContentFolderTextures + GameConfig.Tank.TankTracksTexture);
+            _currentMenuTankModel = _menuContent.Load<Model>(ContentFolder3D + GameConfig.Tank.TankModelPath);
 
             UpdateMenuTankModel(0);
         }
@@ -113,7 +122,7 @@ public class GameStateManager
         {
             try
             {
-                _currentMenuTankModel = _menuContent.Load<Model>(_menuTankModelPaths[tankIndex]);
+                _currentMenuTankModel = _menuContent.Load<Model>("Models/" + GameConfig.Tank.TankModelPath);
             }
             catch (Exception ex)
             {
@@ -126,16 +135,6 @@ public class GameStateManager
     public void HandleMenuState(KeyboardState kb, KeyboardState lastkb)
     {
         HandleMenuInput(kb, lastkb);
-        if (_selectedIndex != _lastSelectedIndex && _selectedIndex < 3)
-        {
-            UpdateMenuTankModel(_selectedIndex);
-            _lastSelectedIndex = _selectedIndex;
-        }
-        else if (_selectedIndex == 3)
-        {
-            _currentMenuTankModel = null;
-            _lastSelectedIndex = _selectedIndex;
-        }
     }
 
     public void Update(GameTime gameTime, KeyboardState kb, KeyboardState lastKb)
@@ -425,6 +424,11 @@ public class GameStateManager
 
         foreach (var mesh in _currentMenuTankModel.Meshes)
         {
+            Texture2D activeTexture = _menuTankTexture;
+            if (mesh.Name.Contains("Cadena")) activeTexture = _menuTracksTexture;
+            else activeTexture = _menuTankTexture;
+            _menuTankEffect.Parameters["ModelTexture"].SetValue(activeTexture);
+
             Microsoft.Xna.Framework.Vector3 colorToApply = whiteColor;
 
             if (mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Anillo") ||
@@ -438,13 +442,13 @@ public class GameStateManager
                 _menuTankEffect.Parameters["World"].SetValue(world);
                 _menuTankEffect.Parameters["View"].SetValue(view);
                 _menuTankEffect.Parameters["Projection"].SetValue(projection);
-                _menuTankEffect.Parameters["ModelTexture"].SetValue(_menuTankTexture);
+                _menuTankEffect.Parameters["ModelTexture"].SetValue(activeTexture);
                 _menuTankEffect.Parameters["DiffuseColor"].SetValue(colorToApply);
 
                 _menuTankEffect.Parameters["HasImpact"]?.SetValue(0);
                 _menuTankEffect.Parameters["ImpactPointWorld"]?.SetValue(Vector3.Zero);
-                _menuTankEffect.Parameters["ImpactRadius"]?.SetValue(1.5f);
-                _menuTankEffect.Parameters["ImpactDepth"]?.SetValue(0.4f);
+                _menuTankEffect.Parameters["ImpactRadius"]?.SetValue(GameConfig.Tank.ImpactRadius);
+                _menuTankEffect.Parameters["ImpactDepth"]?.SetValue(GameConfig.Tank.ImpactDepth);
                 _menuTankEffect.Parameters["IsDeformable"]?.SetValue(0);
             }
             mesh.Draw();

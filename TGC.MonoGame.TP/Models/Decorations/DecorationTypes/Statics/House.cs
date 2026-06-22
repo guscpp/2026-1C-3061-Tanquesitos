@@ -25,6 +25,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
         {
             base.LoadContent(content, simulation, effect);
+            _normalOffsetScale = 0.6f;
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             _width = _dimensions.X;
             _height = _dimensions.Z; //en los fbx la altura esta 'acostada' por usar Y-up

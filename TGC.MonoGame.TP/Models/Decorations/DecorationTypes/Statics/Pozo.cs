@@ -24,6 +24,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
         //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
         {
+            //_normalOffsetScale = 0.4f;
             base.LoadContent(content, simulation, effect);
             // Calculo de escala (Usando una funcion auxiliar para obtener vertices)
             _height = _dimensions.Z/2;

@@ -12,7 +12,6 @@ float4x4 View;
 float4x4 Projection;
 
 float4x4 WorldViewProjection;
-float4x4 InverseTransposeWorld;
 float4x4 LightViewProjection;
 
 float3 lightPosition;
@@ -21,8 +20,8 @@ float3 DiffuseColor;
 
 float normalOffsetScale;
 
-static const float modulatedEpsilon = 0.0008;
-static const float maxEpsilon = 0.0003;
+static const float modulatedEpsilon = 0.003;
+static const float maxEpsilon = 0.0025;
 
 int IsDeformable;
 float ImpactRadius;
@@ -30,8 +29,10 @@ float4 Impacts[6]; // XYZ = posicion mundo, W = profundidad
 
 float3 EyePosition;
 float Shininess;
-float3 LightColor = float3(1.0, 1.0, 1.0);
-float3 AmbientColor = float3(0.3, 0.3, 0.3);
+float3 LightColor;
+float3 AmbientColor;
+
+float TrackOffset; //orugas
 
 texture ModelTexture;
 sampler2D textureSampler = sampler_state
@@ -149,6 +150,7 @@ ShadowedVertexShaderOutput MainVS(in ShadowedVertexShaderInput input)
     output.Position = mul(viewPosition, Projection);
 
     output.TextureCoordinates = input.TextureCoordinates;
+    output.TextureCoordinates.y += TrackOffset;
 
     // Offset de normal para la sombra, sobre la posición ya deformada
     float4 offsetWorldPos = worldPos + float4(worldNormal * normalOffsetScale, 0);
@@ -173,9 +175,9 @@ float4 ShadowedPCFPS(in ShadowedVertexShaderOutput input) : COLOR
     float notInDynamicShadow = 0.0;
 	float2 texelSize = 1.0 / shadowMapSize;
 
-	for (int x = -1; x <= 1; x++)
+	for (int x = -2; x <= 2; x++)
 	{
-		for (int y = -1; y <= 1; y++)
+		for (int y = -2; y <= 2; y++)
 		{
 			float2 offset = float2(x, y) * texelSize;
             float staticDepth = tex2D(shadowMapStaticSampler, shadowMapTextureCoordinates + offset).r + inclinationBias;
@@ -185,8 +187,8 @@ float4 ShadowedPCFPS(in ShadowedVertexShaderOutput input) : COLOR
 		}
 	}
 
-    notInStaticShadow /= 9.0;
-    notInDynamicShadow /= 9.0;
+    notInStaticShadow /= 25.0;
+    notInDynamicShadow /= 25.0;
     float factorSombraFinal = notInStaticShadow * notInDynamicShadow;
 
     float4 texColor = tex2D(textureSampler, input.TextureCoordinates);
