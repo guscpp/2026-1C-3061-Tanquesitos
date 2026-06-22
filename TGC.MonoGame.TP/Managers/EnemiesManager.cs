@@ -9,9 +9,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Reflection.Metadata;
 using TGC.MonoGame.TP.Gizmos;
-using static TGC.MonoGame.TP.GameConfig;
 using TGC.MonoGame.TP.Models.Tanks;
+using static TGC.MonoGame.TP.GameConfig;
 using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 
@@ -56,8 +57,9 @@ public class EnemiesManager
 
     public void LoadContent(ContentManager content)
     {
-        var tankModel = content.Load<Model>(ContentFolder3D + "tanques/tank v5");
+        var tankModel = content.Load<Model>(ContentFolder3D + GameConfig.Tank.TankModelPath);
         var tankTexture = content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+        var tracksTexture = content.Load<Texture2D>(ContentFolderTextures + "tracks_2");
         var effect = content.Load<Effect>(ContentFolderEffects + "ShadowMap");
 
         for (int i = 0; i < _enemiesCount; i++)
@@ -70,7 +72,7 @@ public class EnemiesManager
                 _ => new TankEnemyHeavy(_graphicsDevice)
             };
             enemy.Position = enemy.GetPosition(_terrain, _random);
-            enemy.Load(tankModel, tankTexture, effect, _simulation);
+            enemy.Load(tankModel, tankTexture, tracksTexture, effect, _simulation);
             _enemies.Add(enemy);
             _enemiesHandles.Add(enemy.TankHandler);
         }

@@ -125,7 +125,7 @@ public class StaticsManager
     public Decoration GetDecoration(Vector3 position)
     {
         Vector3 dynamicPos = position + Vector3.Up * GameConfig.Assets.DynamicSpawnOffset;
-        Vector3 rocaPos = position + Vector3.Up * 1.5f;
+        Vector3 rocaPos = position + Vector3.Up * 1.0f;
         var path = GetRandomAssetPath();
         return path switch
         {

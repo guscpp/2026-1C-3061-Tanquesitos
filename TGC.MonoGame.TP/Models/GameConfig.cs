@@ -98,6 +98,11 @@ public static class GameConfig
         public const float CannonSpawnOffsetForward = 1f;   // factor multiplicador
         public const float CannonSpawnOffsetUp = 0f;        // factor de suma
 
+        public const float ImpactRadius = 0.65f; // metros, radio de deformacion por impacto
+        public const float ImpactDepth = 0.3f;   // metros
+
+        public static string TankModelPath = "tanques/tank v6";
+
         public static class Stabilizer
         {
             public const float Width = 2.2f;    // metros

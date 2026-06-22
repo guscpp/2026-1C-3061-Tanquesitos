@@ -11,6 +11,7 @@ public abstract class TankBase
 {
     protected Effect _effect;
     protected Texture2D _texture;
+    protected Texture2D _tracksTexture;
     public Model Model { get; protected set; }
 
     public float MaxSpeed { get; set; }
@@ -44,8 +45,8 @@ public abstract class TankBase
     public bool[] ImpactActive = new bool[MaxImpacts];
     private int _lastImpactSlot = -1;
 
-    public float ImpactRadius { get; set; } = 0.75f;
-    public float ImpactDepth { get; set; } = 0.8f;
+    public float ImpactRadius { get; set; } = GameConfig.Tank.ImpactRadius;
+    public float ImpactDepth { get; set; } = GameConfig.Tank.ImpactDepth;
 
     protected GraphicsDevice _graphicsDevice;
     private float _normalOffsetScale;
@@ -96,12 +97,13 @@ public abstract class TankBase
         }
     }
 
-    public void Load(Model model, Texture2D texture, Effect effect, Simulation simulation)
+    public void Load(Model model, Texture2D texture, Texture2D tracksTexture, Effect effect, Simulation simulation)
     {
         _normalOffsetScale = 0.4f;
         Model = model; 
         _effect = effect; 
         _texture = texture;
+        _tracksTexture = tracksTexture;
         foreach (var mesh in Model.Meshes)
             foreach (var part in mesh.MeshParts) part.Effect = _effect;
         CreatePhysicsBody(simulation);
@@ -179,7 +181,11 @@ public abstract class TankBase
 
         foreach (var mesh in Model.Meshes)
         {
-            bool isDeformable = mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Cuerpo") || 
+            Texture2D activeTexture = _texture;
+            if (mesh.Name.Contains("Cadena")) activeTexture = _tracksTexture;
+            _effect.Parameters["ModelTexture"]?.SetValue(activeTexture);
+
+                bool isDeformable = mesh.Name.Contains("Cabeza") || mesh.Name.Contains("Cuerpo") || 
                 //mesh.Name.Contains("Cano_") || mesh.Name.Contains("Cubre") || 
                 mesh.Name.Contains("Pistola") || mesh.Name.Contains("Proteccion");
             _effect.Parameters["IsDeformable"].SetValue(isDeformable ? 1 : 0);

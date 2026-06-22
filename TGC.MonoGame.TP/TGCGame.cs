@@ -54,12 +54,6 @@ public class TGCGame : Game
     public TankPlayer _tank;
     private TankFollowCamera _camera;
     public TankFollowCamera Camera => _camera;
-    public string[] tankPaths =
-    {
-        "tanques/tank v5", // Scout
-        "tanques/tank v5", // Medium
-        "tanques/tank v5"  // Heavy
-    };
     //-----------TERRENO
     private Terrain _terrain;
     private Wall _wall;
@@ -134,6 +128,7 @@ public class TGCGame : Game
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");
         var groundTexture = Content.Load<Texture2D>(ContentFolderTextures + "sand_1024_seamless");
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+        var tracksTexture = Content.Load<Texture2D>(ContentFolderTextures + "tracks_2");
 
         //CannonballManager
         _cannonballManager = new CannonballManager(_simulation, GameConfig.Tank.Cooldown);
@@ -195,12 +190,12 @@ public class TGCGame : Game
         _lastKeyboardState = kb;
         // Crear el tanque usando la eleccion del jugador
         _tank = new TankPlayer(GraphicsDevice, SelectedPlayerTank);
-        var tankModel = Content.Load<Model>(ContentFolder3D + getTankPath());
+        var tankModel = Content.Load<Model>(ContentFolder3D + GameConfig.Tank.TankModelPath);
         //Determino una posicion para el tanque
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);//Se spawnea unos metros por encima del terreno
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
         //Cargo el tanque
-        _tank.Load(tankModel, tankTexture, _shadowMapEffect, _simulation);
+        _tank.Load(tankModel, tankTexture, tracksTexture, _shadowMapEffect, _simulation);
         //fisicas
         _tankHandle = _tank.TankHandler;
 
@@ -215,13 +210,6 @@ public class TGCGame : Game
         _gizmos.LoadContent(GraphicsDevice, Content);
 
         base.LoadContent();
-    }
-
-    private string getTankPath()
-    {
-        return SelectedPlayerTank is GameConfig.TankClass.Scout ? tankPaths[0] :
-            SelectedPlayerTank is GameConfig.TankClass.Medium ? tankPaths[1] :
-            tankPaths[2];
     }
 
     protected override void Update(GameTime gameTime)
@@ -307,8 +295,9 @@ public class TGCGame : Game
         _cannonballManager.Clear();
         EnemiesKilled = 0;
 
-        var tankModel = Content.Load<Model>(ContentFolder3D + getTankPath());
+        var tankModel = Content.Load<Model>(ContentFolder3D + GameConfig.Tank.TankModelPath);
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+        var tracksTexture = Content.Load<Texture2D>(ContentFolderTextures + "tracks_2");
 
         Vector3 spawnPos = Vector3.Zero;
         float terrainY = _terrain.GetHeight(spawnPos.X, spawnPos.Z);
@@ -316,7 +305,7 @@ public class TGCGame : Game
         _simulation.Bodies.Remove(_tankHandle);
         _tank = new TankPlayer(GraphicsDevice, SelectedPlayerTank);
         _tank.Position = new Vector3(spawnPos.X, terrainY + GameConfig.Tank.SpawnZMargin, spawnPos.Z);
-        _tank.Load(tankModel, tankTexture, _shadowMapEffect, _simulation);
+        _tank.Load(tankModel, tankTexture, tracksTexture, _shadowMapEffect, _simulation);
         _tankHandle = _tank.TankHandler;
 
         _enemiesManager.Reset(_simulation);
