@@ -23,6 +23,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
         {
+            //_normalOffsetScale = 0.1f;
             base.LoadContent(content, simulation, effect);
             
             // La altura la dejamos igual

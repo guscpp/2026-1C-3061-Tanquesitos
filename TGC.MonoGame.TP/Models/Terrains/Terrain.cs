@@ -35,7 +35,7 @@ public class Terrain
     public Terrain(GraphicsDevice graphicsDevice)
     {
         _graphicsDevice = graphicsDevice;
-        _normalOffsetScale = 0.6f;
+        _normalOffsetScale = 0.2f;
     }
 
     public void LoadContent(Texture2D heightmapTexture, Texture2D groundTexture, Effect BasicShader)
@@ -218,10 +218,9 @@ public class Terrain
         _terrainEffect.Parameters["EyePosition"]?.SetValue(cameraPosition);
         _terrainEffect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
 
-        // NUEVO: igual que en Decoration/TankBase
-        _terrainEffect.Parameters["LightColor"]?.SetValue(new Vector3(0.55f, 0.55f, 0.55f));
-        _terrainEffect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
-        _terrainEffect.Parameters["Shininess"]?.SetValue(8f); // el terreno no debería brillar mucho, valor bajo
+        //_terrainEffect.Parameters["LightColor"]?.SetValue(new Vector3(0.55f, 0.55f, 0.55f));
+        //_terrainEffect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
+        _terrainEffect.Parameters["Shininess"]?.SetValue(16f); // el terreno no debería brillar mucho
 
         var smm = TGCGame.Instance.ShadowMapManager;
         _terrainEffect.Parameters["LightViewProjection"]?.SetValue(smm.LightViewProjection);
@@ -261,10 +260,9 @@ public class Terrain
 
         _terrainEffect.CurrentTechnique = _terrainEffect.Techniques["DepthPass"];
 
-        // CORREGIDO: World por separado + LightViewProjection, no WorldViewProjection combinado
         _terrainEffect.Parameters["World"]?.SetValue(Matrix.Identity);
         _terrainEffect.Parameters["LightViewProjection"]?.SetValue(lightViewProjection);
-        _terrainEffect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
+        //_terrainEffect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
         _terrainEffect.Parameters["IsDeformable"]?.SetValue(0);
 
         _graphicsDevice.SetVertexBuffer(_terrainVertexBuffer);

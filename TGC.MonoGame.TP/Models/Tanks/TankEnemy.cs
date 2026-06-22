@@ -17,7 +17,6 @@ public abstract class TankEnemy : TankBase
 
     protected Vector3 _targetPosition;
     private float attackRadius = GameConfig.Enemies.AttackRadius;
-    private float attackRadiusSq => attackRadius * attackRadius;
 
     protected float MaxHealthPoints { get; private set; }
     protected float _currentShootCooldown = 0f;

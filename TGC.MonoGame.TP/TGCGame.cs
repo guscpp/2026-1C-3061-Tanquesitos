@@ -126,7 +126,9 @@ public class TGCGame : Game
         var textureEffect = Content.Load<Effect>(ContentFolderEffects + "BasicShaderTexture"); //modelos con textura
         textureEffect.Parameters["DiffuseColor"].SetValue(Color.White.ToVector3());
         _shadowMapEffect = Content.Load<Effect>(ContentFolderEffects + "ShadowMap");
-        var blinnPhongEffect = Content.Load<Effect>(ContentFolderEffects + "BlinnPhong"); //modelos con textura
+        //La luz es la misma para todos los objetos, asi que la seteamos desde el principio en el efecto de sombras y lo mismo para la luz ambiental
+        _shadowMapEffect.Parameters["LightColor"]?.SetValue(new Vector3(0.65f, 0.55f, 0.40f));
+        _shadowMapEffect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
 
         //texturas
         var terrainTexture = Content.Load<Texture2D>("Models/heightmaps/heightmap_512x512");

@@ -98,8 +98,10 @@ public abstract class TankBase
 
     public void Load(Model model, Texture2D texture, Effect effect, Simulation simulation)
     {
-        _normalOffsetScale = 0.04f;
-        Model = model; _effect = effect; _texture = texture;
+        _normalOffsetScale = 0.4f;
+        Model = model; 
+        _effect = effect; 
+        _texture = texture;
         foreach (var mesh in Model.Meshes)
             foreach (var part in mesh.MeshParts) part.Effect = _effect;
         CreatePhysicsBody(simulation);
@@ -167,8 +169,9 @@ public abstract class TankBase
         _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
         _effect.Parameters["EyePosition"]?.SetValue(cameraPosition); // necesitás pasarle la posición de cámara
         _effect.Parameters["Shininess"]?.SetValue(32f); // valor típico, ajustable
+        //Es mas una cuestion de gustos, pero prefiero que el tanque resalte mas
         _effect.Parameters["LightColor"]?.SetValue(Vector3.One);
-        _effect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.2f, 0.2f, 0.2f));
+        //_effect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.2f, 0.2f, 0.2f));
         _effect.Parameters["ImpactRadius"]?.SetValue(ImpactRadius);
 
         Vector3 colorVector = GetTankColor().ToVector3();
@@ -245,7 +248,7 @@ public abstract class TankBase
         _effect.CurrentTechnique = _effect.Techniques["DepthPass"];
 
         _effect.Parameters["LightViewProjection"]?.SetValue(lightViewProjection);
-        _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
+        //_effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
         _effect.Parameters["ImpactRadius"]?.SetValue(ImpactRadius);
 
         foreach (var mesh in Model.Meshes)

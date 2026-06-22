@@ -52,6 +52,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
         {
             base.LoadContent(content, simulation, effect);
+            //_normalOffsetScale = 0.10f;
             // cache dimensions post-bbox calc para evitar recompute
             _dimensions = _boundingBox.Max - _boundingBox.Min;
             _height = _dimensions.Y;

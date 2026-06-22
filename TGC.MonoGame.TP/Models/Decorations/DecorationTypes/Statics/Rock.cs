@@ -20,6 +20,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
 
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)
             {
+                //_normalOffsetScale = 0.4f;
                 base.LoadContent(content, simulation, effect);
                 
                 // Calculamos el radio base y lo multiplicamos por 0.45f para achicar el diámetro general
