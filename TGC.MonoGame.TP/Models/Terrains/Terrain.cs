@@ -35,7 +35,7 @@ public class Terrain
     public Terrain(GraphicsDevice graphicsDevice)
     {
         _graphicsDevice = graphicsDevice;
-        _normalOffsetScale = 0.2f;
+        _normalOffsetScale = 0.05f;
     }
 
     public void LoadContent(Texture2D heightmapTexture, Texture2D groundTexture, Effect BasicShader)

@@ -50,7 +50,7 @@ public class Cannonball
 
         _effect = effect;
 
-        _normalOffsetScale = 0.4f;
+        _normalOffsetScale = 0.01f;
 
         // Asignamos el shader a cada mesh
         foreach (var mesh in _model.Meshes)
