@@ -15,7 +15,7 @@ public class Terrain
     private const float TerrainScale = GameConfig.Terrain.CellSizeMeters;       //100f
     private const float HeightScale = GameConfig.Terrain.MaxHeightMeters;       //3500f
 
-    public float WidthUnits => 518f * TerrainScale / 2;   //unidades de ancho 
+    public float WidthUnits => 512f * TerrainScale / 2;   //unidades de ancho 
 
     private Texture2D _groundTexture;
 
@@ -29,6 +29,7 @@ public class Terrain
     private float[,] _heights;
     private int _width;
     private int _height;
+    public float HeightUnits => _height * TerrainScale / 2;
 
     private float _normalOffsetScale;
 

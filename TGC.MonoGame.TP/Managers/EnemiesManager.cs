@@ -76,6 +76,14 @@ public class EnemiesManager
         }
     }
 
+    public List<Vector3> GetEnemiesPositions()
+    {
+        var positions = new List<Vector3>();
+        foreach(var enemy in _enemies)
+            if(!enemy.IsDead) positions.Add(enemy.Position);
+        return positions;
+    }
+
     public void Update(GameTime gameTime, Vector3 position) {
         //Transitar de atras para adelante para poder borrar elementos sin romper los indices
         for (int i = _enemies.Count - 1; i >= 0; i--)

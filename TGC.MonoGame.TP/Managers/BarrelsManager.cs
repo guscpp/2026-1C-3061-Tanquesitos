@@ -142,6 +142,14 @@ public class BarrelsManager
         return new Vector3(x, _terrain.GetHeight(x, z), z);
     }
 
+    public List<Vector3> GetBarrelsPositions()
+    {
+        var positions = new List<Vector3>();
+        foreach(var barrel in _fuelBarrels)
+            if(!barrel.IsCollected) positions.Add(barrel.Position);
+        return positions;
+    }
+
     //Me dice si la posicion esta muy cerca de una casa
     private bool IsTooNearToAHouse(Vector3 position, float minDistance)
     {

@@ -205,6 +205,12 @@ public class TGCGame : Game
         //HUD
         _hud = new Hud();
         _hud.LoadContent(Content, GraphicsDevice);
+        _hud.WidthUnits = _terrain.WidthUnits;
+        _hud.HeightUnits = _terrain.HeightUnits;
+        _hud.TankPosition = _tank.Position;
+        _hud.TankRotation = _tank.CannonRotation;
+        _hud.EnemyPositions = _enemiesManager.GetEnemiesPositions();
+        _hud.FuelPositions = _barrelsManager.GetBarrelsPositions();
 
         //CAMARA
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
@@ -292,6 +298,10 @@ public class TGCGame : Game
         _hud.TankPosition = _tank.Position;
         _hud.CannonCurrentCooldown = _cannonballManager.CurrentCooldown;
         _hud.CannonMaxCooldown = GameConfig.Tank.Cooldown;
+        _hud.TankPosition = _tank.Position;
+        _hud.TankRotation = _tank.RotationY;
+        _hud.EnemyPositions = _enemiesManager.GetEnemiesPositions();
+        _hud.FuelPositions = _barrelsManager.GetBarrelsPositions();
         _hud.Update(gameTime);
 
         if (_tank.IsDead) _gameStateManager.ForceState(GameState.GameOver);

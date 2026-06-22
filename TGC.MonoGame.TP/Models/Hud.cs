@@ -4,8 +4,12 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using TGC.MonoGame.TP.Managers;
+using TGC.MonoGame.TP.Models.Decorations;
+using Vector2 = Microsoft.Xna.Framework.Vector2;
+using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Models;
 
@@ -42,9 +46,9 @@ public class Hud
     private string _cachedFuelText = "FUEL: 100 / 100";
     private int _lastDisplayedFuel = -1;
 
-    private string _cachedPosText = "X: 0.0  Y: 0.0  Z: 0.0";
-    private int _lastDisplayedPosX = -9999;
-    private int _lastDisplayedPosZ = -9999;
+    // private string _cachedPosText = "X: 0.0  Y: 0.0  Z: 0.0";
+    // private int _lastDisplayedPosX = -9999;
+    // private int _lastDisplayedPosZ = -9999;
 
     private string _cachedCooldownText = "DISPARO: LISTO";
     private float _lastRemainingSeconds = -1f;
@@ -56,8 +60,21 @@ public class Hud
     private string _cachedPlayerHealth = "Health : / ";
     private float _lastDisplayedHealth = -1.0f;
 
+    // MINIMAP
+    private const int MinimapSize = 180;
+    public float WidthUnits { get; set; }
+    public float HeightUnits { get; set; }
+    private const int iconDesWidth = 180;
+    private const int iconDesHeight = 50;
+    private Texture2D _playerTexture;
+    private Texture2D _enemyTexture;
+    private Texture2D _fuelTexture;
+
     // Propiedades expuestas que actualiza el juego en cada frame
     public Vector3 TankPosition { get; set; }
+    public float TankRotation { get; set; } 
+    public List<Vector3> EnemyPositions { get; set; } = new();
+    public List<Vector3> FuelPositions { get;  set; } = new();
     public float TankFuel { get; set; }
     public float CannonCurrentCooldown { get; set; }
     public float CannonMaxCooldown { get; set; } = 0.5f;
@@ -81,6 +98,10 @@ public class Hud
 
         _whitePixel = new Texture2D(graphicsDevice, 1, 1);
         _whitePixel.SetData(new[] { Color.White });
+
+        _playerTexture = content.Load<Texture2D>("Textures/minimap_playerv4");
+        _enemyTexture = content.Load<Texture2D>("Textures/minimap_enemyv2");
+        _fuelTexture = content.Load<Texture2D>("Textures/minimap_fuel");
     }
 
     /// <summary>
@@ -132,14 +153,20 @@ public class Hud
         // Esta linea es la que desactiva el Z-Buffer
         _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
 
+        // panel para colocar los indicadores
+        Vector2 rightPanelPosition = new Vector2(screenWidth - 250f - padX, padY);
+        float currentY = rightPanelPosition.Y; 
+        Vector2 leftPanelPosition = new Vector2(padX, padY);
+        float leftCurrentY = leftPanelPosition.Y;
+
         // === INSTRUCCIONES (esquina superior izquierda) ===
         var drawPosition = new Vector2(padX, padY);
-        foreach (var line in _instructions)
-        {
-            _spriteBatch.DrawString(_font, line, drawPosition + new Vector2(1, 1), Color.Black);
-            _spriteBatch.DrawString(_font, line, drawPosition, _textColor);
-            drawPosition.Y += _font.LineSpacing + spacing;
-        }
+        // foreach (var line in _instructions)
+        // {
+        //     _spriteBatch.DrawString(_font, line, drawPosition + new Vector2(1, 1), Color.Black);
+        //     _spriteBatch.DrawString(_font, line, drawPosition, _textColor);
+        //     drawPosition.Y += _font.LineSpacing + spacing;
+        // }
 
         //Cache Reactivo de String
         // === INDICADOR DE FPS (esquina superior derecha) ===
@@ -182,12 +209,78 @@ public class Hud
             _lastDisplayedFuel = fuelInt;
         }
 
-        var fuelPosition = new Vector2(posPosition.X, posPosition.Y + _font.LineSpacing + spacing);
+        var fuelPosition = new Vector2(rightPanelPosition.X, currentY);
+        currentY += _font.LineSpacing + spacing;
         Color fuelColor = TankFuel > 30f ? Color.Lime : TankFuel > 10f ? Color.Yellow : Color.Red;
 
         _spriteBatch.DrawString(_font, _cachedFuelText, fuelPosition + Vector2.One, Color.Black);
         _spriteBatch.DrawString(_font, _cachedFuelText, fuelPosition, fuelColor);
+        float fuelPercent = TankFuel / 100f;
+        Vector2 fuelBarPosition = new Vector2(rightPanelPosition.X, currentY);
+        currentY += ProgressBarHeight + spacing * 2;
+        DrawBar(fuelBarPosition, fuelColor, fuelPercent);
 
+        // === VIDA RESTANTE ===
+        float healthPercent = getPlayerHealth() / TGCGame.Instance._tank.initialHealth;
+        Color healthColor = healthPercent > 0.5f ? Color.Lime : healthPercent > 0.25f ? Color.Yellow : Color.Red;
+        Vector2 healthTextPosition = new Vector2(rightPanelPosition.X, currentY);
+        currentY += _font.LineSpacing + spacing;
+        _spriteBatch.DrawString(_font, _cachedPlayerHealth, healthTextPosition + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_font, _cachedPlayerHealth, healthTextPosition, healthColor);
+        Vector2 healthBarPosition = new Vector2(rightPanelPosition.X, currentY);
+        currentY += ProgressBarHeight + spacing * 2;
+        DrawBar(healthBarPosition, healthColor, healthPercent);
+
+        // === MINIMAP ===
+        var minimapPosition = leftPanelPosition;
+        leftCurrentY += MinimapSize + spacing;
+        var minimapRect = new Rectangle((int)minimapPosition.X, (int)minimapPosition.Y, MinimapSize, MinimapSize);
+        _spriteBatch.Draw(_whitePixel, minimapRect, Color.Black * 0.7f);
+
+        // dibuja jugador en el espacio de minimapa
+        Vector2 playerMarker = PositionWorldToMinimap(TankPosition, minimapRect);
+        float tankRotation = TankRotation; // ángulo Y del tanque
+
+        _spriteBatch.Draw(_playerTexture, playerMarker, null, Color.Lime, tankRotation, 
+            new Vector2(_playerTexture.Width / 2f, _playerTexture.Height / 2f), 0.5f, SpriteEffects.None, 0f);
+
+        // dibuja enemigos en el espacio de minimapa
+        foreach (var enemyPos in EnemyPositions)
+        {
+            Vector2 enemyMarker = PositionWorldToMinimap(enemyPos, minimapRect);
+            if (minimapRect.Contains((int)enemyMarker.X, (int)enemyMarker.Y))
+            {
+                _spriteBatch.Draw(_enemyTexture, enemyMarker, null, Color.Red, 0f, 
+                    new Vector2(_enemyTexture.Width / 2f, _enemyTexture.Height / 2f), 0.5f, SpriteEffects.None, 0f);
+            }
+        }
+        //dibuja los barriles de fuel
+        foreach (var barrelPos in FuelPositions)
+        {
+            Vector2 barrelMarker = PositionWorldToMinimap(barrelPos, minimapRect);
+            if (minimapRect.Contains((int)barrelMarker.X, (int)barrelMarker.Y))
+            {
+                _spriteBatch.Draw(_fuelTexture, barrelMarker, null, Color.Yellow, 0f, 
+                    new Vector2(_fuelTexture.Width / 2f, _fuelTexture.Height / 2f), 0.5f, SpriteEffects.None, 0f);
+            }
+        }
+
+        // === BARRA DESCRIPTIVA DE ICONOS ===
+        Rectangle legendRect = new Rectangle((int)leftPanelPosition.X, (int)leftCurrentY, iconDesWidth, iconDesHeight);
+        _spriteBatch.Draw(_whitePixel, legendRect, Color.Black * 0.7f);
+
+        DrawIconAndText(_enemyTexture, "Enemigo", new Vector2(legendRect.X + 12, legendRect.Y + 15), Color.Red, legendRect);
+        DrawIconAndText(_fuelTexture, "Combustible", new Vector2(legendRect.X + 12, legendRect.Y + 40), Color.Yellow, legendRect);
+
+        leftCurrentY += legendRect.X + spacing * 3;
+
+        // === ENEMIGOS DERROTADOS ===
+        var killsPosition = new Vector2(leftPanelPosition.X, leftCurrentY);
+        leftCurrentY += _font.LineSpacing + spacing;
+        _spriteBatch.DrawString(_font, _cachedEnemiesCount, killsPosition + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_font, _cachedEnemiesCount, killsPosition, Color.White);
+
+        // === COOLDOWN ===
         float remaining = MathHelper.Max(0f, CannonCurrentCooldown);
         if (MathF.Abs(remaining - _lastRemainingSeconds) > 0.05f || (remaining == 0f && _lastRemainingSeconds > 0f))
         {
@@ -195,7 +288,10 @@ public class Hud
             _lastRemainingSeconds = remaining;
         }
 
-        var cooldownPosition = new Vector2(fuelPosition.X, fuelPosition.Y + _font.LineSpacing + spacing);
+        var cooldownPosition = new Vector2(leftPanelPosition.X, leftCurrentY);
+        leftCurrentY += _font.LineSpacing + spacing;
+        var cooldownBarPos = new Vector2(leftPanelPosition.X, leftCurrentY);
+        leftCurrentY += ProgressBarHeight + spacing * 2;
         Color cooldownColor = remaining <= 0f ? Color.Lime : Color.Orange;
 
         _spriteBatch.DrawString(_font, _cachedCooldownText, cooldownPosition + Vector2.One, Color.Black);
@@ -204,31 +300,70 @@ public class Hud
         // --- BARRA DE PROGRESO VECTORIAL GRÁFICA (Ahorra un 100% de Garbage Collector en este render) ---
         float barPercent = CannonMaxCooldown > 0f ? (1f - (remaining / CannonMaxCooldown)) : 1f;
         int activeWidth = (int)(barPercent * ProgressBarWidth);
-
-        var barY = cooldownPosition.Y + _font.LineSpacing + spacing;
-        var barBgRect = new Rectangle((int)cooldownPosition.X, (int)barY, ProgressBarWidth, ProgressBarHeight);
-        var barFillRect = new Rectangle((int)cooldownPosition.X, (int)barY, activeWidth, ProgressBarHeight);
-
-        // Dibujar borde/fondo oscuro semitransparente
-        _spriteBatch.Draw(_whitePixel, barBgRect, Color.Black * 0.4f);
-        // Dibujar relleno dinámico escalado según el cooldown
-        _spriteBatch.Draw(_whitePixel, barFillRect, cooldownColor);
-
-        // === ENEMIGOS DERROTADOS ===
-        var killsPosition = new Vector2(cooldownPosition.X, barY + ProgressBarHeight + spacing);
-        _spriteBatch.DrawString(_font, _cachedEnemiesCount, killsPosition + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_font, _cachedEnemiesCount, killsPosition, Color.White);
-
-        // === VIDA RESTANTE ===
-        var healthPorc = getPlayerHealth() / TGCGame.Instance._tank.initialHealth * 100;
-        Color healthColor = healthPorc > 50f ? Color.Lime : healthPorc > 25f ? Color.Yellow : Color.Red;
-        _spriteBatch.DrawString(_font, _cachedPlayerHealth, drawPosition + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_font, _cachedPlayerHealth, drawPosition, healthColor);
+        DrawBar(cooldownBarPos, cooldownColor, barPercent);
 
         _spriteBatch.End();
     }
 
     private int getPlayerHealth() => (int)(TGCGame.Instance._tank.HealthPoints);
+
+    private void DrawBar(Vector2 position, Color color, float percent)
+    {
+        percent = MathHelper.Clamp(percent, 0f, 1f);
+
+        int activeWidth = (int)(percent * ProgressBarWidth);
+
+        var barBgRect = new Rectangle((int)position.X, (int)position.Y, ProgressBarWidth, ProgressBarHeight);
+        var barFillRect = new Rectangle((int)position.X, (int)position.Y, activeWidth, ProgressBarHeight);
+
+        _spriteBatch.Draw(_whitePixel, barBgRect,Color.Black * 0.4f);
+        _spriteBatch.Draw(_whitePixel, barFillRect, color);
+    }
+
+    private void DrawIconAndText(Texture2D iconTexture, string text, Vector2 iconPosition, Color iconColor, Rectangle legendRect)
+    {
+        float iconScale = 0.4f;
+
+        _spriteBatch.Draw(iconTexture, iconPosition, null, iconColor, 0f, 
+            new Vector2(iconTexture.Width / 2f, iconTexture.Height / 2f), iconScale, SpriteEffects.None, 0f);
+
+        Vector2 textPos = new Vector2(iconPosition.X + 18f, iconPosition.Y - _font.LineSpacing / 2f);
+        Vector2 textSize = _font.MeasureString(text);
+        textPos.X = MathHelper.Clamp(textPos.X, legendRect.Left, legendRect.Right - textSize.X);
+        textPos.Y = MathHelper.Clamp(textPos.Y, legendRect.Top, legendRect.Bottom - textSize.Y);
+
+        _spriteBatch.DrawString(_font, text, textPos + Vector2.One, Color.Black);
+        _spriteBatch.DrawString(_font, text, textPos, Color.White);   
+    }
+
+    /// <summary>
+    /// Convierte una posición 3D del mundo a coordenadas 2D del minimapa.
+    /// Usa GameConfig.Terrain para derivar los límites reales del mapa.
+    /// </summary>
+    private Vector2 PositionWorldToMinimap(Vector3 worldPos, Rectangle mapRect)
+    {
+        float nx = MathHelper.Clamp((worldPos.X + WidthUnits) / (WidthUnits * 2f), 0f, 1f);
+        float nz = MathHelper.Clamp((worldPos.Z + HeightUnits) / (HeightUnits * 2f), 0f, 1f);   
+
+        float x = mapRect.X + nx * mapRect.Width;
+        float y = mapRect.Y + nz * mapRect.Height;
+
+        // Margen para que el icono no se salga visualmente
+        const float markerMargin = 8f;
+
+        x = MathHelper.Clamp(
+            x,
+            mapRect.Left + markerMargin,
+            mapRect.Right - markerMargin);
+
+        y = MathHelper.Clamp(
+            y,
+            mapRect.Top + markerMargin,
+            mapRect.Bottom - markerMargin);
+
+        return new Vector2(x, y);
+    }
+
 
     public void Dispose()
     {
