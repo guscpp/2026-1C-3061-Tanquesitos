@@ -53,7 +53,7 @@ public class Hud
     private float _lastDisplayedHealth = -1.0f;
 
     // MINIMAP
-    private const int MinimapSize = 180;
+    private const int MinimapSize = 200;
     public float WidthUnits { get; set; }
     public float HeightUnits { get; set; }
     private const int iconDesWidth = 180;
