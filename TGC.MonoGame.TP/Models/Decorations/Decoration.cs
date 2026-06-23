@@ -60,9 +60,9 @@ public class Decoration
         _boundingBox = BoundingVolumesUtils.CreateBoundingBox(_model);
         _dimensions = _boundingBox.Max - _boundingBox.Min; //tomo el punto maximo y el punto minimo de mi caja y luego calculo la diferencia para saber la distancia, se usa el Min porque el modelo puede estar un poquito mal posicionado y no lo voy andar corrigiendo 80 veces en blender, ya lo intente
         _modelCenter = (_boundingBox.Max + _boundingBox.Min) / 2f; //ajustamos el pivote que originalmente esta en los pies del modelo visual para que concuerde con el del modelo fisico que es en el centro
-        _ = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z));
-        //_normalOffsetScale = MathHelper.Clamp(objectSize * 0.02f, 0.03f, 0.6f);
-        _normalOffsetScale = 0.02f;
+        var objectSize = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z));
+        _normalOffsetScale = MathHelper.Clamp(objectSize * 0.02f, 0.03f, 0.6f);
+        //_normalOffsetScale = 0.02f;
     }
 
     //ACTUALIZO (Modificable)
@@ -148,7 +148,7 @@ public class Decoration
 
         _effect.Parameters["World"]?.SetValue(_world);
         _effect.Parameters["LightViewProjection"]?.SetValue(lightViewProjection);
-        _effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
+        //_effect.Parameters["normalOffsetScale"]?.SetValue(_normalOffsetScale);
         _effect.Parameters["IsDeformable"]?.SetValue(0);
 
         var gd = _effect.GraphicsDevice;
