@@ -26,15 +26,35 @@ public class GameStateManager
     private readonly Texture2D _whitePixel;
     private Texture2D _menuBackground;
     private Texture2D _playButtonTexture;
-    private Texture2D _settingsButtonTexture;
-    private Texture2D _exitButtonTexture;
     private Rectangle _playButtonRectangle;
-    private Rectangle _settingsButtonRectangle;
-    private Rectangle _exitButtonRectangle;
-
     private bool _isPlayButtonHovered;
+    private Texture2D _settingsButtonTexture;
+    private Rectangle _settingsButtonRectangle;
     private bool _isSettingsButtonHovered;
+    private Texture2D _exitButtonTexture;
+    private Rectangle _exitButtonRectangle;
     private bool _isExitButtonHovered;
+    private Texture2D _backButtonTexture;
+    private Rectangle _backButtonRectangle;
+    private bool _isbackButtonHovered;
+    private Texture2D _leftArrowButtonTexture;
+    private Rectangle _leftArrowButtonRectangle;
+    private bool _isLeftArrowButtonHovered;
+    private Texture2D _rightArrowButtonTexture;
+    private Rectangle _rightArrowButtonRectangle;
+    private bool _isrightArrowButtonHovered;
+    private Texture2D _plusButtonTexture;
+    //private Rectangle _plusButtonRectangle;
+    //private bool _isPlusButtonHovered;
+    private Texture2D _minusButtonTexture;
+    //private Rectangle _minusButtonRectangle;
+    //private bool _isMinusButtonHovered;
+    private Texture2D _checkMarkButtonTexture;
+    private Rectangle _checkMarkButtonRectangle;
+    private bool _isCheckMarkButtonHovered;
+    private Texture2D _xButtonTexture;
+    //private Rectangle _xButtonRectangle;
+    //private bool _isXButtonHovered;
 
     private const float HoverScale = 1.08f;
     private float _introTimer = 0f;
@@ -59,30 +79,12 @@ public class GameStateManager
         "Models/tanques/tank v5"  // Heavy
     };
 
-    // Opciones de menu actualizadas para elegir el tipo de tanque
-    private readonly string[] _menuOptions = {
-        "Iniciar (Tanque Scout)",
-        "Iniciar (Tanque Medio)",
-        "Iniciar (Tanque Pesado)",
-        "Salir"
-    };
     private int _selectedIndex = 0; //Preselecciona Iniciar en el menu
-    private int _lastHoveredIndex = -1; //preseleccion del mouse
-
+    private int _lastSelectedIndex = -1;
     private MouseState _lastMouseState;
-
     private ContentManager _menuContent; //evita cache compartido
-
-
-    //Constante compartida de separacion vertical para las opciones del menu
-    private const float OptionSpacing = 20f;
-
     private string _cachedSpecsText = string.Empty;
     private int _specsCachedIndex = -1;
-
-    // Idle animation variables
-    private float _idleTime = 0f;
-    private const float IdleAnimationSpeed = 2.5f; // Controls how fast the pulse is
 
     public GameStateManager(GraphicsDevice graphicsDevice, ContentManager content, SoundManager soundManager)
     {
@@ -98,6 +100,13 @@ public class GameStateManager
         _playButtonTexture = content.Load<Texture2D>("Textures/Buttons/Play_Button");
         _settingsButtonTexture = content.Load<Texture2D>("Textures/Buttons/Settings_Button");
         _exitButtonTexture = content.Load<Texture2D>("Textures/Buttons/Exit_Button");
+        _backButtonTexture = content.Load<Texture2D>("Textures/Buttons/Back_Button");
+        _leftArrowButtonTexture = content.Load<Texture2D>("Textures/Buttons/Left_Arrow_Button");
+        _rightArrowButtonTexture = content.Load<Texture2D>("Textures/Buttons/Right_Arrow_Button");
+        _plusButtonTexture = content.Load<Texture2D>("Textures/Buttons/Plus_Button");
+        _minusButtonTexture = content.Load<Texture2D>("Textures/Buttons/Minus_Button");
+        _checkMarkButtonTexture = content.Load<Texture2D>("Textures/Buttons/Check_Mark_Button");
+        _xButtonTexture = content.Load<Texture2D>("Textures/Buttons/X_Button");
 
         //Textura 1x1 para overlays
         _whitePixel = new Texture2D(graphicsDevice, 1, 1);
@@ -146,9 +155,13 @@ public class GameStateManager
         }
     }
 
-    public void HandleMenuState(KeyboardState kb, KeyboardState lastkb)
+    public void HandleMenuState()
     {
-        HandleMenuInput(kb, lastkb);
+        if (_selectedIndex != _lastSelectedIndex)
+        {
+            UpdateMenuTankModel(_selectedIndex);
+            _lastSelectedIndex = _selectedIndex;
+        }
     }
 
     public void Update(GameTime gameTime, KeyboardState kb, KeyboardState lastKb)
@@ -181,19 +194,17 @@ public class GameStateManager
         }
 
         _menuTankRotation += _menuTankRotationSpeed;
-        _idleTime += dt;
 
-        //el menu maneja su propia logica, early return
         if (CurrentState == GameState.TankSelection)
         {
-            //Bloquear input bleed por 0,3 seg
             if (_menuInputLockTime > 0f)
             {
                 _menuInputLockTime -= dt;
                 return;
             }
 
-            HandleMenuState(kb, lastKb);
+            HandleTankSelectionInput();
+            HandleMenuState();
             return;
         }
 
@@ -221,42 +232,6 @@ public class GameStateManager
                 }
                 break;
         }
-    }
-
-    private void HandleMenuInput(KeyboardState kb, KeyboardState lastKb)
-    {
-        // Teclado: flechas arriba/abajo
-        if ((kb.IsKeyDown(Keys.Down) || kb.IsKeyDown(Keys.S)) && (lastKb.IsKeyUp(Keys.Down) && lastKb.IsKeyUp(Keys.S)))
-            {
-            TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
-            _selectedIndex = (_selectedIndex + 1) % _menuOptions.Length;
-        }
-            
-        else if ((kb.IsKeyDown(Keys.Up) || kb.IsKeyDown(Keys.W)) && (lastKb.IsKeyUp(Keys.Up) && lastKb.IsKeyUp(Keys.W)))
-        {
-            TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
-            _selectedIndex = (_selectedIndex - 1 + _menuOptions.Length) % _menuOptions.Length;
-        }
-            
-        // Teclado: enter
-        if (kb.IsKeyDown(Keys.Enter) && lastKb.IsKeyUp(Keys.Enter))
-            ApplySelection();
-
-        // Mouse: hover y click
-        MouseState currentMouse = Mouse.GetState();
-        int hoveredIndex = GetOptionAtPosition(currentMouse.X, currentMouse.Y);
-        if (hoveredIndex != -1)
-        {
-            if (hoveredIndex != _lastHoveredIndex)
-                TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
-
-            _lastHoveredIndex = hoveredIndex;
-
-            _selectedIndex = hoveredIndex; // Feedback de hover
-            if (currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released)
-                ApplySelection(); // Click selecciona esa opcion
-        }
-        _lastMouseState = currentMouse;
     }
 
     private void HandleMainMenuInput(KeyboardState kb, KeyboardState lastKb)
@@ -314,6 +289,75 @@ public class GameStateManager
         _exitButtonRectangle = new Rectangle(centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight);
     }
 
+    private void HandleTankSelectionInput()
+    {
+        UpdateTankSelectionLayout(_graphicsDevice.Viewport);
+
+        MouseState currentMouse = Mouse.GetState();
+        Point mousePosition = new(currentMouse.X, currentMouse.Y);
+
+        _isbackButtonHovered = _backButtonRectangle.Contains(mousePosition);
+        _isLeftArrowButtonHovered = _leftArrowButtonRectangle.Contains(mousePosition);
+
+        _isCheckMarkButtonHovered = _checkMarkButtonRectangle.Contains(mousePosition);
+
+        _isrightArrowButtonHovered = _rightArrowButtonRectangle.Contains(mousePosition);
+
+        bool leftClick = currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released;
+
+        if (leftClick)
+        {
+            if (_isLeftArrowButtonHovered)
+            {
+                _selectedIndex = (_selectedIndex - 1 + 3) % 3;  // "%3" porque solo existen 3 opciones
+            }
+            else if (_isrightArrowButtonHovered)
+            {
+                _selectedIndex = (_selectedIndex + 1) % 3;
+            }
+            else if (_isCheckMarkButtonHovered)
+            {
+                ApplySelection();
+            }
+            else if (_isbackButtonHovered)
+            {
+                CurrentState = GameState.MainMenu;
+                _menuInputLockTime = 0.3f;
+            }
+        }
+
+        _lastMouseState = currentMouse;
+    }
+
+    private void UpdateTankSelectionLayout(Viewport vp)
+    {
+        float buttonScale = vp.AspectRatio / 5.5f;
+
+        int buttonWidth = (int)(_backButtonTexture.Width * buttonScale);
+        int buttonHeight = (int)(_backButtonTexture.Height * buttonScale);
+
+        int marginX = (int)(vp.Width * 0.01f);
+
+        _backButtonRectangle = new Rectangle(marginX, vp.Height - buttonHeight, buttonWidth, buttonHeight);
+
+        
+        float selectorButtonScale = vp.AspectRatio / 8f;
+
+        int selectorButtonWidth = (int)(_checkMarkButtonTexture.Width * selectorButtonScale);
+        int selectorButtonHeight = (int)(_checkMarkButtonTexture.Height * selectorButtonScale);
+
+        float specsX = vp.Width * 0.1f;
+        float specsY = vp.Height * 0.2f;
+
+        // Aproximadamente debajo del bloque de estadísticas
+        int buttonsY = (int)(specsY + 240);
+        int spacing = 20;
+
+        _leftArrowButtonRectangle = new Rectangle((int)specsX, buttonsY, selectorButtonWidth, selectorButtonHeight);
+        _checkMarkButtonRectangle = new Rectangle(_leftArrowButtonRectangle.Right + spacing, buttonsY, selectorButtonWidth, selectorButtonHeight);
+        _rightArrowButtonRectangle = new Rectangle(_checkMarkButtonRectangle.Right + spacing, buttonsY, selectorButtonWidth, selectorButtonHeight);
+    }
+
     private Rectangle ScaleRectangle(Rectangle rectangle, float scale)
     {
         int newWidth = (int)(rectangle.Width * scale);
@@ -325,63 +369,25 @@ public class GameStateManager
         return new Rectangle(newX, newY, newWidth, newHeight);
     }
 
-    /// <summary>
-    /// Determina si el cursor del mouse esta sobre alguna opcion del menu.
-    /// Devuelve el indice de la opcion bajo el cursor, o -1 si no esta sobre ninguna.
-    /// </summary>
-    private int GetOptionAtPosition(int mouseX, int mouseY)
-    {
-        // 1. Obtener las dimensiones actuales de la ventana/pantalla
-        var vp = _spriteBatch.GraphicsDevice.Viewport;
-
-        // 2. Calcular el punto central exacto de la pantalla
-        Vector2 center = new Vector2(vp.Width / 2f, vp.Height / 2f);
-
-        // 3. Calcular la coordenada Y inicial para que el bloque completo de opciones quede centrado verticalmente.
-        //    Se toma la mitad del alto total estimado del texto y se resta del centro.
-        float pulse = (MathF.Sin(_idleTime * IdleAnimationSpeed) + 1f) / 2f;
-        float scalePulse = 1.0f + pulse * 0.03f;
-
-        // 5. Recorrer cada opción del menú para verificar si el mouse está dentro de su area visual
-        for (int i = 0; i < _menuOptions.Length; i++)
-        {
-            bool isSelected = (i == _selectedIndex);
-            float currentScale = isSelected ? scalePulse : 1f;
-
-            Rectangle rect = CalculateOptionRectangle(i, center, currentScale);
-
-            // Verificar si las coordenadas del mouse están dentro de este rectángulo
-            if (rect.Contains(mouseX, mouseY))
-                return i; // ¡Encontrado! Devolver el índice de la opción
-        }
-
-        // Si el bucle termina sin encontrar coincidencia, el mouse no está sobre ninguna opción
-        return -1;
-    }
-
     private void ApplySelection()
     {
         switch (_selectedIndex)
         {
-            case 0: // Iniciar Scout
+            case 0:
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Scout;
-                TGCGame.Instance.ResetGame(); 
-                CurrentState = GameState.Playing;
                 break;
-            case 1: // Iniciar Medio
+
+            case 1:
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Medium;
-                TGCGame.Instance.ResetGame(); 
-                CurrentState = GameState.Playing;
                 break;
-            case 2: // Iniciar Pesado
+
+            case 2:
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Heavy;
-                TGCGame.Instance.ResetGame(); 
-                CurrentState = GameState.Playing;
-                break;
-            case 3: // Salir
-                Environment.Exit(0);
                 break;
         }
+
+        TGCGame.Instance.ResetGame();
+        CurrentState = GameState.Playing;
     }
 
     public void Draw(string extraInfo = "")
@@ -443,6 +449,16 @@ public class GameStateManager
         {
             _graphicsDevice.Clear(Color.DarkSlateGray);
 
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+
+            // Fondo del menú
+            _spriteBatch.Draw(_menuBackground, new Rectangle(0, 0, vp.Width, vp.Height), Color.White);
+
+            // Overlay gris oscuro semitransparente
+            _spriteBatch.Draw(_whitePixel,new Rectangle(0, 0, vp.Width, vp.Height),new Color(30, 30, 30, 180));
+
+            _spriteBatch.End();
+            
             if (_selectedIndex < 3 && _currentMenuTankModel != null)
             {
 
@@ -451,7 +467,7 @@ public class GameStateManager
                                Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *
                                Matrix.CreateRotationY(_menuTankRotation);
 
-                Matrix view = Matrix.CreateLookAt(new Vector3(10, 13f, 18f), new Vector3(0, 4, 0), Vector3.Up);
+                Matrix view = Matrix.CreateLookAt(new Vector3(10f, 13f, 18f), new Vector3(-8, 1, 0), Vector3.Up);
                 Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, vp.AspectRatio, 0.1f, 100f);
 
                 // Fix culling and depth issues
@@ -467,7 +483,8 @@ public class GameStateManager
             if (_selectedIndex < 3)
                 DrawTankSpecs(vp);
             
-            DrawMenu(center);
+            DrawTankSelectionButtons();
+
             _spriteBatch.End();
         }
         else if (CurrentState == GameState.Paused || CurrentState == GameState.GameOver || CurrentState == GameState.Win)
@@ -599,69 +616,13 @@ public class GameStateManager
         }
 
         // Posicionamiento de la caja de especificaciones en pantalla
-        float padX = vp.Width * 0.05f;
-        float padY = vp.Height * 0.15f;
+        float padX = vp.Width * 0.14f;
+        float padY = vp.Height * 0.2f;
         Vector2 specsPos = new Vector2(padX, padY);
 
         // Dibujamos usando el string en caché (Costo de CPU y asignaciones de memoria = 0)
         _spriteBatch.DrawString(_fontConsolas, _cachedSpecsText, specsPos + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_fontConsolas, _cachedSpecsText, specsPos, Color.Gold);
-    }
-
-    private void DrawMenu(Vector2 center)
-    {
-        float pulse = (MathF.Sin(_idleTime * IdleAnimationSpeed) + 1f) / 2f;
-        float arrowOffset = pulse * 4f;
-
-        Color breathingColor = Color.Lerp(
-            new Color(180, 140, 0),
-            new Color(255, 223, 0),
-            pulse
-        );
-
-        float scalePulse = 1.0f + pulse * 0.03f;
-
-        for (int i = 0; i < _menuOptions.Length; i++)
-        {
-            string option = _menuOptions[i];
-            bool isSelected = (i == _selectedIndex);
-            float currentScale = isSelected ? scalePulse : 1f;
-
-            // Usamos la unificacion del metodo que calcula la ubicacion y dimensiones exactas
-            Rectangle rect = CalculateOptionRectangle(i, center, currentScale);
-            Vector2 pos = new Vector2(rect.X, rect.Y);
-
-            Color shadowColor = Color.Black;
-
-            if (isSelected)
-            {
-                // Sombra con la escala animada aplicada
-                _spriteBatch.DrawString(_fontArial, option, pos + new Vector2(2, 2), shadowColor,
-                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
-
-                // Texto principal con el color oscilante (breathing)
-                _spriteBatch.DrawString(_fontArial, option, pos, breathingColor,
-                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
-
-                // Flechas dinamicas del menú
-                var arrowSize = _fontArial.MeasureString("> ");
-                
-                // Flecha Izquierda
-                _spriteBatch.DrawString(_fontArial, "> ",
-                    new Vector2(pos.X - arrowSize.X + arrowOffset, pos.Y), breathingColor,
-                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
-                
-                // Flecha Derecha
-                _spriteBatch.DrawString(_fontArial, " <",
-                    pos + new Vector2(rect.Width - arrowOffset, 0), breathingColor,
-                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
-            }
-            else
-            {
-                _spriteBatch.DrawString(_fontArial, option, pos + new Vector2(2, 2), shadowColor);
-                _spriteBatch.DrawString(_fontArial, option, pos, Color.White);
-            }
-        }
+        _spriteBatch.DrawString(_fontConsolas, _cachedSpecsText, specsPos, Color.White);
     }
 
     private void DrawMainMenuButtons()
@@ -670,27 +631,22 @@ public class GameStateManager
         Rectangle settingsRect = _isSettingsButtonHovered ? ScaleRectangle(_settingsButtonRectangle, HoverScale) : _settingsButtonRectangle;
         Rectangle exitRect = _isExitButtonHovered ? ScaleRectangle(_exitButtonRectangle, HoverScale) : _exitButtonRectangle;
 
-        _spriteBatch.Draw(_playButtonTexture, playRect, _isPlayButtonHovered ? Color.LightGoldenrodYellow : Color.AntiqueWhite);
-        _spriteBatch.Draw(_settingsButtonTexture, settingsRect, _isSettingsButtonHovered ? Color.LightGoldenrodYellow : Color.AntiqueWhite);
-        _spriteBatch.Draw(_exitButtonTexture, exitRect, _isExitButtonHovered ? Color.LightGoldenrodYellow : Color.AntiqueWhite);
+        _spriteBatch.Draw(_playButtonTexture, playRect, _isPlayButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
+        _spriteBatch.Draw(_settingsButtonTexture, settingsRect, _isSettingsButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
+        _spriteBatch.Draw(_exitButtonTexture, exitRect, _isExitButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
     }
 
-    private Rectangle CalculateOptionRectangle(int index, Vector2 center, float scale = 1f)
+    private void DrawTankSelectionButtons()
     {
-        float startY = center.Y - (_fontArial.LineSpacing * _menuOptions.Length / 2f);
-        float offsetX = center.X * 0.3f;
-        
-        string option = _menuOptions[index];
-        Vector2 originalSize = _fontArial.MeasureString(option);
-        Vector2 scaledSize = originalSize * scale;
+        Rectangle backRect = _isbackButtonHovered ? ScaleRectangle(_backButtonRectangle, HoverScale) : _backButtonRectangle;
+        Rectangle leftRect = _isLeftArrowButtonHovered ? ScaleRectangle(_leftArrowButtonRectangle, HoverScale) : _leftArrowButtonRectangle;
+        Rectangle checkRect = _isCheckMarkButtonHovered ? ScaleRectangle(_checkMarkButtonRectangle, HoverScale) : _checkMarkButtonRectangle;
+        Rectangle rightRect = _isrightArrowButtonHovered ? ScaleRectangle(_rightArrowButtonRectangle, HoverScale) : _rightArrowButtonRectangle;
 
-        // Posición base
-        Vector2 basePos = new Vector2(offsetX - originalSize.X / 2f, startY + index * (_fontArial.LineSpacing + OptionSpacing));
-        
-        // Centrado correctivo para cuando se aplica escala animada
-        Vector2 adjustedPos = basePos - (scaledSize - originalSize) / 2f;
-
-        return new Rectangle((int)adjustedPos.X, (int)adjustedPos.Y, (int)scaledSize.X, (int)scaledSize.Y);
+        _spriteBatch.Draw(_backButtonTexture,backRect, _isbackButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
+        _spriteBatch.Draw(_leftArrowButtonTexture, leftRect,_isLeftArrowButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
+        _spriteBatch.Draw(_checkMarkButtonTexture, checkRect,_isCheckMarkButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
+        _spriteBatch.Draw(_rightArrowButtonTexture, rightRect,_isrightArrowButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
     }
 
     private void DrawCenteredText(string text, Vector2 center)

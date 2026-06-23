@@ -667,6 +667,18 @@
 /processorParam:TextureFormat=Color
 /build:Textures/Buttons/Back_Button.png
 
+#begin Textures/Buttons/Check_Mark_Button.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Textures/Buttons/Check_Mark_Button.png
+
 #begin Textures/Buttons/Exit_Button.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -678,6 +690,30 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Textures/Buttons/Exit_Button.png
+
+#begin Textures/Buttons/Left_Arrow_Button.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Textures/Buttons/Left_Arrow_Button.png
+
+#begin Textures/Buttons/Minus_Button.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Textures/Buttons/Minus_Button.png
 
 #begin Textures/Buttons/Play_Button.png
 /importer:TextureImporter
@@ -691,6 +727,30 @@
 /processorParam:TextureFormat=Color
 /build:Textures/Buttons/Play_Button.png
 
+#begin Textures/Buttons/Plus_Button.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Textures/Buttons/Plus_Button.png
+
+#begin Textures/Buttons/Right_Arrow_Button.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Textures/Buttons/Right_Arrow_Button.png
+
 #begin Textures/Buttons/Settings_Button.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -702,6 +762,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Textures/Buttons/Settings_Button.png
+
+#begin Textures/Buttons/X_Button.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Textures/Buttons/X_Button.png
 
 #begin Textures/ConceptArt6.png
 /importer:TextureImporter

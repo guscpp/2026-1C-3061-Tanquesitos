@@ -184,7 +184,7 @@ public class TGCGame : Game
 
         //TANQUE
         var kb = Keyboard.GetState();
-        _gameStateManager.HandleMenuState(kb, _lastKeyboardState);
+        _gameStateManager.HandleMenuState();
         _lastKeyboardState = kb;
         // Crear el tanque usando la eleccion del jugador
         _tank = new TankPlayer(GraphicsDevice, SelectedPlayerTank);
