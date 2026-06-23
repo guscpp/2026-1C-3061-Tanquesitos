@@ -10,7 +10,7 @@ namespace TGC.MonoGame.TP.Managers;
 
 public class GameStateManager
 {
-    public GameState CurrentState { get; private set; } = GameState.Menu;
+    public GameState CurrentState { get; private set; } = GameState.TankSelection;
 
     private readonly GraphicsDevice _graphicsDevice;
     private readonly ContentManager _content;
@@ -19,6 +19,18 @@ public class GameStateManager
     private readonly SpriteFont _fontConsolas;
     private readonly Texture2D _whitePixel;
     private Texture2D _menuBackground;
+    private Texture2D _playButtonTexture;
+    private Texture2D _settingsButtonTexture;
+    private Texture2D _exitButtonTexture;
+    private Rectangle _playButtonRectangle;
+    private Rectangle _settingsButtonRectangle;
+    private Rectangle _exitButtonRectangle;
+
+    private bool _isPlayButtonHovered;
+    private bool _isSettingsButtonHovered;
+    private bool _isExitButtonHovered;
+
+    private const float HoverScale = 1.08f;
     private float _introTimer = 0f;
     private float _menuInputLockTime = 0f;
 
@@ -76,6 +88,10 @@ public class GameStateManager
         _fontArial = content.Load<SpriteFont>("SpriteFonts/ArialFont");
         _fontConsolas = content.Load<SpriteFont>("SpriteFonts/ConsolasFont");
         _menuBackground = content.Load<Texture2D>("Textures/ConceptArt6");
+        
+        _playButtonTexture = content.Load<Texture2D>("Textures/Buttons/Play_Button");
+        _settingsButtonTexture = content.Load<Texture2D>("Textures/Buttons/Settings_Button");
+        _exitButtonTexture = content.Load<Texture2D>("Textures/Buttons/Exit_Button");
 
         //Textura 1x1 para overlays
         _whitePixel = new Texture2D(graphicsDevice, 1, 1);
@@ -153,19 +169,25 @@ public class GameStateManager
             bool mouseClicked = currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released;
             _lastMouseState = currentMouse;
 
-            if (_introTimer >= 8f || keyPressed || mouseClicked)
+            if (keyPressed || mouseClicked)
             {
-                CurrentState = GameState.Menu;
+                CurrentState = GameState.MainMenu;
                 _introTimer = 0f;
                 _menuInputLockTime = 0.3f; //impide input bleed en GameState.Menu
             }
+        }
+
+        if (CurrentState == GameState.MainMenu)
+        {
+            HandleMainMenuInput(kb, lastKb);
+            return;
         }
 
         _menuTankRotation += _menuTankRotationSpeed;
         _idleTime += dt;
 
         //el menu maneja su propia logica, early return
-        if (CurrentState == GameState.Menu)
+        if (CurrentState == GameState.TankSelection)
         {
             //Bloquear input bleed por 0,3 seg
             if (_menuInputLockTime > 0f)
@@ -194,7 +216,7 @@ public class GameStateManager
                 SoundManager.StopMusic();
                 if (kb.IsKeyDown(Keys.Enter) && lastKb.IsKeyUp(Keys.Enter))
                 {
-                    CurrentState = GameState.Menu;
+                    CurrentState = GameState.TankSelection;
                     _selectedIndex = 0;
                     _lastSelectedIndex = -1;
                     _menuMusicStarted = false;
@@ -239,6 +261,72 @@ public class GameStateManager
                 ApplySelection(); // Click selecciona esa opcion
         }
         _lastMouseState = currentMouse;
+    }
+
+    private void HandleMainMenuInput(KeyboardState kb, KeyboardState lastKb)
+    {
+        UpdateMainMenuLayout(_graphicsDevice.Viewport);
+        
+        MouseState currentMouse = Mouse.GetState();
+        Point mousePosition = new(currentMouse.X, currentMouse.Y);
+
+        _isPlayButtonHovered = _playButtonRectangle.Contains(mousePosition);
+        _isSettingsButtonHovered = _settingsButtonRectangle.Contains(mousePosition);
+        _isExitButtonHovered = _exitButtonRectangle.Contains(mousePosition);
+        
+        bool leftClick = currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released;
+
+        if (leftClick)
+        {
+            if (_isPlayButtonHovered)
+            {
+                CurrentState = GameState.TankSelection;
+                _menuInputLockTime = 0.3f;
+            }
+            else if (_isSettingsButtonHovered)
+            {
+                // Pantalla de configuracion
+            }
+            else if (_isExitButtonHovered)
+            {
+                Environment.Exit(0);
+            }
+        }
+
+        _lastMouseState = currentMouse;
+    }
+
+    private void UpdateMainMenuLayout(Viewport vp)
+    {
+        // TO DO: Agregar condicional para que se ejecute solo cuando cambia el viewport
+        int buttonSpacing = (int)(20 * vp.AspectRatio);
+        float buttonScale = vp.AspectRatio / 4f;
+
+        int buttonWidth = (int)(_playButtonTexture.Width * buttonScale);
+        int buttonHeight = (int)(_playButtonTexture.Height * buttonScale);
+
+        int totalHeight = buttonHeight * 3 + buttonSpacing * 2;
+        int heightOffset = (int)(vp.AspectRatio * 20);
+
+        int startY = (vp.Height - totalHeight) / 2 + heightOffset;
+        int centerX = vp.Width / 2 - buttonWidth / 2;
+
+        _playButtonRectangle = new Rectangle(centerX, startY, buttonWidth, buttonHeight);
+
+        _settingsButtonRectangle = new Rectangle(centerX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight);
+
+        _exitButtonRectangle = new Rectangle(centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight);
+    }
+
+    private Rectangle ScaleRectangle(Rectangle rectangle, float scale)
+    {
+        int newWidth = (int)(rectangle.Width * scale);
+        int newHeight = (int)(rectangle.Height * scale);
+
+        int newX = rectangle.Center.X - newWidth / 2;
+        int newY = rectangle.Center.Y - newHeight / 2;
+
+        return new Rectangle(newX, newY, newWidth, newHeight);
     }
 
     /// <summary>
@@ -344,7 +432,18 @@ public class GameStateManager
             _spriteBatch.End();
         }
 
-        if (CurrentState == GameState.Menu)
+        if (CurrentState == GameState.MainMenu)
+        {
+            _graphicsDevice.Clear(Color.Black);
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+
+            _spriteBatch.Draw(_menuBackground, new Rectangle(0, 0, vp.Width, vp.Height), Color.White);
+            DrawMainMenuButtons();
+            
+            _spriteBatch.End();
+        }
+
+        if (CurrentState == GameState.TankSelection)
         {
             _graphicsDevice.Clear(Color.DarkSlateGray);
 
@@ -564,6 +663,17 @@ public class GameStateManager
         }
     }
 
+    private void DrawMainMenuButtons()
+    {
+        Rectangle playRect = _isPlayButtonHovered ? ScaleRectangle(_playButtonRectangle, HoverScale) : _playButtonRectangle;
+        Rectangle settingsRect = _isSettingsButtonHovered ? ScaleRectangle(_settingsButtonRectangle, HoverScale) : _settingsButtonRectangle;
+        Rectangle exitRect = _isExitButtonHovered ? ScaleRectangle(_exitButtonRectangle, HoverScale) : _exitButtonRectangle;
+
+        _spriteBatch.Draw(_playButtonTexture, playRect, _isPlayButtonHovered ? Color.LightGoldenrodYellow : Color.AntiqueWhite);
+        _spriteBatch.Draw(_settingsButtonTexture, settingsRect, _isSettingsButtonHovered ? Color.LightGoldenrodYellow : Color.AntiqueWhite);
+        _spriteBatch.Draw(_exitButtonTexture, exitRect, _isExitButtonHovered ? Color.LightGoldenrodYellow : Color.AntiqueWhite);
+    }
+
     private Rectangle CalculateOptionRectangle(int index, Vector2 center, float scale = 1f)
     {
         float startY = center.Y - (_fontArial.LineSpacing * _menuOptions.Length / 2f);
@@ -595,7 +705,7 @@ public class GameStateManager
     // Maneja la reproduccion de musica segun el estado del juego
     private void HandleMusic()
     {
-        if (CurrentState == GameState.Menu)
+        if (CurrentState == GameState.TankSelection)
         {
             // Reproducir musica del menu solo si no esta sonando
             if (!_menuMusicStarted && MediaPlayer.State != MediaState.Playing)
