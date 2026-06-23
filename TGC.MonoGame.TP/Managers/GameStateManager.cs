@@ -224,7 +224,8 @@ public class GameStateManager
                 SoundManager.StopMusic();
                 if (kb.IsKeyDown(Keys.Enter) && lastKb.IsKeyUp(Keys.Enter))
                 {
-                    CurrentState = GameState.TankSelection;
+                    CurrentState = GameState.MainMenu;
+                    TGCGame.Instance.IsMouseVisible = true;
                     _selectedIndex = 0;
                     _menuMusicStarted = false;
                     _currentMenuTankModel = null;
@@ -662,7 +663,7 @@ public class GameStateManager
     // Maneja la reproduccion de musica segun el estado del juego
     private void HandleMusic()
     {
-        if (CurrentState == GameState.TankSelection)
+        if (CurrentState == GameState.MainMenu || CurrentState == GameState.TankSelection)
         {
             // Reproducir musica del menu solo si no esta sonando
             if (!_menuMusicStarted && MediaPlayer.State != MediaState.Playing)
