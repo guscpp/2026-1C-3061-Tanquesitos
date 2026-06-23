@@ -253,6 +253,7 @@ public class GameStateManager
             if (_isPlayButtonHovered)
             {
                 CurrentState = GameState.TankSelection;
+                _soundManager.PlaySound("colision_casa");
                 _menuInputLockTime = 0.3f;
             }
             else if (_isSettingsButtonHovered)
@@ -311,10 +312,12 @@ public class GameStateManager
             if (_isLeftArrowButtonHovered)
             {
                 _selectedIndex = (_selectedIndex - 1 + 3) % 3;  // "%3" porque solo existen 3 opciones
+                _soundManager.PlaySound("enemy_cannon_fire");
             }
             else if (_isrightArrowButtonHovered)
             {
                 _selectedIndex = (_selectedIndex + 1) % 3;
+                _soundManager.PlaySound("enemy_cannon_fire");
             }
             else if (_isCheckMarkButtonHovered)
             {
