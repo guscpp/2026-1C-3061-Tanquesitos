@@ -16,7 +16,7 @@ public class GameStateManager
     public const string ContentFolderSounds = "Sounds/";
     public const string ContentFolderSpriteFonts = "SpriteFonts/";
     public const string ContentFolderTextures = "Textures/";
-    public GameState CurrentState { get; private set; } = GameState.TankSelection;
+    public GameState CurrentState { get; private set; } = GameState.Menu;
 
     private readonly GraphicsDevice _graphicsDevice;
     private readonly ContentManager _content;
@@ -25,38 +25,6 @@ public class GameStateManager
     private readonly SpriteFont _fontConsolas;
     private readonly Texture2D _whitePixel;
     private Texture2D _menuBackground;
-    private Texture2D _playButtonTexture;
-    private Rectangle _playButtonRectangle;
-    private bool _isPlayButtonHovered;
-    private Texture2D _settingsButtonTexture;
-    private Rectangle _settingsButtonRectangle;
-    private bool _isSettingsButtonHovered;
-    private Texture2D _exitButtonTexture;
-    private Rectangle _exitButtonRectangle;
-    private bool _isExitButtonHovered;
-    private Texture2D _backButtonTexture;
-    private Rectangle _backButtonRectangle;
-    private bool _isbackButtonHovered;
-    private Texture2D _leftArrowButtonTexture;
-    private Rectangle _leftArrowButtonRectangle;
-    private bool _isLeftArrowButtonHovered;
-    private Texture2D _rightArrowButtonTexture;
-    private Rectangle _rightArrowButtonRectangle;
-    private bool _isrightArrowButtonHovered;
-    private Texture2D _plusButtonTexture;
-    //private Rectangle _plusButtonRectangle;
-    //private bool _isPlusButtonHovered;
-    private Texture2D _minusButtonTexture;
-    //private Rectangle _minusButtonRectangle;
-    //private bool _isMinusButtonHovered;
-    private Texture2D _checkMarkButtonTexture;
-    private Rectangle _checkMarkButtonRectangle;
-    private bool _isCheckMarkButtonHovered;
-    private Texture2D _xButtonTexture;
-    //private Rectangle _xButtonRectangle;
-    //private bool _isXButtonHovered;
-
-    private const float HoverScale = 1.08f;
     private float _introTimer = 0f;
     private float _menuInputLockTime = 0f;
 
@@ -68,23 +36,54 @@ public class GameStateManager
     private Model _currentMenuTankModel;
     private Texture2D _menuTankTexture;
     private Texture2D _menuTracksTexture;
+    private Texture2D _menuSandTexture;
     private Effect _menuTankEffect;
     private float _menuTankRotation = 0f;
     private float _menuTankRotationSpeed = 0.015f;
 
-    //En algun momento consideramos usar 3 modelos distintos para los 3 tipos
-    private readonly string[] _menuTankModelPaths = {
-        "Models/tanques/tank v5", // Scout
-        "Models/tanques/tank v5", // Medium
-        "Models/tanques/tank v5"  // Heavy
-    };
+    // diorama
+    private Model _menuTerrainModel;
+    private Model _menuArbolMuerto1Model;
+    private Model _menuBarrilModel;
+    private Model _menuCactus1Model;
+    private Model _menuCarretaModel;
+    private Model _menuCasitaMedianaModel;
+    private Model _menuPozoModel;
+    private Matrix _terrainWorld;
+    private Matrix _arbolMuerto1World;
+    private Matrix _barrilWorld;
+    private Matrix _cactus1World;
+    private Matrix _carretaWorld;
+    private Matrix _casitaMedianaWorld;
+    private Matrix _pozoWorld;
 
+    // Opciones de menu actualizadas para elegir el tipo de tanque
+    private readonly string[] _menuOptions = {
+        "Scout",
+        "Medium",
+        "Heavy",
+        "Salir"
+    };
     private int _selectedIndex = 0; //Preselecciona Iniciar en el menu
-    private int _lastSelectedIndex = -1;
+    private int _lastHoveredIndex = -1; //preseleccion del mouse
+
     private MouseState _lastMouseState;
+
     private ContentManager _menuContent; //evita cache compartido
+
+    //exponerlo para reproducir efectos 3d
+    public SoundManager SoundManager => _soundManager;
+
+
+    //Constante compartida de separacion vertical para las opciones del menu
+    private const float OptionSpacing = 20f;
+
     private string _cachedSpecsText = string.Empty;
     private int _specsCachedIndex = -1;
+
+    // Idle animation variables
+    private float _idleTime = 0f;
+    private const float IdleAnimationSpeed = 2.5f; // Controls how fast the pulse is
 
     public GameStateManager(GraphicsDevice graphicsDevice, ContentManager content, SoundManager soundManager)
     {
@@ -96,17 +95,6 @@ public class GameStateManager
         _fontArial = content.Load<SpriteFont>("SpriteFonts/ArialFont");
         _fontConsolas = content.Load<SpriteFont>("SpriteFonts/ConsolasFont");
         _menuBackground = content.Load<Texture2D>("Textures/ConceptArt6");
-        
-        _playButtonTexture = content.Load<Texture2D>("Textures/Buttons/Play_Button");
-        _settingsButtonTexture = content.Load<Texture2D>("Textures/Buttons/Settings_Button");
-        _exitButtonTexture = content.Load<Texture2D>("Textures/Buttons/Exit_Button");
-        _backButtonTexture = content.Load<Texture2D>("Textures/Buttons/Back_Button");
-        _leftArrowButtonTexture = content.Load<Texture2D>("Textures/Buttons/Left_Arrow_Button");
-        _rightArrowButtonTexture = content.Load<Texture2D>("Textures/Buttons/Right_Arrow_Button");
-        _plusButtonTexture = content.Load<Texture2D>("Textures/Buttons/Plus_Button");
-        _minusButtonTexture = content.Load<Texture2D>("Textures/Buttons/Minus_Button");
-        _checkMarkButtonTexture = content.Load<Texture2D>("Textures/Buttons/Check_Mark_Button");
-        _xButtonTexture = content.Load<Texture2D>("Textures/Buttons/X_Button");
 
         //Textura 1x1 para overlays
         _whitePixel = new Texture2D(graphicsDevice, 1, 1);
@@ -128,10 +116,40 @@ public class GameStateManager
             //_menuTankEffect = _content.Load<Effect>("Effects/BasicShaderTexture");
             _menuTankEffect = _menuContent.Load<Effect>("Effects/BlinnPhong");
             _menuTankTexture = _menuContent.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");
+            _menuSandTexture = _menuContent.Load<Texture2D>(ContentFolderTextures + "sand_seamless");
             _menuTracksTexture = _menuContent.Load<Texture2D>(ContentFolderTextures + GameConfig.Tank.TankTracksTexture);
             _currentMenuTankModel = _menuContent.Load<Model>(ContentFolder3D + GameConfig.Tank.TankModelPath);
 
-            UpdateMenuTankModel(0);
+            //assets del diorama
+            _menuTerrainModel = _menuContent.Load<Model>("Models/menu3d/menu3d v1");
+            _menuArbolMuerto1Model = _menuContent.Load<Model>("Models/decoraciones/arbol_muerto_1");
+            _menuBarrilModel = _menuContent.Load<Model>("Models/decoraciones/barril");
+            _menuCactus1Model = _menuContent.Load<Model>("Models/decoraciones/cactus_1");
+            _menuCasitaMedianaModel = _menuContent.Load<Model>("Models/casas/casita_mediana");
+            _menuPozoModel = _menuContent.Load<Model>("Models/decoraciones/pozo");
+            _menuCarretaModel = _menuContent.Load<Model>("Models/decoraciones/carreta_1");
+
+            Matrix fixRotation = Matrix.CreateRotationX(MathHelper.ToRadians(-90f));
+
+            _terrainWorld = Matrix.CreateScale(1) * fixRotation * 
+                            Matrix.CreateRotationY(MathHelper.ToRadians(90f)) * 
+                            Matrix.CreateTranslation(0f, 0f, 0f);
+            _arbolMuerto1World = Matrix.CreateScale(1) * fixRotation *
+                          Matrix.CreateRotationY(MathHelper.ToRadians(-35f)) *
+                          Matrix.CreateTranslation(-3f, 0f, -16f);
+            _barrilWorld = Matrix.CreateScale(1) * fixRotation *
+                          Matrix.CreateRotationY(MathHelper.ToRadians(-35f)) *
+                          Matrix.CreateTranslation(-9f, 0f, -5f);
+            _cactus1World = Matrix.CreateScale(1) * fixRotation *
+                            Matrix.CreateRotationY(MathHelper.ToRadians(-35f)) *
+                            Matrix.CreateTranslation(3f, 0f, -3f);
+            _carretaWorld = Matrix.CreateScale(1) * fixRotation *
+                            Matrix.CreateTranslation(-3f, 0f, -4f);
+            _casitaMedianaWorld = Matrix.CreateScale(1) * fixRotation *
+                          Matrix.CreateRotationY(MathHelper.ToRadians(-35f)) *
+                          Matrix.CreateTranslation(-10f, 0f, -8f);
+            _pozoWorld = Matrix.CreateScale(1) * fixRotation * 
+                         Matrix.CreateTranslation(5f, 0f, -2f);
         }
         catch (Exception ex)
         {
@@ -139,29 +157,9 @@ public class GameStateManager
         }
     }
 
-    private void UpdateMenuTankModel(int tankIndex)
+    public void HandleMenuState(KeyboardState kb, KeyboardState lastkb)
     {
-        if (tankIndex >= 0 && tankIndex < _menuTankModelPaths.Length)
-        {
-            try
-            {
-                _currentMenuTankModel = _menuContent.Load<Model>("Models/" + GameConfig.Tank.TankModelPath);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading model {tankIndex}: {ex.Message}");
-                _currentMenuTankModel = null;
-            }
-        }
-    }
-
-    public void HandleMenuState()
-    {
-        if (_selectedIndex != _lastSelectedIndex)
-        {
-            UpdateMenuTankModel(_selectedIndex);
-            _lastSelectedIndex = _selectedIndex;
-        }
+        HandleMenuInput(kb, lastkb);
     }
 
     public void Update(GameTime gameTime, KeyboardState kb, KeyboardState lastKb)
@@ -179,32 +177,28 @@ public class GameStateManager
             bool mouseClicked = currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released;
             _lastMouseState = currentMouse;
 
-            if (keyPressed || mouseClicked)
+            if (_introTimer >= 8f || keyPressed || mouseClicked)
             {
-                CurrentState = GameState.MainMenu;
+                CurrentState = GameState.Menu;
                 _introTimer = 0f;
                 _menuInputLockTime = 0.3f; //impide input bleed en GameState.Menu
             }
         }
 
-        if (CurrentState == GameState.MainMenu)
-        {
-            HandleMainMenuInput(kb, lastKb);
-            return;
-        }
-
         _menuTankRotation += _menuTankRotationSpeed;
+        _idleTime += dt;
 
-        if (CurrentState == GameState.TankSelection)
+        //el menu maneja su propia logica, early return
+        if (CurrentState == GameState.Menu)
         {
+            //Bloquear input bleed por 0,3 seg
             if (_menuInputLockTime > 0f)
             {
                 _menuInputLockTime -= dt;
                 return;
             }
 
-            HandleTankSelectionInput();
-            HandleMenuState();
+            HandleMenuState(kb, lastKb);
             return;
         }
 
@@ -224,174 +218,110 @@ public class GameStateManager
                 SoundManager.StopMusic();
                 if (kb.IsKeyDown(Keys.Enter) && lastKb.IsKeyUp(Keys.Enter))
                 {
-                    CurrentState = GameState.MainMenu;
-                    TGCGame.Instance.IsMouseVisible = true;
+                    CurrentState = GameState.Menu;
                     _selectedIndex = 0;
                     _menuMusicStarted = false;
                     _currentMenuTankModel = null;
-                    UpdateMenuTankModel(0);
+
+                    TGCGame.Instance.IsMouseVisible = true;
                 }
                 break;
         }
     }
 
-    private void HandleMainMenuInput(KeyboardState kb, KeyboardState lastKb)
+    private void HandleMenuInput(KeyboardState kb, KeyboardState lastKb)
     {
-        UpdateMainMenuLayout(_graphicsDevice.Viewport);
-        
-        MouseState currentMouse = Mouse.GetState();
-        Point mousePosition = new(currentMouse.X, currentMouse.Y);
-
-        _isPlayButtonHovered = _playButtonRectangle.Contains(mousePosition);
-        _isSettingsButtonHovered = _settingsButtonRectangle.Contains(mousePosition);
-        _isExitButtonHovered = _exitButtonRectangle.Contains(mousePosition);
-        
-        bool leftClick = currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released;
-
-        if (leftClick)
-        {
-            if (_isPlayButtonHovered)
+        // Teclado: flechas arriba/abajo
+        if ((kb.IsKeyDown(Keys.Down) || kb.IsKeyDown(Keys.S)) && (lastKb.IsKeyUp(Keys.Down) && lastKb.IsKeyUp(Keys.S)))
             {
-                CurrentState = GameState.TankSelection;
-                _soundManager.PlaySound("colision_casa");
-                _menuInputLockTime = 0.3f;
-            }
-            else if (_isSettingsButtonHovered)
-            {
-                // Pantalla de configuracion
-            }
-            else if (_isExitButtonHovered)
-            {
-                Environment.Exit(0);
-            }
+            TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
+            _selectedIndex = (_selectedIndex + 1) % _menuOptions.Length;
         }
+            
+        else if ((kb.IsKeyDown(Keys.Up) || kb.IsKeyDown(Keys.W)) && (lastKb.IsKeyUp(Keys.Up) && lastKb.IsKeyUp(Keys.W)))
+        {
+            TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
+            _selectedIndex = (_selectedIndex - 1 + _menuOptions.Length) % _menuOptions.Length;
+        }
+            
+        // Teclado: enter
+        if (kb.IsKeyDown(Keys.Enter) && lastKb.IsKeyUp(Keys.Enter))
+            ApplySelection();
 
+        // Mouse: hover y click
+        MouseState currentMouse = Mouse.GetState();
+        int hoveredIndex = GetOptionAtPosition(currentMouse.X, currentMouse.Y);
+        if (hoveredIndex != -1)
+        {
+            if (hoveredIndex != _lastHoveredIndex)
+                TGCGame.Instance.SoundManager.PlaySound("enemy_cannon_fire");
+
+            _lastHoveredIndex = hoveredIndex;
+
+            _selectedIndex = hoveredIndex; // Feedback de hover
+            if (currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released)
+                ApplySelection(); // Click selecciona esa opcion
+        }
         _lastMouseState = currentMouse;
     }
 
-    private void UpdateMainMenuLayout(Viewport vp)
+    /// <summary>
+    /// Determina si el cursor del mouse esta sobre alguna opcion del menu.
+    /// Devuelve el indice de la opcion bajo el cursor, o -1 si no esta sobre ninguna.
+    /// </summary>
+    private int GetOptionAtPosition(int mouseX, int mouseY)
     {
-        // TO DO: Agregar condicional para que se ejecute solo cuando cambia el viewport
-        int buttonSpacing = (int)(20 * vp.AspectRatio);
-        float buttonScale = vp.AspectRatio / 4f;
+        // 1. Obtener las dimensiones actuales de la ventana/pantalla
+        var vp = _spriteBatch.GraphicsDevice.Viewport;
 
-        int buttonWidth = (int)(_playButtonTexture.Width * buttonScale);
-        int buttonHeight = (int)(_playButtonTexture.Height * buttonScale);
+        // 2. Calcular el punto central exacto de la pantalla
+        Vector2 center = new Vector2(vp.Width / 2f, vp.Height / 2f);
 
-        int totalHeight = buttonHeight * 3 + buttonSpacing * 2;
-        int heightOffset = (int)(vp.AspectRatio * 20);
+        // 3. Calcular la coordenada Y inicial para que el bloque completo de opciones quede centrado verticalmente.
+        //    Se toma la mitad del alto total estimado del texto y se resta del centro.
+        float pulse = (MathF.Sin(_idleTime * IdleAnimationSpeed) + 1f) / 2f;
+        float scalePulse = 1.0f + pulse * 0.03f;
 
-        int startY = (vp.Height - totalHeight) / 2 + heightOffset;
-        int centerX = vp.Width / 2 - buttonWidth / 2;
-
-        _playButtonRectangle = new Rectangle(centerX, startY, buttonWidth, buttonHeight);
-
-        _settingsButtonRectangle = new Rectangle(centerX, startY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight);
-
-        _exitButtonRectangle = new Rectangle(centerX, startY + (buttonHeight + buttonSpacing) * 2, buttonWidth, buttonHeight);
-    }
-
-    private void HandleTankSelectionInput()
-    {
-        UpdateTankSelectionLayout(_graphicsDevice.Viewport);
-
-        MouseState currentMouse = Mouse.GetState();
-        Point mousePosition = new(currentMouse.X, currentMouse.Y);
-
-        _isbackButtonHovered = _backButtonRectangle.Contains(mousePosition);
-        _isLeftArrowButtonHovered = _leftArrowButtonRectangle.Contains(mousePosition);
-
-        _isCheckMarkButtonHovered = _checkMarkButtonRectangle.Contains(mousePosition);
-
-        _isrightArrowButtonHovered = _rightArrowButtonRectangle.Contains(mousePosition);
-
-        bool leftClick = currentMouse.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton == ButtonState.Released;
-
-        if (leftClick)
+        // 5. Recorrer cada opcion del menu para verificar si el mouse esta dentro de su area visual
+        for (int i = 0; i < _menuOptions.Length; i++)
         {
-            if (_isLeftArrowButtonHovered)
-            {
-                _selectedIndex = (_selectedIndex - 1 + 3) % 3;  // "%3" porque solo existen 3 opciones
-                _soundManager.PlaySound("enemy_cannon_fire");
-            }
-            else if (_isrightArrowButtonHovered)
-            {
-                _selectedIndex = (_selectedIndex + 1) % 3;
-                _soundManager.PlaySound("enemy_cannon_fire");
-            }
-            else if (_isCheckMarkButtonHovered)
-            {
-                ApplySelection();
-            }
-            else if (_isbackButtonHovered)
-            {
-                CurrentState = GameState.MainMenu;
-                _menuInputLockTime = 0.3f;
-            }
+            bool isSelected = (i == _selectedIndex);
+            float currentScale = isSelected ? scalePulse : 1f;
+
+            Rectangle rect = CalculateOptionRectangle(i, center, currentScale);
+
+            // Verificar si las coordenadas del mouse estan dentro de este rectangulo
+            if (rect.Contains(mouseX, mouseY))
+                return i; // ¡Encontrado! Devolver el indice de la opcion
         }
 
-        _lastMouseState = currentMouse;
-    }
-
-    private void UpdateTankSelectionLayout(Viewport vp)
-    {
-        float buttonScale = vp.AspectRatio / 5.5f;
-
-        int buttonWidth = (int)(_backButtonTexture.Width * buttonScale);
-        int buttonHeight = (int)(_backButtonTexture.Height * buttonScale);
-
-        int marginX = (int)(vp.Width * 0.01f);
-
-        _backButtonRectangle = new Rectangle(marginX, vp.Height - buttonHeight, buttonWidth, buttonHeight);
-
-        
-        float selectorButtonScale = vp.AspectRatio / 8f;
-
-        int selectorButtonWidth = (int)(_checkMarkButtonTexture.Width * selectorButtonScale);
-        int selectorButtonHeight = (int)(_checkMarkButtonTexture.Height * selectorButtonScale);
-
-        float specsX = vp.Width * 0.1f;
-        float specsY = vp.Height * 0.2f;
-
-        // Aproximadamente debajo del bloque de estadísticas
-        int buttonsY = (int)(specsY + 240);
-        int spacing = 20;
-
-        _leftArrowButtonRectangle = new Rectangle((int)specsX, buttonsY, selectorButtonWidth, selectorButtonHeight);
-        _checkMarkButtonRectangle = new Rectangle(_leftArrowButtonRectangle.Right + spacing, buttonsY, selectorButtonWidth, selectorButtonHeight);
-        _rightArrowButtonRectangle = new Rectangle(_checkMarkButtonRectangle.Right + spacing, buttonsY, selectorButtonWidth, selectorButtonHeight);
-    }
-
-    private Rectangle ScaleRectangle(Rectangle rectangle, float scale)
-    {
-        int newWidth = (int)(rectangle.Width * scale);
-        int newHeight = (int)(rectangle.Height * scale);
-
-        int newX = rectangle.Center.X - newWidth / 2;
-        int newY = rectangle.Center.Y - newHeight / 2;
-
-        return new Rectangle(newX, newY, newWidth, newHeight);
+        // Si el bucle termina sin encontrar coincidencia, el mouse no esta sobre ninguna opcion
+        return -1;
     }
 
     private void ApplySelection()
     {
         switch (_selectedIndex)
         {
-            case 0:
+            case 0: // Iniciar Scout
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Scout;
+                TGCGame.Instance.ResetGame(); 
+                CurrentState = GameState.Playing;
                 break;
-
-            case 1:
+            case 1: // Iniciar Medio
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Medium;
+                TGCGame.Instance.ResetGame(); 
+                CurrentState = GameState.Playing;
                 break;
-
-            case 2:
+            case 2: // Iniciar Pesado
                 TGCGame.SelectedPlayerTank = GameConfig.TankClass.Heavy;
+                TGCGame.Instance.ResetGame(); 
+                CurrentState = GameState.Playing;
+                break;
+            case 3: // Salir
+                Environment.Exit(0);
                 break;
         }
-
-        TGCGame.Instance.ResetGame();
-        CurrentState = GameState.Playing;
     }
 
     public void Draw(string extraInfo = "")
@@ -438,48 +368,37 @@ public class GameStateManager
             _spriteBatch.End();
         }
 
-        if (CurrentState == GameState.MainMenu)
-        {
-            _graphicsDevice.Clear(Color.Black);
-            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
-
-            _spriteBatch.Draw(_menuBackground, new Rectangle(0, 0, vp.Width, vp.Height), Color.White);
-            DrawMainMenuButtons();
-            
-            _spriteBatch.End();
-        }
-
-        if (CurrentState == GameState.TankSelection)
+        if (CurrentState == GameState.Menu)
         {
             _graphicsDevice.Clear(Color.DarkSlateGray);
 
-            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+            // Camera adjustments
+            Matrix view = Matrix.CreateLookAt(new Vector3(7f, 8f, 7f), new Vector3(0, 2, 0), Vector3.Up);
+            Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, vp.AspectRatio, 0.1f, 100f);
 
-            // Fondo del menú
-            _spriteBatch.Draw(_menuBackground, new Rectangle(0, 0, vp.Width, vp.Height), Color.White);
+            // Fix culling and depth issues
+            _graphicsDevice.RasterizerState = RasterizerState.CullNone;
+            _graphicsDevice.DepthStencilState = DepthStencilState.Default;
+            _graphicsDevice.BlendState = BlendState.Opaque;
 
-            // Overlay gris oscuro semitransparente
-            _spriteBatch.Draw(_whitePixel,new Rectangle(0, 0, vp.Width, vp.Height),new Color(30, 30, 30, 180));
+            if (_menuTerrainModel != null)
+            {
+                DrawMenuEnvironmentModel(_menuTerrainModel, _terrainWorld, view, projection);
+                DrawMenuEnvironmentModel(_menuArbolMuerto1Model, _arbolMuerto1World, view, projection);
+                DrawMenuEnvironmentModel(_menuBarrilModel, _barrilWorld, view, projection);
+                DrawMenuEnvironmentModel(_menuCactus1Model, _cactus1World, view, projection);
+                DrawMenuEnvironmentModel(_menuCasitaMedianaModel, _casitaMedianaWorld, view, projection);
+                DrawMenuEnvironmentModel(_menuPozoModel, _pozoWorld, view, projection);
+                DrawMenuEnvironmentModel(_menuCarretaModel, _carretaWorld, view, projection);
+            }
 
-            _spriteBatch.End();
-            
             if (_selectedIndex < 3 && _currentMenuTankModel != null)
             {
+                Matrix tankWorld = Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *
+                                   Matrix.CreateRotationY(_menuTankRotation) *
+                                   Matrix.CreateTranslation(0f, 0.3f, 0f);
 
-                // Camera and scale adjustments
-                Matrix world = Matrix.CreateScale(4f) *
-                               Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *
-                               Matrix.CreateRotationY(_menuTankRotation);
-
-                Matrix view = Matrix.CreateLookAt(new Vector3(10f, 13f, 18f), new Vector3(-8, 1, 0), Vector3.Up);
-                Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, vp.AspectRatio, 0.1f, 100f);
-
-                // Fix culling and depth issues
-                _graphicsDevice.RasterizerState = RasterizerState.CullNone;
-                _graphicsDevice.DepthStencilState = DepthStencilState.Default;
-                _graphicsDevice.BlendState = BlendState.Opaque;
-
-                Draw3DTank(world, view, projection);
+                Draw3DTank(tankWorld, view, projection);
             }
 
             _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
@@ -487,8 +406,7 @@ public class GameStateManager
             if (_selectedIndex < 3)
                 DrawTankSpecs(vp);
             
-            DrawTankSelectionButtons();
-
+            DrawMenu(center);
             _spriteBatch.End();
         }
         else if (CurrentState == GameState.Paused || CurrentState == GameState.GameOver || CurrentState == GameState.Win)
@@ -607,50 +525,320 @@ public class GameStateManager
                 attackDamage = GameConfig.TankClasses.Heavy.AttackDamage;
             }
 
-        // Se genera la cadena de texto una sola vez por cada cambio de tanque
-        _cachedSpecsText = $"CLASE: {className}\n\n" +
-                        $"HP Jugador:   {playerHealth}\n" +
-                        $"Velocidad:    {maxSpeed} m/s\n" +
-                        $"Fuerza Motor: {motorForce}\n" +
-                        $"Vel. Giro:    {turnSpeed}\n" +
-                        $"Danio Ataque: {attackDamage}";
+            _cachedSpecsText = $"CLASE: {className}\n\n" +
+                            $"HP Jugador:   {playerHealth}\n" +
+                            $"Velocidad:    {maxSpeed} m/s\n" +
+                            $"Fuerza Motor: {motorForce}\n" +
+                            $"Vel. Giro:    {turnSpeed}\n" +
+                            $"Danio Ataque: {attackDamage}";
 
-        // Actualizamos el indice de control para recordar que este tanque ya esta procesado
-        _specsCachedIndex = _selectedIndex;
+            _specsCachedIndex = _selectedIndex;
         }
 
-        // Posicionamiento de la caja de especificaciones en pantalla
-        float padX = vp.Width * 0.14f;
-        float padY = vp.Height * 0.2f;
-        Vector2 specsPos = new Vector2(padX, padY);
+        // ==========================================
+        // POSICIONAMIENTO Y ANCHO FIJO
+        // ==========================================
+        // Usamos el mismo padX que el menu para que los bordes izquierdos coincidan exactamente
+        float padX = vp.Width * 0.05f;
+        float padY = vp.Height * 0.15f;
+        float padding = 15f;
 
-        // Dibujamos usando el string en caché (Costo de CPU y asignaciones de memoria = 0)
+        // Medimos el texto actual y calculamos el ancho fijo para 8 numeros
+        Vector2 textSize = _fontConsolas.MeasureString(_cachedSpecsText);
+        //float widthFor8Chars = _fontConsolas.MeasureString("12345678").X;
+        //float fixedWidth = Math.Max(textSize.X, widthFor8Chars);
+        float fixedWidth = 400f;
+
+        // El rectangulo empieza exactamente en padX (alineado con el panel de clases)
+        Rectangle bgRect = new Rectangle(
+            (int)padX,
+            (int)(padY - padding),
+            (int)(fixedWidth + padding * 2),
+            (int)(textSize.Y + padding * 2)
+        );
+
+        // El texto se dibuja desplazado por el padding interno respecto al rectangulo
+        Vector2 specsPos = new Vector2(padX + padding, padY);
+
+        // ==========================================
+        // DIBUJO DEL FONDO Y TEXTO
+        // ==========================================
+        // Fondo negro translucido
+        _spriteBatch.Draw(_whitePixel, bgRect, new Color(0, 0, 0, 180));
+
+        // Borde sutil para que combine con el menu (DrawRectOutline se agrego en el paso anterior)
+        DrawRectOutline(bgRect, new Color(255, 200, 50, 100));
+
+        // Texto con sombra
         _spriteBatch.DrawString(_fontConsolas, _cachedSpecsText, specsPos + Vector2.One, Color.Black);
-        _spriteBatch.DrawString(_fontConsolas, _cachedSpecsText, specsPos, Color.White);
+        _spriteBatch.DrawString(_fontConsolas, _cachedSpecsText, specsPos, Color.Gold);
     }
 
-    private void DrawMainMenuButtons()
+    private void DrawMenu(Vector2 center)
     {
-        Rectangle playRect = _isPlayButtonHovered ? ScaleRectangle(_playButtonRectangle, HoverScale) : _playButtonRectangle;
-        Rectangle settingsRect = _isSettingsButtonHovered ? ScaleRectangle(_settingsButtonRectangle, HoverScale) : _settingsButtonRectangle;
-        Rectangle exitRect = _isExitButtonHovered ? ScaleRectangle(_exitButtonRectangle, HoverScale) : _exitButtonRectangle;
+        var vp = _graphicsDevice.Viewport;
+        Vector2 menuStart = GetMenuStartPosition(vp);
 
-        _spriteBatch.Draw(_playButtonTexture, playRect, _isPlayButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
-        _spriteBatch.Draw(_settingsButtonTexture, settingsRect, _isSettingsButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
-        _spriteBatch.Draw(_exitButtonTexture, exitRect, _isExitButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
+        float pulse = (MathF.Sin(_idleTime * IdleAnimationSpeed) + 1f) / 2f;
+        float arrowOffset = pulse * 4f;
+
+        Color breathingColor = Color.Lerp(
+            new Color(180, 140, 0),
+            new Color(255, 223, 0),
+            pulse
+        );
+
+        float scalePulse = 1.0f + pulse * 0.03f;
+
+        // ==========================================
+        // PANELES DE FONDO (Rectangulos translucidos)
+        // ==========================================
+
+        // --- Panel de Clases (incluye titulo + 3 opciones) ---
+        string title = "ELIGE TU CLASE:";
+        Vector2 titleSize = _fontArial.MeasureString(title);
+
+        float panelPaddingX = 30f;
+        float panelPaddingY = 20f;
+        float titleToOptionsGap = 12f;
+
+        // Altura total del panel de clases
+        float optionsBlockHeight = 3 * (_fontArial.LineSpacing + OptionSpacing);
+        float classPanelHeight = titleSize.Y + titleToOptionsGap + optionsBlockHeight + panelPaddingY * 2;
+
+        // Ancho: el mas grande entre el titulo y la opcion mas ancha
+        float maxOptionWidth = 0f;
+        for (int i = 0; i < 3; i++)
+        {
+            float w = _fontArial.MeasureString(_menuOptions[i]).X;
+            if (w > maxOptionWidth) maxOptionWidth = w;
+        }
+        float classPanelWidth = MathF.Max(titleSize.X, maxOptionWidth) + panelPaddingX * 2 + 50f; // +50 para las flechas
+
+        // Posicion del panel de clases (alineado a la izquierda desde menuStart)
+        float classPanelX = menuStart.X;
+        float classPanelY = menuStart.Y;
+
+        Rectangle classPanelRect = new Rectangle(
+            (int)classPanelX, (int)classPanelY,
+            (int)classPanelWidth, (int)classPanelHeight
+        );
+
+        // Dibujar fondo del panel de clases
+        _spriteBatch.Draw(_whitePixel, classPanelRect, new Color(0, 0, 0, 160));
+        DrawRectOutline(classPanelRect, new Color(255, 223, 0, 80));
+
+        // --- Panel de Salir (separado, abajo) ---
+        string exitOption = _menuOptions[3];
+        Vector2 exitSize = _fontArial.MeasureString(exitOption);
+        float exitPanelWidth = exitSize.X + panelPaddingX * 2 + 50f;
+        float exitPanelHeight = _fontArial.LineSpacing + panelPaddingY * 2;
+
+        float exitPanelX = menuStart.X;
+        float exitPanelY = classPanelY + classPanelHeight + 15f; // 15px de separacion
+
+        Rectangle exitPanelRect = new Rectangle(
+            (int)exitPanelX, (int)exitPanelY,
+            (int)exitPanelWidth, (int)exitPanelHeight
+        );
+
+        // Dibujar fondo del panel de salir
+        _spriteBatch.Draw(_whitePixel, exitPanelRect, new Color(0, 0, 0, 160));
+        DrawRectOutline(exitPanelRect, new Color(255, 223, 0, 80));
+
+        // ==========================================
+        // TiTULO "ELIGE TU CLASE:"
+        // ==========================================
+        Vector2 titlePos = new Vector2(
+            classPanelX + panelPaddingX,
+            classPanelY + panelPaddingY
+        );
+
+        // Sombra del titulo
+        _spriteBatch.DrawString(_fontArial, title, titlePos + new Vector2(2, 2), Color.Black);
+        // Titulo con color dorado fijo
+        _spriteBatch.DrawString(_fontArial, title, titlePos, new Color(255, 200, 50));
+
+        // ==========================================
+        // OPCIONES DE CLASE (SCOUT, MEDIUM, HEAVY)
+        // ==========================================
+        float optionsStartY = titlePos.Y + titleSize.Y + titleToOptionsGap;
+
+        for (int i = 0; i < 3; i++)
+        {
+            string option = _menuOptions[i];
+            bool isSelected = (i == _selectedIndex);
+            float currentScale = isSelected ? scalePulse : 1f;
+
+            Vector2 originalSize = _fontArial.MeasureString(option);
+            Vector2 scaledSize = originalSize * currentScale;
+
+            // Alinear a la izquierda dentro del panel (con padding)
+            Vector2 pos = new Vector2(
+                classPanelX + panelPaddingX,
+                optionsStartY + i * (_fontArial.LineSpacing + OptionSpacing)
+            );
+
+            if (isSelected)
+            {
+                // Sombra
+                _spriteBatch.DrawString(_fontArial, option, pos + new Vector2(2, 2), Color.Black,
+                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
+
+                // Texto principal con color oscilante
+                _spriteBatch.DrawString(_fontArial, option, pos, breathingColor,
+                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
+
+                // Flechas dinamicas
+                var arrowSize = _fontArial.MeasureString("> ");
+
+                _spriteBatch.DrawString(_fontArial, "> ",
+                    new Vector2(pos.X - arrowSize.X + arrowOffset, pos.Y), breathingColor,
+                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
+
+                _spriteBatch.DrawString(_fontArial, " <",
+                    pos + new Vector2(scaledSize.X - arrowOffset, 0), breathingColor,
+                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
+            }
+            else
+            {
+                _spriteBatch.DrawString(_fontArial, option, pos + new Vector2(2, 2), Color.Black);
+                _spriteBatch.DrawString(_fontArial, option, pos, Color.White);
+            }
+        }
+
+        // ==========================================
+        // OPCION SALIR (en su propio panel)
+        // ==========================================
+        {
+            bool isSelected = (3 == _selectedIndex);
+            float currentScale = isSelected ? scalePulse : 1f;
+
+            Vector2 originalSize = _fontArial.MeasureString(exitOption);
+            Vector2 scaledSize = originalSize * currentScale;
+
+            // Alinear a la izquierda dentro del panel
+            Vector2 pos = new Vector2(
+                exitPanelX + panelPaddingX,
+                exitPanelY + (exitPanelHeight - scaledSize.Y) / 2f
+            );
+
+            if (isSelected)
+            {
+                _spriteBatch.DrawString(_fontArial, exitOption, pos + new Vector2(2, 2), Color.Black,
+                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
+
+                // Color rojizo para "Salir" cuando esta seleccionado
+                Color exitColor = Color.Lerp(new Color(180, 40, 40), new Color(255, 80, 80), pulse);
+                _spriteBatch.DrawString(_fontArial, exitOption, pos, exitColor,
+                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
+
+                var arrowSize = _fontArial.MeasureString("> ");
+
+                _spriteBatch.DrawString(_fontArial, "> ",
+                    new Vector2(pos.X - arrowSize.X + arrowOffset, pos.Y), exitColor,
+                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
+
+                _spriteBatch.DrawString(_fontArial, " <",
+                    pos + new Vector2(scaledSize.X - arrowOffset, 0), exitColor,
+                    0f, Vector2.Zero, scalePulse, SpriteEffects.None, 0f);
+            }
+            else
+            {
+                _spriteBatch.DrawString(_fontArial, exitOption, pos + new Vector2(2, 2), Color.Black);
+                _spriteBatch.DrawString(_fontArial, exitOption, pos, new Color(200, 200, 200));
+            }
+        }
     }
 
-    private void DrawTankSelectionButtons()
+    private Rectangle CalculateOptionRectangle(int index, Vector2 center, float scale = 1f)
     {
-        Rectangle backRect = _isbackButtonHovered ? ScaleRectangle(_backButtonRectangle, HoverScale) : _backButtonRectangle;
-        Rectangle leftRect = _isLeftArrowButtonHovered ? ScaleRectangle(_leftArrowButtonRectangle, HoverScale) : _leftArrowButtonRectangle;
-        Rectangle checkRect = _isCheckMarkButtonHovered ? ScaleRectangle(_checkMarkButtonRectangle, HoverScale) : _checkMarkButtonRectangle;
-        Rectangle rightRect = _isrightArrowButtonHovered ? ScaleRectangle(_rightArrowButtonRectangle, HoverScale) : _rightArrowButtonRectangle;
+        var vp = _graphicsDevice.Viewport;
+        Vector2 menuStart = GetMenuStartPosition(vp);
 
-        _spriteBatch.Draw(_backButtonTexture,backRect, _isbackButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
-        _spriteBatch.Draw(_leftArrowButtonTexture, leftRect,_isLeftArrowButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
-        _spriteBatch.Draw(_checkMarkButtonTexture, checkRect,_isCheckMarkButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
-        _spriteBatch.Draw(_rightArrowButtonTexture, rightRect,_isrightArrowButtonHovered ? Color.PaleGoldenrod : Color.AntiqueWhite);
+        // === Mismas constantes que en DrawMenu ===
+        string title = "ELIGE TU CLASE:";
+        Vector2 titleSize = _fontArial.MeasureString(title);
+        float panelPaddingX = 30f;
+        float panelPaddingY = 20f;
+        float titleToOptionsGap = 12f;
+
+        // Calcular dimensiones del panel de clases (igual que en DrawMenu)
+        float optionsBlockHeight = 3 * (_fontArial.LineSpacing + OptionSpacing);
+        float classPanelHeight = titleSize.Y + titleToOptionsGap + optionsBlockHeight + panelPaddingY * 2;
+
+        float maxOptionWidth = 0f;
+        for (int i = 0; i < 3; i++)
+        {
+            float w = _fontArial.MeasureString(_menuOptions[i]).X;
+            if (w > maxOptionWidth) maxOptionWidth = w;
+        }
+        float classPanelWidth = MathF.Max(titleSize.X, maxOptionWidth) + panelPaddingX * 2 + 50f;
+
+        float classPanelX = menuStart.X;
+        float classPanelY = menuStart.Y;
+
+        float optionsStartY = classPanelY + panelPaddingY + titleSize.Y + titleToOptionsGap;
+
+        if (index < 3)
+        {
+            // Opciones de clase
+            string option = _menuOptions[index];
+            Vector2 originalSize = _fontArial.MeasureString(option);
+            Vector2 scaledSize = originalSize * scale;
+
+            Vector2 pos = new Vector2(
+                classPanelX + panelPaddingX,
+                optionsStartY + index * (_fontArial.LineSpacing + OptionSpacing)
+            );
+
+            // Agregar un poco de margen para que sea mas facil clickear
+            int hitMargin = 10;
+            return new Rectangle(
+                (int)pos.X - hitMargin,
+                (int)pos.Y - hitMargin,
+                (int)classPanelWidth - (int)panelPaddingX * 2 + (int)hitMargin * 2, // Ancho del panel menos padding
+                (int)scaledSize.Y + hitMargin * 2
+            );
+        }
+        else
+        {
+            // Opcion Salir
+            string exitOption = _menuOptions[3];
+            Vector2 exitSize = _fontArial.MeasureString(exitOption);
+            float exitPanelWidth = exitSize.X + panelPaddingX * 2 + 50f;
+            float exitPanelHeight = _fontArial.LineSpacing + panelPaddingY * 2;
+
+            float exitPanelX = menuStart.X;
+            float exitPanelY = classPanelY + classPanelHeight + 15f;
+
+            // Retornar el rectangulo completo del panel de salir para facilitar el click
+            return new Rectangle(
+                (int)exitPanelX,
+                (int)exitPanelY,
+                (int)exitPanelWidth,
+                (int)exitPanelHeight
+            );
+        }
+    }
+
+    /// <summary>
+    /// Calcula la posicion donde deben empezar los paneles del menu (debajo de los stats del tanque).
+    /// </summary>
+    private Vector2 GetMenuStartPosition(Viewport vp)
+    {
+        float padX = vp.Width * 0.05f;
+        float padY = vp.Height * 0.15f;
+
+        // Calcular la altura del panel de stats
+        Vector2 textSize = _fontConsolas.MeasureString(_cachedSpecsText);
+        float bgPadding = 15f;
+        float specsPanelHeight = textSize.Y + bgPadding * 2;
+
+        // Los menus empiezan debajo del panel de stats con un pequeño gap
+        float menuStartY = padY + specsPanelHeight + 25f; // 25px de separacion
+
+        return new Vector2(padX, menuStartY);
     }
 
     private void DrawCenteredText(string text, Vector2 center)
@@ -666,7 +854,7 @@ public class GameStateManager
     // Maneja la reproduccion de musica segun el estado del juego
     private void HandleMusic()
     {
-        if (CurrentState == GameState.MainMenu || CurrentState == GameState.TankSelection)
+        if (CurrentState == GameState.Menu)
         {
             // Reproducir musica del menu solo si no esta sonando
             if (!_menuMusicStarted && MediaPlayer.State != MediaState.Playing)
@@ -688,8 +876,58 @@ public class GameStateManager
         }
     }
 
-    //exponerlo para reproducir efectos 3d
-    public SoundManager SoundManager => _soundManager;
+    /// <summary>
+    /// Dibuja un modelo generico del menu usando la configuracion de luz y textura del tanque.
+    /// </summary>
+    private void DrawMenuEnvironmentModel(Model model, Matrix world, Matrix view, Matrix projection)
+    {
+        if (model == null || _menuTankEffect == null) return;
+
+        // Configuracion de luz (Reutilizamos el shader BlinnPhong)
+        _menuTankEffect.Parameters["LightDirection"]?.SetValue(new Microsoft.Xna.Framework.Vector3(0.5f, 1.0f, 0.3f));
+        _menuTankEffect.Parameters["LightColor"]?.SetValue(Vector3.One);
+        _menuTankEffect.Parameters["AmbientColor"]?.SetValue(new Vector3(0.3f, 0.3f, 0.3f)); // Un poco mas de luz ambiental
+        _menuTankEffect.Parameters["Shininess"]?.SetValue(16f);
+        _menuTankEffect.Parameters["EyePosition"]?.SetValue(new Vector3(10f, 13f, 18f));
+
+        // Parametros de deformacion/impacto en 0 (el entorno no se deforma)
+        _menuTankEffect.Parameters["IsDeformable"]?.SetValue(0);
+        _menuTankEffect.Parameters["ImpactRadius"]?.SetValue(0f);
+        _menuTankEffect.Parameters["ImpactDepth"]?.SetValue(0f);
+
+        foreach (var mesh in model.Meshes)
+        {
+            Texture2D activeTexture = _menuTankTexture;
+            if (mesh.Name.Contains("Terreno")) activeTexture = _menuSandTexture;
+
+            foreach (var part in mesh.MeshParts)
+            {
+                part.Effect = _menuTankEffect;
+                _menuTankEffect.Parameters["World"].SetValue(world);
+                _menuTankEffect.Parameters["View"].SetValue(view);
+                _menuTankEffect.Parameters["Projection"].SetValue(projection);
+                _menuTankEffect.Parameters["ModelTexture"].SetValue(activeTexture);
+                _menuTankEffect.Parameters["DiffuseColor"].SetValue(Vector3.One);
+            }
+            mesh.Draw();
+        }
+    }
+
+    private void DrawRectOutline(Rectangle rect, Color color)
+    {
+        // Grosor fijo de 2 pixeles
+        int thickness = 2;
+
+        // Top
+        _spriteBatch.Draw(_whitePixel, new Rectangle(rect.X, rect.Y, rect.Width, thickness), color);
+        // Bottom
+        _spriteBatch.Draw(_whitePixel, new Rectangle(rect.X, rect.Y + rect.Height - thickness, rect.Width, thickness), color);
+        // Left
+        _spriteBatch.Draw(_whitePixel, new Rectangle(rect.X, rect.Y, thickness, rect.Height), color);
+        // Right
+        _spriteBatch.Draw(_whitePixel, new Rectangle(rect.X + rect.Width - thickness, rect.Y, thickness, rect.Height), color);
+    }
+
 
     public void Dispose()
     {
