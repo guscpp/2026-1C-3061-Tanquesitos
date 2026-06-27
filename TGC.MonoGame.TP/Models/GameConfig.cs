@@ -173,6 +173,10 @@ public static class GameConfig
         public const float LookAtHeight = 2.5f;
         public const float NearPlaneDist = 0.5f;
         public const float FarPlaneDist = 250;
+
+        public const float ShakeIntensity = 1.025f;     // unidades de mundo
+        public const float ShakeDuration = 0.100f;      // segundos
+        public const float TerrainClampOffset = 2.5f;   // metros, altura minima sobre el terreno
     }
 
     // ASSETS (CASAS, DECORACIONES)

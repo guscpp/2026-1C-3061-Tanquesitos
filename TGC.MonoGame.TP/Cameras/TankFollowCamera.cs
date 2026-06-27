@@ -1,10 +1,13 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System;
+using TGC.MonoGame.TP.Models.Terrains;
 
 namespace TGC.MonoGame.TP.Cameras;
 
 /// <summary>
 ///     Camara en tercera persona que sigue al tanque desde atras y arriba.
+///     Cuando el tanque recibe un disparo tiene camera-shake
 /// </summary>
 public class TankFollowCamera
 {
@@ -23,6 +26,13 @@ public class TankFollowCamera
     public Vector3 ListenerPosition => _currentPosition;
     public Vector3 ListenerForward => Vector3.Normalize(_lookAt - _currentPosition);
 
+    //para efectos
+    public Terrain Terrain { get; set; } //referencia al terreno para clamping de altura
+    private float _shakeIntensity = 0f;
+    private float _shakeDuration = 0f;
+    private float _shakeTimer = 0f;
+    private readonly Random _random = new Random();
+
     private Vector3 _currentPosition;
     private Vector3 _targetPosition;
     private Vector3 _lookAt;
@@ -30,6 +40,17 @@ public class TankFollowCamera
 
     public Matrix View { get; private set; }
     public Matrix Projection { get; private set; }
+
+    /// <summary>
+    ///  Inicia el efecto camera-shake
+    /// </summary>
+    public void Shake(float intensity, float duration)
+    {
+        _shakeIntensity = intensity;
+        _shakeDuration = duration;
+        _shakeTimer = duration;
+    }
+
 
     public TankFollowCamera(float aspectRatio, Vector3 initialTankPos)
     {
@@ -70,8 +91,31 @@ public class TankFollowCamera
         }
         _lastScrollValue = mouseState.ScrollWheelValue;
 
-        //suavizare movimiento
+        //suavizar el movimiento
         _currentPosition = Vector3.Lerp(_currentPosition, _targetPosition, dt * Smoothness);
+
+        // === Camera shake ===
+        if (_shakeTimer > 0)
+        {
+            _shakeTimer -= dt;
+
+            float currentIntensity = _shakeIntensity * (_shakeTimer / _shakeDuration);
+            float shakeX = (float)(_random.NextDouble() * 2.0 - 1.0) * currentIntensity;
+            float shakeY = (float)(_random.NextDouble() * 2.0 - 1.0) * currentIntensity;
+            float shakeZ = (float)(_random.NextDouble() * 2.0 - 1.0) * currentIntensity;
+
+            _currentPosition += new Vector3(shakeX, shakeY, shakeZ);
+        }
+
+        // === Camera clamping (mantenerla siempre sobre el terreno) ===
+        if (Terrain != null)
+        {
+            float terrainHeight = Terrain.GetHeight(_currentPosition.X, _currentPosition.Z);
+            float minHeight = terrainHeight + GameConfig.Camera.TerrainClampOffset;
+
+            if (_currentPosition.Y < minHeight) _currentPosition.Y = minHeight;
+        }
+
 
         UpdateView();
     }

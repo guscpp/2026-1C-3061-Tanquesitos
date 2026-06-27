@@ -134,7 +134,8 @@ public abstract class TankBase
             inertia, new CollidableDescription(shapeIdx, 0.1f), new BodyActivityDescription(0.01f)));
     }
 
-    public void HandleHealth(float damage, Vector3 impactPointWorld)
+    // Metodo virtual para agregarle el llamado al camera shake en el tanque del player
+    public virtual void HandleHealth(float damage, Vector3 impactPointWorld)
     {
         HealthPoints -= damage;
         if (HealthPoints <= 0) { 

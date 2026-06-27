@@ -209,6 +209,7 @@ public class TGCGame : Game
 
         //CAMARA
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
+        _camera.Terrain = _terrain;
 
         //GIZMOS
         _gizmos.LoadContent(GraphicsDevice, Content);

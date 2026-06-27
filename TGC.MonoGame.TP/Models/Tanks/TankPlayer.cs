@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
+using System.Runtime.Serialization.DataContracts;
 
 namespace TGC.MonoGame.TP.Models.Tanks;
 
@@ -51,6 +52,14 @@ public class TankPlayer : TankBase
         ForwardDrag = GameConfig.Tank.ForwardDrag;
         LateralDrag = GameConfig.Tank.LateralDrag;
         CurrentFuel = GameConfig.Tank.MaxFuel;
+    }
+
+    public override void HandleHealth(float damage, Vector3 impactPointWorld)
+    {
+        if (damage > 0 && !IsDead)
+            TGCGame.Instance.Camera.Shake(GameConfig.Camera.ShakeIntensity, GameConfig.Camera.ShakeDuration);
+
+        base.HandleHealth(damage, impactPointWorld);
     }
 
     public void AddFuel(float amount) => CurrentFuel = MathHelper.Clamp(CurrentFuel + amount, 0f, GameConfig.Tank.MaxFuel);
