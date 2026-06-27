@@ -204,7 +204,7 @@ public class Hud
 
         // dibuja jugador en el espacio de minimapa
         Vector2 playerMarker = PositionWorldToMinimap(TankPosition, minimapRect);
-        float tankRotation = TankRotation; // ángulo Y del tanque
+        float tankRotation = - TankRotation; // ángulo Y del tanque
 
         _spriteBatch.Draw(_playerTexture, playerMarker, null, Color.Lime, tankRotation, 
             new Vector2(_playerTexture.Width / 2f, _playerTexture.Height / 2f), 0.5f, SpriteEffects.None, 0f);
