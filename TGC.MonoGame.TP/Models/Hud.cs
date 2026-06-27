@@ -37,6 +37,8 @@ public class Hud
     private float _fpsAccumulator;
     private int _fpsFrameCount;
 
+    private List<DamageNumber> _damageNumbers = new List<DamageNumber>();
+
     // --- VARIABLES DE CACHÉ REACTIVA (Evitan miles de allocations de strings por segundo) ---
 
     private string _cachedFuelText = "FUEL: 100 / 100";
@@ -86,20 +88,36 @@ public class Hud
         _fuelTexture = content.Load<Texture2D>("Textures/minimap_fuel");
     }
 
+    public void AddDamageNumber(Vector3 worldPos, float value)
+    {
+        var viewport = _spriteBatch.GraphicsDevice.Viewport;
+        var camera = TGCGame.Instance.Camera;
+        _damageNumbers.Add(new DamageNumber(worldPos, value, viewport, camera.View, camera.Projection));
+    }
+
     /// <summary>
     ///     Actualiza el contador de FPS. Llamar desde TGCGame.Update()
     /// </summary>
     public void Update(GameTime gameTime)
     {
+        float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
         _fpsAccumulator += (float)gameTime.ElapsedGameTime.TotalSeconds;
         _fpsFrameCount++;
 
-        // Recalcular el promedio cada segundo
+        // Recalcular el promedio defps cada segundo
         if (_fpsAccumulator >= 1f)
         {
             _fps = _fpsFrameCount / _fpsAccumulator;
             _fpsAccumulator = 0f;
             _fpsFrameCount = 0;
+        }
+
+        // === damage numbers ===
+        for (int i = _damageNumbers.Count - 1; i >= 0; i--)
+        {
+            _damageNumbers[i].Update(dt);
+            if (_damageNumbers[i].IsDead) _damageNumbers.RemoveAt(i);
         }
 
         // calcular la cantidad de kills
@@ -248,6 +266,9 @@ public class Hud
         float barPercent = CannonMaxCooldown > 0f ? (1f - (remaining / CannonMaxCooldown)) : 1f;
         int activeWidth = (int)(barPercent * ProgressBarWidth);
         DrawBar(cooldownBarPos, cooldownColor, barPercent);
+
+        // === damage numbers ===
+        foreach (var dmgNum in _damageNumbers) dmgNum.Draw(_spriteBatch, _font);
 
         _spriteBatch.End();
     }

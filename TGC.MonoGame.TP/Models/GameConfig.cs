@@ -37,7 +37,7 @@ public static class GameConfig
 
             // HPs segun sea Scout player o Scout NPC
             public const float PlayerHealth = 15f;
-            public const float EnemyHealth = 2f;
+            public const float EnemyHealth = 4f;
         }
 
         public static class Medium
@@ -50,7 +50,7 @@ public static class GameConfig
 
             // HPs segun sea Medium player o Medium NPC
             public const float PlayerHealth = 20f;
-            public const float EnemyHealth = 3f;
+            public const float EnemyHealth = 6f;
         }
 
         public static class Heavy
@@ -63,7 +63,7 @@ public static class GameConfig
 
             // HPs segun sea Heavy player o Heavy NPC
             public const float PlayerHealth = 30f;
-            public const float EnemyHealth = 4f;
+            public const float EnemyHealth = 8f;
         }
     }
 

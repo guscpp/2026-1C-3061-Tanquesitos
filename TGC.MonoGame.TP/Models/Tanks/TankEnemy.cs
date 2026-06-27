@@ -37,6 +37,15 @@ public abstract class TankEnemy : TankBase
         ShootCooldown = cooldown;
     }
 
+    public override void HandleHealth(float damage, Vector3 impactPointWorld)
+    {
+        base.HandleHealth(damage, impactPointWorld);
+
+        float remainingHP = Math.Max(0, HealthPoints);
+
+        if (TGCGame.Instance.Hud != null) TGCGame.Instance.Hud.AddDamageNumber(impactPointWorld, remainingHP);
+    }
+
     // Mantengo la firma original para no tocar TGCGame.cs
     public void UpdateEnemy(GameTime gameTime, Simulation simulation, Vector3 targetPos)
     {

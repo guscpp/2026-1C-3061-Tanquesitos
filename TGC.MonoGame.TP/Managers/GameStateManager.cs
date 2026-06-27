@@ -221,7 +221,6 @@ public class GameStateManager
                     CurrentState = GameState.Menu;
                     _selectedIndex = 0;
                     _menuMusicStarted = false;
-                    _currentMenuTankModel = null;
 
                     TGCGame.Instance.IsMouseVisible = true;
                 }

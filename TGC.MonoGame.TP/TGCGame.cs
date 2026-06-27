@@ -48,6 +48,7 @@ public class TGCGame : Game
     private MouseState _previousMouseState;
     //hud
     private Hud _hud;
+    public Hud Hud => _hud;
     //gamestate
     private GameStateManager _gameStateManager;
     //-----------TANQUE
