@@ -89,7 +89,7 @@ public static class GameConfig
         public const float AngularVelocityClampZ = 0.3f;    // radianes/segundo
         public const float AngularDampingXZ = 0.88f;        // adimensional
         public const float AngularDampingY = 0.98f;         // adimensional
-        public const float VisualOffsetY = -0.2f;           // metros
+        public const float VisualOffsetY = -0.35f;          // metros
 
         public const float CannonMuzzleOffsetY = 1.5f;  // metros
         public const float CannonMuzzleOffsetZ = 2.0f;  // metros
@@ -101,7 +101,7 @@ public static class GameConfig
         public const float ImpactRadius = 0.65f; // metros, radio de deformacion por impacto
         public const float ImpactDepth = 0.3f;   // metros
 
-        public static string TankModelPath = "tanques/tank v6";
+        public static string TankModelPath = "tanques/tank v7";
         public static string TankTracksTexture = "tracks_3_252525";
 
         public static class Stabilizer
@@ -165,18 +165,23 @@ public static class GameConfig
     public static class Camera
     {
         public const float DefaultDistance = 10f;
-        public const float HeightOffset = 6f;
+        public const float MinHeightOffset = 1.5f;
+        public const float MaxHeightOffset = 8.0f;
+        public const float HeightOffset = 5.0f;
         public const float MinDistance = 4f;
         public const float MaxDistance = 25f;
         public const float ZoomSensitivity = 1.5f;
         public const float Smoothness = 10f;
         public const float LookAtHeight = 2.5f;
+        public const float FocusDistance = 3.0f;
+        public const float ShoulderOffset = 2.2f;
+
         public const float NearPlaneDist = 0.5f;
         public const float FarPlaneDist = 250;
 
         public const float ShakeIntensity = 1.025f;     // unidades de mundo
         public const float ShakeDuration = 0.100f;      // segundos
-        public const float TerrainClampOffset = 2.5f;   // metros, altura minima sobre el terreno
+        public const float TerrainClampOffset = 1.0f;   // metros, altura minima sobre el terreno
     }
 
     // ASSETS (CASAS, DECORACIONES)

@@ -395,7 +395,7 @@ public class GameStateManager
             {
                 Matrix tankWorld = Matrix.CreateRotationX(MathHelper.ToRadians(-90f)) *
                                    Matrix.CreateRotationY(_menuTankRotation) *
-                                   Matrix.CreateTranslation(0f, 0.3f, 0f);
+                                   Matrix.CreateTranslation(0f, 0.45f, 0f);
 
                 Draw3DTank(tankWorld, view, projection);
             }
