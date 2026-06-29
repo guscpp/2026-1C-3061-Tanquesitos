@@ -45,6 +45,7 @@ public class DinamicsManager
     public List<Vector3> _houses = new();
     private Terrain _terrain;
     private readonly Random _random = new();
+    public Dictionary<BodyHandle, Dinamic> DynamicDecorationsByHandle { get; private set; } = new();
 
     public DinamicsManager(Terrain terrain, List<Vector3> staticDecorations, List<Vector3> houses)
     {
@@ -69,6 +70,7 @@ public class DinamicsManager
         foreach (var asset in _dynamicDecorations)
         {
             asset.LoadContent(content, simulation, effect);
+            DynamicDecorationsByHandle[asset.bodyHandle] = asset;
         }
     }
 
@@ -77,6 +79,7 @@ public class DinamicsManager
         foreach (var asset in _dynamicDecorations)
             if(asset is Dinamic dinamicAsset) simulation.Bodies.Remove(dinamicAsset.bodyHandle);
         _dynamicDecorations.Clear();
+        DynamicDecorationsByHandle.Clear();
         Initialize();
         LoadContent(TGCGame.Instance.Content, simulation);
     }
@@ -98,6 +101,8 @@ public class DinamicsManager
                 {
                     // Lo borro de bepu
                     simulation.Bodies.Remove(dinamicAsset.bodyHandle);
+
+                    DynamicDecorationsByHandle.Remove(dinamicAsset.bodyHandle);
 
                     //Lo borro de la lista
                     _dynamicDecorations.RemoveAt(i);

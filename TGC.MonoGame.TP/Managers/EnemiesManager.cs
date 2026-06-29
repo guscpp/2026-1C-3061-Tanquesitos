@@ -33,6 +33,7 @@ public class EnemiesManager
     private Simulation _simulation;
 
     private GraphicsDevice _graphicsDevice;
+    public Dictionary<BodyHandle, TankEnemy> EnemiesByHandle { get; private set; } = new();
 
     public EnemiesManager(Terrain terrain, Simulation simulation, GraphicsDevice graphicsDevice)
     {
@@ -66,6 +67,7 @@ public class EnemiesManager
             enemy.Load(tankModel, tankTexture, tracksTexture, effect, _simulation);
             _enemies.Add(enemy);
             _enemiesHandles.Add(enemy.TankHandler);
+            EnemiesByHandle[enemy.TankHandler] = enemy;
         }
     }
 
@@ -87,6 +89,8 @@ public class EnemiesManager
             {
                 //Eliminar el cuerpo fisico
                 _simulation.Bodies.Remove(tankEnemy.TankHandler);
+
+                EnemiesByHandle.Remove(tankEnemy.TankHandler);
 
                 //Remover el handle de la lista auxiliar para evitar leaks
                 _enemiesHandles.Remove(tankEnemy.TankHandler);
@@ -127,6 +131,7 @@ public class EnemiesManager
 
         _enemies.Clear();
         _enemiesHandles.Clear();
+        EnemiesByHandle.Clear();
 
         // recargar a los enemigos
         LoadContent(TGCGame.Instance.Content);

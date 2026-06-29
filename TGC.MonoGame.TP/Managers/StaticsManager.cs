@@ -59,6 +59,7 @@ public class StaticsManager
     private Dictionary<string, List<Matrix>> _instancedMatrices = new();
     // Diccionario que guarda los grupos de instanciado ya inicializados
     private Dictionary<string, InstancedDecorationGroup> _decorationGroups = new();
+    public Dictionary<StaticHandle, Static> StaticsByHandle { get; private set; } = new();
 
     public StaticsManager(Terrain terrain, List<Vector3> houses, GraphicsDevice graphicsDevice)
     {
@@ -84,6 +85,7 @@ public class StaticsManager
         foreach (var asset in _decorationModels)
         {
             asset.LoadContent(content, simulation, effect);
+            StaticsByHandle[asset.StaticHandle] = asset;
             
             string modelPath = asset.ModelPath;
             if (!_instancedMatrices.ContainsKey(modelPath))

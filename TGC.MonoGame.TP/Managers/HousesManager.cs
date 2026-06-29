@@ -42,6 +42,7 @@ public class HousesManager
     private Dictionary<string, List<Matrix>> _instancedMatrices = new();
     // Diccionario que guarda los grupos de instanciado ya inicializados
     private Dictionary<string, InstancedDecorationGroup> _houseGroups = new();
+    public Dictionary<StaticHandle, House> HousesByHandle { get; private set; } = new();
 
     public HousesManager(Terrain terrain, GraphicsDevice graphicsDevice)
     {
@@ -66,6 +67,7 @@ public class HousesManager
         foreach (var house in _houses)
         {
             house.LoadContent(content, simulation, effect);
+            HousesByHandle[house.StaticHandle] = house;
             string modelPath = house.ModelPath; // Asegúrate de tener esta propiedad
             if (!_instancedMatrices.ContainsKey(modelPath))
                 _instancedMatrices[modelPath] = new List<Matrix>();
