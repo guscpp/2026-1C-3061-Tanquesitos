@@ -15,16 +15,21 @@ public class CannonballManager
     private Effect _cannonballEffect;
     private readonly List<Cannonball> _cannonballs;
 
-    private readonly float _shootCooldown;
+    private float _shootCooldown;
+    public float ShootCooldown
+    {
+        get => _shootCooldown;
+        set => _shootCooldown = value;
+    }
     private float _currentCooldown;
     public float CurrentCooldown => _currentCooldown;
     public bool CanFire => _currentCooldown <= 0f;
     private Dictionary<BodyHandle, Cannonball> _cannonballsByHandle = new();
 
-    public CannonballManager(Simulation simulation, float cooldown)
+    public CannonballManager(Simulation simulation)
     {
         _simulation = simulation;
-        _shootCooldown = cooldown;
+        _shootCooldown = 0.001f; //valor que se sobreescribe segun sea s/m/h al arrancar la partida
         _currentCooldown = 0f;
         _cannonballs = new List<Cannonball>();
     }
@@ -43,7 +48,7 @@ public class CannonballManager
         }
     }
 
-    public void Fire(Vector3 spawnPosition, Vector3 direction, float damage, SoundManager soundManager, Vector3 listenerPos, Vector3 listenerForward, bool isPlayer = false)
+    public void Fire(Vector3 spawnPosition, Vector3 direction, float damage, SoundManager soundManager, Vector3 listenerPos, Vector3 listenerForward, bool isPlayer = false, float pitch =0f)
     {
         if (isPlayer && !CanFire) return;
 
@@ -53,7 +58,7 @@ public class CannonballManager
 
         if (isPlayer) _currentCooldown = _shootCooldown;
 
-        soundManager.PlaySound3D("cannon_fire", spawnPosition, listenerPos, listenerForward);
+        soundManager.PlaySound3D("cannon_fire", spawnPosition, listenerPos, listenerForward, pitch);
     }
 
     public Vector3 GetCannonballPosition(BodyHandle handle)

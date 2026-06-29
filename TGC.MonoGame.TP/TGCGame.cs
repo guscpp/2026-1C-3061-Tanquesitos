@@ -131,7 +131,7 @@ public class TGCGame : Game
         var tracksTexture = Content.Load<Texture2D>(ContentFolderTextures + GameConfig.Tank.TankTracksTexture);
 
         //CannonballManager
-        _cannonballManager = new CannonballManager(_simulation, GameConfig.Tank.Cooldown);
+        _cannonballManager = new CannonballManager(_simulation);
         _cannonballManager.LoadContent(Content, ContentFolder3D + "cannonball/cannonball", ContentFolderEffects + "ShadowMap");
 
         //AUXILIARES
@@ -279,7 +279,14 @@ public class TGCGame : Game
                 (direction * GameConfig.Tank.CannonSpawnOffsetForward) +
                 (Vector3.Up * GameConfig.Tank.CannonSpawnOffsetUp);
 
-            _cannonballManager.Fire(spawnPosition, direction, _tank.AttackDamage, _gameStateManager.SoundManager, _camera.ListenerPosition, _camera.ListenerForward, true);
+            float playerPitch = SelectedPlayerTank switch
+            {
+                GameConfig.TankClass.Scout => GameConfig.TankClasses.Scout.CannonPitch,
+                GameConfig.TankClass.Heavy => GameConfig.TankClasses.Heavy.CannonPitch,
+                                         _ => GameConfig.TankClasses.Medium.CannonPitch
+            };
+
+            _cannonballManager.Fire(spawnPosition, direction, _tank.AttackDamage, _gameStateManager.SoundManager, _camera.ListenerPosition, _camera.ListenerForward, true, playerPitch);
         }
         _previousMouseState = currentMouseState;
 
@@ -293,7 +300,7 @@ public class TGCGame : Game
 
         _hud.TankPosition = _tank.Position;
         _hud.CannonCurrentCooldown = _cannonballManager.CurrentCooldown;
-        _hud.CannonMaxCooldown = GameConfig.Tank.Cooldown;
+        _hud.CannonMaxCooldown = _cannonballManager.ShootCooldown;
         _hud.TankPosition = _tank.Position;
         _hud.TankRotation = _tank.RotationY;
         _hud.EnemyPositions = _enemiesManager.GetEnemiesPositions();
@@ -310,6 +317,13 @@ public class TGCGame : Game
     {
         _cannonballManager.Clear();
         EnemiesKilled = 0;
+
+        float playerCooldown = SelectedPlayerTank switch
+        { GameConfig.TankClass.Scout => GameConfig.TankClasses.Scout.Cooldown,
+            GameConfig.TankClass.Heavy => GameConfig.TankClasses.Heavy.Cooldown,
+            _ => GameConfig.TankClasses.Medium.Cooldown,
+        };
+        _cannonballManager.ShootCooldown = playerCooldown;
 
         var tankModel = Content.Load<Model>(ContentFolder3D + GameConfig.Tank.TankModelPath);
         var tankTexture = Content.Load<Texture2D>(ContentFolderTextures + "paleta_256x512");

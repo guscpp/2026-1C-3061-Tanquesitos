@@ -159,6 +159,13 @@ public abstract class TankEnemy : TankBase
         var spawnPos = currentPos + dir * GameConfig.Enemies.CannonSpawnOffsetForward +
             Vector3.Up * GameConfig.Enemies.CannonSpawnOffsetUp;
 
+        float enemyPitch = TankClass switch
+        {
+            GameConfig.TankClass.Scout => GameConfig.TankClasses.Scout.CannonPitch,
+            GameConfig.TankClass.Heavy => GameConfig.TankClasses.Heavy.CannonPitch,
+            _ => GameConfig.TankClasses.Medium.CannonPitch
+        };
+
         TGCGame.Instance.CannonballManager.Fire(
             spawnPos,
             dir,
@@ -166,7 +173,8 @@ public abstract class TankEnemy : TankBase
             TGCGame.Instance.SoundManager,
             TGCGame.Instance.Camera.ListenerPosition,
             TGCGame.Instance.Camera.ListenerForward,
-            false);
+            false,
+            enemyPitch);
     }
 
     // Posicion inicial aleatoria para spawnear(sin cambios)

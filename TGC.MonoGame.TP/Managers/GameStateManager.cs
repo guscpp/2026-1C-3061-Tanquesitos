@@ -494,42 +494,46 @@ public class GameStateManager
         if (_selectedIndex != _specsCachedIndex)
         {
             string className;
-            float playerHealth, maxSpeed, motorForce, turnSpeed, attackDamage;
+            float playerHealth, maxSpeed, motorForce, turnSpeed, attackDamage, cooldown;
 
             if (_selectedIndex == 0)
             {
                 className = "SCOUT";
                 playerHealth = GameConfig.TankClasses.Scout.PlayerHealth;
                 maxSpeed = GameConfig.TankClasses.Scout.MaxSpeed;
-                motorForce = GameConfig.TankClasses.Scout.MotorForce;
+                motorForce = GameConfig.TankClasses.Scout.MotorForce / 1000;
                 turnSpeed = GameConfig.TankClasses.Scout.TurnSpeed;
                 attackDamage = GameConfig.TankClasses.Scout.AttackDamage;
+                cooldown = GameConfig.TankClasses.Scout.Cooldown;
             }
             else if (_selectedIndex == 1)
             {
                 className = "MEDIUM";
                 playerHealth = GameConfig.TankClasses.Medium.PlayerHealth;
                 maxSpeed = GameConfig.TankClasses.Medium.MaxSpeed;
-                motorForce = GameConfig.TankClasses.Medium.MotorForce;
+                motorForce = GameConfig.TankClasses.Medium.MotorForce / 1000;
                 turnSpeed = GameConfig.TankClasses.Medium.TurnSpeed;
                 attackDamage = GameConfig.TankClasses.Medium.AttackDamage;
+                cooldown = GameConfig.TankClasses.Medium.Cooldown;
             }
             else
             {
                 className = "HEAVY";
                 playerHealth = GameConfig.TankClasses.Heavy.PlayerHealth;
                 maxSpeed = GameConfig.TankClasses.Heavy.MaxSpeed;
-                motorForce = GameConfig.TankClasses.Heavy.MotorForce;
+                motorForce = GameConfig.TankClasses.Heavy.MotorForce / 1000;
                 turnSpeed = GameConfig.TankClasses.Heavy.TurnSpeed;
                 attackDamage = GameConfig.TankClasses.Heavy.AttackDamage;
+                cooldown = GameConfig.TankClasses.Heavy.Cooldown;
             }
 
             _cachedSpecsText = $"CLASE: {className}\n\n" +
                             $"HP Jugador:   {playerHealth}\n" +
-                            $"Velocidad:    {maxSpeed} m/s\n" +
+                            $"Velocidad:    {maxSpeed}\n" +
                             $"Fuerza Motor: {motorForce}\n" +
                             $"Vel. Giro:    {turnSpeed}\n" +
-                            $"Danio Ataque: {attackDamage}";
+                            $"Danio Ataque: {attackDamage:F1}\n" +
+                            $"Cooldown:     {cooldown:F1}";
 
             _specsCachedIndex = _selectedIndex;
         }

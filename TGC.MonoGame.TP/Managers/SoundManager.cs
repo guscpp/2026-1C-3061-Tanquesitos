@@ -77,7 +77,7 @@ namespace TGC.MonoGame.TP.Managers
         }
 
         //Reproducir sonido 3D
-        public void PlaySound3D(string soundName, Vector3 emitterPosition, Vector3 listenerPosition, Vector3 listenerForward)
+        public void PlaySound3D(string soundName, Vector3 emitterPosition, Vector3 listenerPosition, Vector3 listenerForward, float pitch = 0f)
         {
             if (!_soundEffects.TryGetValue(soundName, out SoundEffect soundEffect))
             {
@@ -89,6 +89,8 @@ namespace TGC.MonoGame.TP.Managers
 
             // Aplicar volumen
             instance.Volume = GetVolumeForSfx(soundName);
+
+            instance.Pitch = MathHelper.Clamp(pitch, -1f, 1f); //contenido dentro de +- 1 octava
 
             // Configurar el emisor (la fuente del sonido, ej: el tanque o la bala)
             AudioEmitter emitter = new AudioEmitter

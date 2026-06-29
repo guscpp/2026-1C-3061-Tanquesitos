@@ -30,10 +30,12 @@ public static class GameConfig
     {
         public static class Scout
         {
-            public const float MaxSpeed = 120f;      // m/s
-            public const float MotorForce = 160000f; //
-            public const float TurnSpeed = 1.5f;     //
-            public const float AttackDamage = 0.8f;  //
+            public const float MaxSpeed = 120f;       // m/s
+            public const float MotorForce = 160000f;  //
+            public const float TurnSpeed = 1.5f;      //
+            public const float AttackDamage = 0.8f;   //
+            public const float CannonPitch = 1.00f;   // adimensional, modifica el tono hacia agudo
+            public const float Cooldown = 0.5f;       // segundo
 
             // HPs segun sea Scout player o Scout NPC
             public const float PlayerHealth = 15f;
@@ -47,6 +49,8 @@ public static class GameConfig
             public const float MotorForce = 150000f; //
             public const float TurnSpeed = 1.2f;     //
             public const float AttackDamage = 1f;
+            public const float CannonPitch = 0.0f;   // adimensional, no modifica el tono
+            public const float Cooldown = 0.75f;      // segundo
 
             // HPs segun sea Medium player o Medium NPC
             public const float PlayerHealth = 20f;
@@ -60,6 +64,8 @@ public static class GameConfig
             public const float MotorForce = 130000f;  //
             public const float TurnSpeed = 0.9f;      //
             public const float AttackDamage = 2.0f;
+            public const float CannonPitch = -1.00f;  // adimensional, modifica el tono hacia grave
+            public const float Cooldown = 1.5f;       // segundo
 
             // HPs segun sea Heavy player o Heavy NPC
             public const float PlayerHealth = 30f;
@@ -84,7 +90,6 @@ public static class GameConfig
         public const float SpawnZMargin = 7f;   // metros, el tanque spawnea esta altura por encima del terreno
         public const float MaxFuel = 100f;              // litros
         public const float FuelConsumptionRate = 1f;    // litros
-        public const float Cooldown = 0.5f;             // segundos
         public const float AngularVelocityClampX = 0.5f;    // radianes/segundo
         public const float AngularVelocityClampZ = 0.3f;    // radianes/segundo
         public const float AngularDampingXZ = 0.88f;        // adimensional
