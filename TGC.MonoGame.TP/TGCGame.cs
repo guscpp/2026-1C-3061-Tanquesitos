@@ -162,11 +162,11 @@ public class TGCGame : Game
 
         //ASSETS DECORATIVOS
         //casas
-        _housesManager = new HousesManager(_terrain);
+        _housesManager = new HousesManager(_terrain, GraphicsDevice);
         _housesManager.Initialize();
         _housesManager.LoadContent(Content, _simulation);
         //estaticos
-        _staticsManager = new StaticsManager(_terrain, _housesManager.getHouses());
+        _staticsManager = new StaticsManager(_terrain, _housesManager.getHouses(), GraphicsDevice);
         _staticsManager.Initialize();
         _staticsManager.LoadContent(Content, _simulation);
         //dinamicos

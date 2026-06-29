@@ -40,7 +40,7 @@ public class DinamicsManager
         0.12f,  // planta_rodadora         
     };
     private const int NumberOfAssets = 200; 
-    public List<Decoration> _dynamicDecorations = new();
+    public List<Dinamic> _dynamicDecorations = new();
     private List<Vector3> _staticDecorations;
     public List<Vector3> _houses = new();
     private Terrain _terrain;
@@ -137,7 +137,7 @@ public class DinamicsManager
         return new Vector3(x, _terrain.GetHeight(x, z)+2, z);
     }
 
-    public Decoration GetDecoration(Vector3 position)
+    public Dinamic GetDecoration(Vector3 position)
     {
         Vector3 dynamicPos = position + Vector3.Up * GameConfig.Assets.DynamicSpawnOffset;
         Vector3 rocaPos = position + Vector3.Up * 1.5f;
@@ -149,7 +149,7 @@ public class DinamicsManager
             var p when p.Contains("planta")     => new Plant(dynamicPos, path),
             var p when p.Contains("caja")       => new WoodenBox(dynamicPos, path),
             var p when p.Contains("escaleras")  => new Stairs(dynamicPos, path),
-            _                                   => new Decoration(position, path)
+            _                                   => new Dinamic(position, path)
         };
     }
 
