@@ -59,6 +59,7 @@ public class TGCGame : Game
     private Terrain _terrain;
     private Wall _wall;
     public StaticHandle TerrainHandle => _terrainStaticHandle;
+    public Skybox _skybox;
     //-----------Manager
     public HousesManager _housesManager;
     public StaticsManager _staticsManager;
@@ -183,6 +184,10 @@ public class TGCGame : Game
         _barrelsManager.Initialize();
         _barrelsManager.LoadContent(Content, _simulation);
 
+        //SKYBOX
+        _skybox = new Skybox(GraphicsDevice);
+        _skybox.LoadContent(Content);
+
         //TANQUE
         var kb = Keyboard.GetState();
         _gameStateManager.HandleMenuState(kb, _lastKeyboardState);
@@ -232,6 +237,7 @@ public class TGCGame : Game
         //El update del juego ocurre unicamente en estado Playing, sino se sale temprano
         if (_gameStateManager.CurrentState != GameState.Playing)
         {
+            _skybox.Update(gameTime);
             base.Update(gameTime);
             return;
         }
@@ -329,13 +335,15 @@ public class TGCGame : Game
     {
         // Aca deberiamos poner toda la logica de renderizado del juego.
         _ = (float)gameTime.TotalGameTime.TotalSeconds;
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        //GraphicsDevice.Clear(Color.CornflowerBlue);
+        GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.CornflowerBlue, 1f, 0);
 
         if (_gameStateManager.CurrentState == GameState.Playing || _gameStateManager.CurrentState == GameState.Paused)
         {
             var smm = _shadowMapManager;
             var lvp = smm.LightViewProjection; // una sola matriz para todo
 
+            //pasadas de sombras
             if (smm.RebajarSombrasEstaticas)
             {
                 smm.BeginStaticShadowPass();
@@ -345,6 +353,9 @@ public class TGCGame : Game
                 smm.RebajarSombrasEstaticas = false;
             }
 
+            var cameraCorners = GetCameraFrustumCorners();
+            smm.FitDynamicToCamera(cameraCorners);
+
             smm.BeginDynamicShadowPass();
             _tank.DrawDepth(lvp);
             _enemiesManager.DrawDepth(lvp);
@@ -352,9 +363,14 @@ public class TGCGame : Game
             _dinamicsManager.DrawDepth(lvp);
             _barrelsManager.DrawDepth(lvp);
             
+            //preparar lighting pass
             smm.BeginLightingPass(_shadowMapEffect);
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
+            //dibujar skybox
+            _skybox.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
+
+            //dibujar el resto de la escena, encima del skybox
             _terrain.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
             _tank.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
             _cannonballManager.Draw(_camera.View, _camera.Projection);
@@ -381,6 +397,39 @@ public class TGCGame : Game
                 new NarrowPhaseCallbacks(),
                 new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -9.8f, 0)),
                 new SolveDescription(8, 1));
+    }
+
+    private Vector3[] GetCameraFrustumCorners()
+    {
+        var viewport = GraphicsDevice.Viewport;
+        var nearCorners = new Vector3[4];
+        var farCorners = new Vector3[4];
+
+        var projection = _camera.Projection;
+        var view = _camera.View;
+
+        // Near plane corners
+        nearCorners[0] = new Vector3(-1, -1, 0);
+        nearCorners[1] = new Vector3(1, -1, 0);
+        nearCorners[2] = new Vector3(1, 1, 0);
+        nearCorners[3] = new Vector3(-1, 1, 0);
+
+        // Far plane corners
+        farCorners[0] = new Vector3(-1, -1, 1);
+        farCorners[1] = new Vector3(1, -1, 1);
+        farCorners[2] = new Vector3(1, 1, 1);
+        farCorners[3] = new Vector3(-1, 1, 1);
+
+        // Transformar a world space
+        var invViewProj = Matrix.Invert(view * projection);
+        for (int i = 0; i < 4; i++)
+        {
+            nearCorners[i] = Vector3.Transform(nearCorners[i], invViewProj);
+            farCorners[i] = Vector3.Transform(farCorners[i], invViewProj);
+        }
+
+        return new[] { nearCorners[0], nearCorners[1], nearCorners[2], nearCorners[3],
+                   farCorners[0], farCorners[1], farCorners[2], farCorners[3] };
     }
 
     protected override void UnloadContent()
