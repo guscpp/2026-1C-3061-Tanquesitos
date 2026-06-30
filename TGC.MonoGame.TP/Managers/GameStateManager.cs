@@ -68,12 +68,15 @@ public class GameStateManager
     private int _lastHoveredIndex = -1; //preseleccion del mouse
 
     private MouseState _lastMouseState;
+    private GameState _previousState = GameState.Menu;
 
     private ContentManager _menuContent; //evita cache compartido
 
     //exponerlo para reproducir efectos 3d
     public SoundManager SoundManager => _soundManager;
 
+    public bool IsGodMode => CurrentState == GameState.GodMode;
+    public bool IsGameRunning => CurrentState == GameState.Playing || IsGodMode;
 
     //Constante compartida de separacion vertical para las opciones del menu
     private const float OptionSpacing = 20f;
@@ -205,13 +208,17 @@ public class GameStateManager
         switch (CurrentState)
         {
             case GameState.Playing:
+            case GameState.GodMode:
                 if (kb.IsKeyDown(Keys.P) && lastKb.IsKeyUp(Keys.P))
+                {
+                    _previousState = CurrentState;
                     CurrentState = GameState.Paused;
+                }
                 break;
             case GameState.Paused:
                 // SoundManager.StopMusic();
                 if (kb.IsKeyDown(Keys.P) && lastKb.IsKeyUp(Keys.P))
-                    CurrentState = GameState.Playing;
+                    CurrentState = _previousState;
                 break;
             case GameState.GameOver:
             case GameState.Win: // por ahora, mismo comportamiento que cuando se pierde
@@ -852,7 +859,14 @@ public class GameStateManager
         _spriteBatch.DrawString(_fontArial, text, pos, Color.White);
     }
 
-    public void ForceState(GameState state) => CurrentState = state;
+    public void ForceState(GameState state)
+    {
+        if (CurrentState != state)
+        {
+            _previousState = CurrentState;
+            CurrentState = state;
+        }
+    }
 
     // Maneja la reproduccion de musica segun el estado del juego
     private void HandleMusic()
@@ -931,6 +945,32 @@ public class GameStateManager
         _spriteBatch.Draw(_whitePixel, new Rectangle(rect.X + rect.Width - thickness, rect.Y, thickness, rect.Height), color);
     }
 
+    public void ToggleGodMode()
+    {
+        if (!IsGameRunning) return;
+
+        if (CurrentState == GameState.Playing)
+        {
+            CurrentState = GameState.GodMode;
+            if (TGCGame.Instance?._tank != null)
+            { 
+                TGCGame.Instance._tank.HealthPoints = 999;
+            }
+        }
+        else if (CurrentState == GameState.GodMode)
+        {
+            CurrentState = GameState.Playing;
+            if (TGCGame.Instance?._tank != null)
+            {
+                TGCGame.Instance._tank.HealthPoints = TGCGame.Instance._tank.initialHealth;
+            }
+        }
+    }
+
+    public void RestoreState()
+    {
+        CurrentState = _previousState;
+    }
 
     public void Dispose()
     {

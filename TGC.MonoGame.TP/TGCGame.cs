@@ -51,6 +51,7 @@ public class TGCGame : Game
     public Hud Hud => _hud;
     //gamestate
     private GameStateManager _gameStateManager;
+    public GameStateManager GameStateManager => _gameStateManager;
     //-----------TANQUE
     public TankPlayer _tank;
     private TankFollowCamera _camera;
@@ -227,15 +228,16 @@ public class TGCGame : Game
     {
         var kb = Keyboard.GetState();
         _gameStateManager.Update(gameTime, kb, _lastKeyboardState);
+
+        if (kb.IsKeyDown(Keys.G) && !_lastKeyboardState.IsKeyDown(Keys.G))
+        {
+            _gameStateManager.ToggleGodMode();
+        }
+
         _lastKeyboardState = kb;
 
-        if (kb.IsKeyDown(Keys.P) && !_lastKeyboardState.IsKeyDown(Keys.P)) 
-        {
-            _gameStateManager.ForceState(_gameStateManager.CurrentState == GameState.Playing ? 
-                GameState.Paused : GameState.Playing);
-        }
-        //El update del juego ocurre unicamente en estado Playing, sino se sale temprano
-        if (_gameStateManager.CurrentState != GameState.Playing)
+        //El update del juego ocurre unicamente en estado Playing o GodMode, sino se sale temprano
+        if (!_gameStateManager.IsGameRunning)
         {
             _skybox.Update(gameTime);
             base.Update(gameTime);
@@ -268,8 +270,8 @@ public class TGCGame : Game
         MouseState currentMouseState = Mouse.GetState();
 
         if (currentMouseState.LeftButton == ButtonState.Pressed 
-        && _previousMouseState.LeftButton == ButtonState.Released 
-        && _cannonballManager.CanFire)
+            && (_previousMouseState.LeftButton == ButtonState.Released || _gameStateManager.IsGodMode )
+            && _cannonballManager.CanFire)
         {
             Vector3 direction = _tank.CannonForward;
             direction.Normalize();
@@ -352,7 +354,7 @@ public class TGCGame : Game
         //GraphicsDevice.Clear(Color.CornflowerBlue);
         GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.CornflowerBlue, 1f, 0);
 
-        if (_gameStateManager.CurrentState == GameState.Playing || _gameStateManager.CurrentState == GameState.Paused)
+        if (_gameStateManager.IsGameRunning || _gameStateManager.CurrentState == GameState.Paused)
         {
             var smm = _shadowMapManager;
             var lvp = smm.LightViewProjection; // una sola matriz para todo
