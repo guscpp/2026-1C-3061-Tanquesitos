@@ -80,7 +80,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                 // ✅ BÚSQUEDA O(1) SIN LINQ
                 if (TGCGame.Instance._dinamicsManager.DynamicDecorationsByHandle.TryGetValue(obstacleHandle, out var objetoChocado))
                 {
-                    if (!objetoChocado.IsDead) objetoChocado.HandleCollision();
+                    if (!objetoChocado.IsDead && objetoChocado.esDestruible) objetoChocado.HandleCollision();
                 }
             }
 
@@ -105,7 +105,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
                 // ✅ BÚSQUEDA O(1) SIN LINQ
                 if (TGCGame.Instance._dinamicsManager.DynamicDecorationsByHandle.TryGetValue(obstacleHandle, out var objetoChocadoBala))
                 {
-                    if (!objetoChocadoBala.IsDead && !cannonball.IsDead)
+                    if (!objetoChocadoBala.IsDead && objetoChocadoBala.esDestruible && !cannonball.IsDead)
                     {
                         objetoChocadoBala.HandleCollision();
                         cannonball.killCannonball();
