@@ -150,6 +150,22 @@ public class Hud
         float padY = screenHeight * _paddingPercentY;
         float spacing = screenHeight * _spacingPercent;
 
+        if (TGCGame.Instance.GameStateManager.IsGodMode)
+        {
+            string godText = "MODO GOD ACTIVADO";
+            Vector2 godTextSize = _font.MeasureString(godText);
+            Vector2 godTextPos = new Vector2(screenWidth / 2f - godTextSize.X / 2f, 20f);
+
+            _spriteBatch.Begin();
+
+            // Sombra
+            _spriteBatch.DrawString(_font, godText, godTextPos + Vector2.One, Color.Black);
+            // Texto principal
+            _spriteBatch.DrawString(_font, godText, godTextPos, Color.Gold);
+
+            _spriteBatch.End();
+        }
+
         // Esta linea es la que desactiva el Z-Buffer
         _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
 

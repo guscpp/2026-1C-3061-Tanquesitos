@@ -15,7 +15,10 @@ namespace TGC.MonoGame.TP.Models.Decorations
         private float _height;
         private float _lenght;
 
-        public Stairs(Vector3 position, string path) : base(position, path) { } //Decoration ya hace lo necesario
+        public Stairs(Vector3 position, string path) : base(position, path)
+        {
+            _destructible = true;
+        } //Decoration ya hace lo necesario
         
         //CARGO EL CONTENIDO (Modificacion de la funcion en DECORATION)
         public override void LoadContent(ContentManager content, Simulation simulation, Effect effect)

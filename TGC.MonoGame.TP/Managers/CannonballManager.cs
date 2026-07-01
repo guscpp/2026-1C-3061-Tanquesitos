@@ -23,8 +23,10 @@ public class CannonballManager
     }
     private float _currentCooldown;
     public float CurrentCooldown => _currentCooldown;
-    public bool CanFire => _currentCooldown <= 0f;
     private Dictionary<BodyHandle, Cannonball> _cannonballsByHandle = new();
+
+    public void ResetCooldown() => _currentCooldown = 0f;
+    public bool CanFire => _currentCooldown <= 0f || TGCGame.Instance.GameStateManager.IsGodMode;
 
     public CannonballManager(Simulation simulation)
     {
