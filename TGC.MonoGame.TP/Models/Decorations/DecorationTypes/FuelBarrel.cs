@@ -109,6 +109,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
                 IsRecharging = false;
                 CollectedBy = null;
             }
+            RecalculateWorldBoundingBox();
         }
 
         // debug visual: dibuja volumen de colision solo si el barril esta activo

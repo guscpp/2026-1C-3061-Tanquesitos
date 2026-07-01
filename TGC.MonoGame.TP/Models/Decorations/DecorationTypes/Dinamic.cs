@@ -25,6 +25,7 @@ namespace TGC.MonoGame.TP.Models.Decorations
         public override void Update(Simulation simulation)
         {
             base.Update(simulation);
+            RecalculateWorldBoundingBox();
         }
 
         //DIBUJO EL MODELO (Modificacion de la funcion en DECORATION)

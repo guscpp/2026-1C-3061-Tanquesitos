@@ -115,19 +115,25 @@ public class DinamicsManager
         }
     }
 
-    public void Draw(Matrix view, Matrix projection)
+    public void Draw(Matrix view, Matrix projection, BoundingFrustum CameraFrustum)
     {
+        int totalVisible = 0;
         foreach (var asset in _dynamicDecorations)
         {
-            asset.Draw(view, projection);
+            if(CameraFrustum.Intersects(asset.BoundingBox)) {
+                asset.Draw(view, projection);
+                totalVisible++;
+            }
         }
+        Console.WriteLine($"Dinamicos Visibles: {totalVisible} / {NumberOfAssets}");
     }
 
-    public void DrawDepth(Matrix lightViewProjection)
+    public void DrawDepth(Matrix lightViewProjection, BoundingFrustum CameraFrustum)
     {
         foreach (var asset in _dynamicDecorations)
         {
-            asset.DrawDepth(lightViewProjection);
+            if(CameraFrustum.Intersects(asset.BoundingBox))
+                asset.DrawDepth(lightViewProjection);
         }
     }
 

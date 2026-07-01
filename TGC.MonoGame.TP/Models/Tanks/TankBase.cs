@@ -3,6 +3,7 @@ using BepuPhysics.Collidables;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using TGC.MonoGame.TP.Collisions;
 using TGC.MonoGame.TP.Gizmos;
 
 namespace TGC.MonoGame.TP.Models.Tanks;
@@ -29,6 +30,8 @@ public abstract class TankBase
     public float RotationY { get; protected set; }
     public bool IsDead { get; protected set; }
     public BodyHandle TankHandler;
+    private BoundingBox _boundingVolume;
+    public BoundingBox _worldBoundingVolume {get; protected set;}
 
     protected System.Numerics.Quaternion _physicsOrientation = System.Numerics.Quaternion.Identity;
     protected float _turretRotation = 0f;
@@ -99,6 +102,17 @@ public abstract class TankBase
         }
     }
 
+    protected void RecalculateWorldBoundingBox()
+    {
+        var corners = new Vector3[8];
+        _boundingVolume.GetCorners(corners); //genera los 8 vertices de la caja local
+        for (int i = 0; i < corners.Length; i++)
+        {
+            corners[i] = Vector3.Transform(corners[i], WorldMatrix);
+        }
+        _worldBoundingVolume = BoundingBox.CreateFromPoints(corners);
+    }
+
     public void Load(Model model, Texture2D texture, Texture2D tracksTexture, Effect effect, Simulation simulation)
     {
         _normalOffsetScale = 0.4f;
@@ -109,6 +123,9 @@ public abstract class TankBase
         foreach (var mesh in Model.Meshes)
             foreach (var part in mesh.MeshParts) part.Effect = _effect;
         CreatePhysicsBody(simulation);
+
+        _boundingVolume = BoundingVolumesUtils.CreateAABBFromModel(model);
+        _worldBoundingVolume = _boundingVolume;
     }
 
     protected virtual void CreatePhysicsBody(Simulation simulation)

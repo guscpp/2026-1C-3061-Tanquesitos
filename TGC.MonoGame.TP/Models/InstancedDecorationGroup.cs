@@ -9,6 +9,9 @@ public class InstancedDecorationGroup
     private readonly Model _model;
     private GraphicsDevice _graphicsDevice;
     private readonly VertexBuffer _instanceBuffer;
+    private List<Matrix> _allInstances;
+    private List<Matrix> _visibleInstances = new();
+    private int _visibleInstanceCount;
     private readonly int _instanceCount;
     private Effect _effect;
     private readonly Texture2D _texture;
@@ -20,6 +23,9 @@ public class InstancedDecorationGroup
         _graphicsDevice = graphicsDevice;
         _texture = texture;
         _effect = effect.Clone();
+
+        _allInstances = worldMatrices;
+        _visibleInstances = new List<Matrix>(worldMatrices.Count);
 
         var instanceDeclaration = new VertexDeclaration(
             new VertexElement(0, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1),
@@ -35,11 +41,28 @@ public class InstancedDecorationGroup
             _instanceCount, 
             BufferUsage.WriteOnly
         );
-        _instanceBuffer.SetData(worldMatrices.ToArray());
+        // al ppio todas las instancias son visibles
+        _visibleInstances.AddRange(worldMatrices);
+        _visibleInstanceCount = worldMatrices.Count;
+
+        _instanceBuffer.SetData(_visibleInstances.ToArray());
+    }
+
+    public void SetVisibleInstances(List<Matrix> visibleInstances)
+    {
+        _visibleInstances.Clear(); // se borran las instancias anteriores para actualizar
+        _visibleInstances.AddRange(visibleInstances);
+
+        _visibleInstanceCount = _visibleInstances.Count;
+
+        if (_visibleInstanceCount > 0)
+            _instanceBuffer.SetData(_visibleInstances.ToArray(), 0, _visibleInstanceCount);
     }
 
     public void Draw(Matrix view, Matrix projection)
     {
+        if (_visibleInstanceCount == 0) return;
+
         var smm = TGCGame.Instance.ShadowMapManager;
 
         _effect.Parameters["View"]?.SetValue(view);
@@ -82,7 +105,7 @@ public class InstancedDecorationGroup
                         meshPart.VertexOffset,
                         0,
                         meshPart.PrimitiveCount,
-                        _instanceCount
+                        _visibleInstanceCount
                     );
                 }
             }
@@ -91,6 +114,8 @@ public class InstancedDecorationGroup
 
     public void DrawDepth(Matrix lightViewProjection)
     {
+        if (_visibleInstanceCount == 0) return;
+
         _effect.Parameters["LightViewProjection"]?.SetValue(lightViewProjection);
         _effect.Parameters["normalOffsetScale"]?.SetValue(0.05f);
         _effect.Parameters["IsDeformable"]?.SetValue(0);
@@ -115,7 +140,7 @@ public class InstancedDecorationGroup
                         meshPart.VertexOffset,
                         0,
                         meshPart.PrimitiveCount,
-                        _instanceCount
+                        _visibleInstanceCount
                     );
                 }
             }

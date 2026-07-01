@@ -107,19 +107,25 @@ public class EnemiesManager
         }
      }
 
-    public void Draw(Matrix view, Matrix projection, Vector3 cameraPosition)
+    public void Draw(Matrix view, Matrix projection, Vector3 cameraPosition, BoundingFrustum CameraFrustum)
     {
+        int totalVisible = 0;
         foreach(var tankEnemy in _enemies)
         {
-            tankEnemy.Draw(view, projection, cameraPosition);
+            if(CameraFrustum.Intersects(tankEnemy._worldBoundingVolume)) {
+                tankEnemy.Draw(view, projection, cameraPosition);
+                totalVisible++;
+            }
         }
+        Console.WriteLine($"Casas Visibles: {totalVisible} / {_enemiesCount}");
     }
 
-    public void DrawDepth(Matrix lightViewProjection)
+    public void DrawDepth(Matrix lightViewProjection, BoundingFrustum CameraFrustum)
     {
         foreach(var tankEnemy in _enemies)
         {
-            tankEnemy.DrawDepth(lightViewProjection);
+            if(CameraFrustum.Intersects(tankEnemy._worldBoundingVolume))
+                tankEnemy.DrawDepth(lightViewProjection);
         }
     }
 

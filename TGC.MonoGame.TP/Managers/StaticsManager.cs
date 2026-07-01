@@ -101,7 +101,34 @@ public class StaticsManager
         }
     }
 
-    public void Update() { }
+    public void Update(BoundingFrustum CameraFrustum)
+    {
+        var visibleModels = new Dictionary<string, List<Matrix>>();
+        foreach(var staticDecoration in _decorationModels)
+        {
+            var boundingBox = staticDecoration.BoundingBox;
+            if(CameraFrustum.Intersects(boundingBox))
+            {
+                if (!visibleModels.TryGetValue(staticDecoration.ModelPath, out var list))
+                {
+                    list = new List<Matrix>();
+                    visibleModels[staticDecoration.ModelPath] = list;
+                }
+                list.Add(staticDecoration.WorldMatrix);
+            }
+        }
+        // se actualiza con las instancias visibles
+        foreach (var group in _decorationGroups)
+        {
+            if (visibleModels.TryGetValue(group.Key, out var visibleMatrices))
+                group.Value.SetVisibleInstances(visibleMatrices);
+            else
+                group.Value.SetVisibleInstances(new List<Matrix>()); // nada visible de ese modelo
+        }
+
+        int totalVisible = visibleModels.Values.Sum(l => l.Count);
+        Console.WriteLine($"Estaticos Visibles: {totalVisible} / {_decorationModels.Count}");
+    }
 
     public void Draw(Matrix view, Matrix projection)
     {

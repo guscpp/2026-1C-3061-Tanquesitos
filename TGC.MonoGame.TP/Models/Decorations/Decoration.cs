@@ -23,6 +23,8 @@ public class Decoration
     protected float _visualScale;
     protected string _path;
     protected BoundingBox _boundingBox; //la cajita xd
+    protected BoundingBox _worldBoundingBox; //caja transformada a espacio mundo, la que se usa para frustum culling
+    public BoundingBox BoundingBox => _worldBoundingBox;
     protected Vector3 _dimensions; //guarda el ancho, alto y largo del modelo
     protected Vector3 _modelCenter; //ubicacion del pivote
 
@@ -63,6 +65,7 @@ public class Decoration
         var objectSize = Math.Max(_dimensions.X, Math.Max(_dimensions.Y, _dimensions.Z));
         _normalOffsetScale = MathHelper.Clamp(objectSize * 0.02f, 0.03f, 0.6f);
         //_normalOffsetScale = 0.02f;
+        _worldBoundingBox = _boundingBox;
     }
 
     //ACTUALIZO (Modificable)
@@ -70,6 +73,17 @@ public class Decoration
 
     //DIBUJO LAS COLISIONES (Modificable)
     public virtual void DrawCollisionChamber(Gizmo gizmos, Simulation simulation) {}
+
+    protected void RecalculateWorldBoundingBox()
+    {
+        var corners = new Vector3[8];
+        _boundingBox.GetCorners(corners); //genera los 8 vertices de la caja local
+        for (int i = 0; i < corners.Length; i++)
+        {
+            corners[i] = Vector3.Transform(corners[i], _world);
+        }
+        _worldBoundingBox = BoundingBox.CreateFromPoints(corners);
+    }
 
     //DIBUJO (Modificable)
     public virtual void Draw(Matrix view, Matrix projection)

@@ -5,6 +5,8 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TGC.MonoGame.TP.Collisions;
+using TGC.MonoGame.TP.Gizmos;
 using TGC.MonoGame.TP.Models;
 using TGC.MonoGame.TP.Models.Decorations;
 using Terrain = TGC.MonoGame.TP.Models.Terrains.Terrain;
@@ -81,7 +83,34 @@ public class HousesManager
         }
     }
 
-    public void Update() { }
+    public void Update(BoundingFrustum CameraFrustum, Gizmo gizmos, Simulation simulation) 
+    { 
+        var visibleModels = new Dictionary<string, List<Matrix>>();
+        foreach(var house in _houses)
+        {
+            var houseBoundingBox = house.BoundingBox;
+            if(CameraFrustum.Intersects(houseBoundingBox))
+            {
+                if (!visibleModels.TryGetValue(house.ModelPath, out var list))
+                {
+                    list = new List<Matrix>();
+                    visibleModels[house.ModelPath] = list;
+                }
+                list.Add(house.WorldMatrix);
+                //house.DrawCollisionChamber(gizmos, simulation);
+            }
+        }
+        // se actualiza con las instancias visibles
+        foreach (var group in _houseGroups)
+        {
+            if (visibleModels.TryGetValue(group.Key, out var visibleMatrices))
+                group.Value.SetVisibleInstances(visibleMatrices);
+            else
+                group.Value.SetVisibleInstances(new List<Matrix>()); // nada visible de ese modelo
+        }
+        int totalVisible = visibleModels.Values.Sum(l => l.Count);
+        Console.WriteLine($"Casas Visibles: {totalVisible} / {_houses.Count}");
+    }
 
     public void Draw(Matrix view, Matrix projection)
     {

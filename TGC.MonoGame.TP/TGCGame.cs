@@ -87,6 +87,10 @@ public class TGCGame : Game
     // Variable para contabilizar las kills del jugador
     public int EnemiesKilled = 0;
 
+    // ------Optimizacion
+    private BoundingFrustum _cameraFrustum; // frustum de la camara para hacer frustum culling
+    public BoundingFrustum CameraFrustum => _cameraFrustum;
+
     public TGCGame()
     {
         _graphics = new GraphicsDeviceManager(this);
@@ -217,6 +221,8 @@ public class TGCGame : Game
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
         _camera.Terrain = _terrain;
 
+        _cameraFrustum = new BoundingFrustum(_camera.View * _camera.Projection);
+
         //GIZMOS
         _gizmos.LoadContent(GraphicsDevice, Content);
 
@@ -256,10 +262,13 @@ public class TGCGame : Game
             if (!barrel.IsCollected) barrel.TryCollect(_tank, _simulation);
         }
 
+        _camera.Update(gameTime, _tank.Position, _tank.TurretRotationWorld); //A la camara ahora le paso la posicion de la torreta en vez de la base
+        _cameraFrustum.Matrix = _camera.View * _camera.Projection;
+
         _enemiesManager.Update(gameTime, _tank.Position);
 
-        _housesManager.Update();
-        _staticsManager.Update();
+        _housesManager.Update(_cameraFrustum, _gizmos, _simulation);
+        _staticsManager.Update(_cameraFrustum);
         _dinamicsManager.Update(_simulation);
         _barrelsManager.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
@@ -291,7 +300,7 @@ public class TGCGame : Game
         _previousMouseState = currentMouseState;
 
         _cannonballManager.Update(gameTime);
-        _camera.Update(gameTime, _tank.Position, _tank.TurretRotationWorld); //A la camara ahora le paso la posicion de la torreta en vez de la base
+        
         _gizmos.UpdateViewProjection(_camera.View, _camera.Projection);
 
         _hud.TankFuel = _tank.CurrentFuel;
@@ -343,6 +352,7 @@ public class TGCGame : Game
         _barrelsManager.Reset(_simulation);
 
         _camera = new TankFollowCamera(GraphicsDevice.Viewport.AspectRatio, _tank.Position);
+        _cameraFrustum = new BoundingFrustum(_camera.View * _camera.Projection);
     }
 
     protected override void Draw(GameTime gameTime)
@@ -372,10 +382,10 @@ public class TGCGame : Game
 
             smm.BeginDynamicShadowPass();
             _tank.DrawDepth(lvp);
-            _enemiesManager.DrawDepth(lvp);
+            _enemiesManager.DrawDepth(lvp, CameraFrustum);
             _cannonballManager.DrawDepth(lvp);
-            _dinamicsManager.DrawDepth(lvp);
-            _barrelsManager.DrawDepth(lvp);
+            _dinamicsManager.DrawDepth(lvp, CameraFrustum);
+            _barrelsManager.DrawDepth(lvp, CameraFrustum);
             
             //preparar lighting pass
             smm.BeginLightingPass(_shadowMapEffect);
@@ -390,9 +400,9 @@ public class TGCGame : Game
             _cannonballManager.Draw(_camera.View, _camera.Projection);
             _housesManager.Draw(_camera.View, _camera.Projection);
             _staticsManager.Draw(_camera.View, _camera.Projection);
-            _dinamicsManager.Draw(_camera.View, _camera.Projection);
-            _barrelsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation);
-            _enemiesManager.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition);
+            _dinamicsManager.Draw(_camera.View, _camera.Projection, CameraFrustum);
+            _barrelsManager.Draw(_camera.View, _camera.Projection, _gizmos, _simulation, CameraFrustum);
+            _enemiesManager.Draw(_camera.View, _camera.Projection, _camera.ListenerPosition, CameraFrustum);
 
             _hud.Draw();
             _gizmos.Draw();

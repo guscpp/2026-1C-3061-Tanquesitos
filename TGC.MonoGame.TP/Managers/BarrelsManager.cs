@@ -101,19 +101,21 @@ public class BarrelsManager
         }
     }
 
-    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation)
+    public void Draw(Matrix view, Matrix projection, Gizmo gizmos, Simulation simulation, BoundingFrustum CameraFrustum)
     {
+        int totalVisible = 0;
         foreach (var barrel in _fuelBarrels)
         {
-            if (!barrel.IsCollected) barrel.Draw(view, projection);
+            if (!barrel.IsCollected && CameraFrustum.Intersects(barrel.BoundingBox)) {barrel.Draw(view, projection); totalVisible++;}
         }
+        Console.WriteLine($"Casas Visibles: {totalVisible} / {_fuelBarrels.Count}");
     }
 
-    public void DrawDepth(Matrix lightViewProjection)
+    public void DrawDepth(Matrix lightViewProjection, BoundingFrustum CameraFrustum)
     {
         foreach (var barrel in _fuelBarrels)
         {
-            if (!barrel.IsCollected) barrel.DrawDepth(lightViewProjection);
+            if (!barrel.IsCollected && CameraFrustum.Intersects(barrel.BoundingBox)) barrel.DrawDepth(lightViewProjection);
         }
     }
 
