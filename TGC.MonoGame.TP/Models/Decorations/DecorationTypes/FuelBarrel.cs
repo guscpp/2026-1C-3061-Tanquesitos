@@ -126,6 +126,8 @@ namespace TGC.MonoGame.TP.Models.Decorations
                 * Matrix.CreateScale(_visualScale)
                 * rotation 
                 * Matrix.CreateTranslation(_position);
+
+            RecalculateWorldBoundingBox();
     }
     }
 }

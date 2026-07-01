@@ -59,6 +59,8 @@ namespace TGC.MonoGame.TP.Models.Decorations
         {
             if (IsDead) return;
 
+            base.Update(simulation);
+
             // Tomo la posicion actual en la simulacion
             var bodyReference = simulation.Bodies[bodyHandle];
             var pose = bodyReference.Pose;
